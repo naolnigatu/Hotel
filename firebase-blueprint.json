@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account data with role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "reception", "kitchen", "waiter", "housekeeping", "guest"] },
+        "phone": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "email", "name", "role", "createdAt"]
+    },
+    "StaffMember": {
+      "title": "Staff Member Profile",
+      "description": "Hotel employee record and permissions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "phone": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "department": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "email", "name", "role", "isActive", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Restaurant Order",
+      "description": "Food and beverage orders for dining, room service, takeaway",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "type": { "type": "string" },
+        "locationRef": { "type": "string" },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string" },
+        "paymentStatus": { "type": "string" },
+        "assignedWaiterId": { "type": "string" },
+        "assignedWaiterName": { "type": "string" },
+        "waiterNotes": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "orderNumber", "type", "locationRef", "items", "totalAmount", "status", "createdAt", "updatedAt"]
+    },
+    "ServiceRequest": {
+      "title": "Service Request",
+      "description": "Guest waiter calls and bill requests",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "locationRef": { "type": "string" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "type", "locationRef", "status", "createdAt", "updatedAt"]
+    },
+    "Table": {
+      "title": "Restaurant Table",
+      "description": "Dining table configuration and QR codes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tableNumber": { "type": "string" },
+        "area": { "type": "string" },
+        "capacity": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "tableNumber", "area", "capacity"]
+    },
+    "KitchenStation": {
+      "title": "Kitchen Station",
+      "description": "Kitchen prep area configuration for KDS",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "displayOrder": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "name", "displayOrder", "isActive"]
+    },
+    "AuditLog": {
+      "title": "Audit Log Entry",
+      "description": "Audit record of management actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userRole": { "type": "string" },
+        "action": { "type": "string" },
+        "module": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["id", "userId", "userName", "userRole", "action", "module", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/staff/{staffId}": {
+      "schema": "StaffMember",
+      "description": "Hotel staff accounts"
+    },
+    "/restaurant_orders/{orderId}": {
+      "schema": "Order",
+      "description": "Restaurant orders"
+    },
+    "/service_requests/{requestId}": {
+      "schema": "ServiceRequest",
+      "description": "Waiter service calls"
+    },
+    "/restaurant_tables/{tableId}": {
+      "schema": "Table",
+      "description": "Restaurant tables"
+    },
+    "/kitchen_stations/{stationId}": {
+      "schema": "KitchenStation",
+      "description": "Kitchen prep stations"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Audit logs"
+    }
+  }
+}

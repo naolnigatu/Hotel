@@ -1,0 +1,6 @@
+{
+  "name": "Woliso Hotel",
+  "description": "Woliso Hotel - Hotel Management, Room Booking & Restaurant Ordering Platform (Woliso, Ethiopia)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
