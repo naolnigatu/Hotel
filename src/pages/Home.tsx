@@ -15,6 +15,8 @@ export default function Home() {
   const [featuredDishes, setFeaturedDishes] = useState<MenuItem[]>([]);
   const [featuredHalls, setFeaturedHalls] = useState<Hall[]>([]);
 
+  const [heroImageError, setHeroImageError] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -53,7 +55,8 @@ export default function Home() {
     fetchData();
   }, []);
 
-  const heroImage = cmsData?.heroImageUrl || "https://images.unsplash.com/photo-1542314831-c6a4d1409e1f?auto=format&fit=crop&q=80&w=2850";
+  const fallbackHeroImage = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=2850";
+  const heroImage = heroImageError ? fallbackHeroImage : (cmsData?.heroImageUrl || fallbackHeroImage);
 
   return (
     <div className="flex flex-col bg-neutral-50">
@@ -74,6 +77,10 @@ export default function Home() {
             src={heroImage} 
             alt="Hotel Exterior" 
             className="absolute inset-0 w-full h-full object-cover"
+            onError={() => {
+              console.error(`Failed to load hero image: ${heroImage}. Falling back to default.`);
+              setHeroImageError(true);
+            }}
           />
         )}
         

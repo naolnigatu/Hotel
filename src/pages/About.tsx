@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 export default function About() {
   const [cmsData, setCmsData] = useState<CmsAbout | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchCms = async () => {
@@ -36,13 +37,17 @@ export default function About() {
     );
   }
 
+  const fallbackAboutImage = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1000";
+  const aboutImage = imageError ? fallbackAboutImage : (cmsData?.imageUrl || fallbackAboutImage);
+
   return (
     <div className="bg-neutral-50 min-h-screen pb-20">
       <div className="w-full h-80 relative overflow-hidden">
         <img 
-          src={cmsData?.imageUrl || "https://images.unsplash.com/photo-1551882547-ff40c0d5b5df?auto=format&fit=crop&q=80&w=1000"} 
+          src={aboutImage} 
           alt="About Us"
           className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
         />
         <div className="absolute inset-0 bg-neutral-900/40" />
         <div className="absolute inset-0 flex items-center justify-center">
