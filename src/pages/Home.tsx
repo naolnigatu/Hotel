@@ -5,11 +5,12 @@ import { MapPin, Wifi, Coffee, Car, Star, Phone, Mail, ArrowRight } from 'lucide
 import { motion } from 'motion/react';
 import { collection, doc, getDoc, getDocs, query, limit, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { CmsHome, RoomCategory, MenuItem, Hall } from '../types';
+import { CmsHome, RoomCategory, MenuItem, Hall, CmsContact } from '../types';
 
 export default function Home() {
   const { t } = useTranslation();
   const [cmsData, setCmsData] = useState<CmsHome | null>(null);
+  const [contactData, setContactData] = useState<CmsContact | null>(null);
   const [featuredRooms, setFeaturedRooms] = useState<RoomCategory[]>([]);
   const [featuredDishes, setFeaturedDishes] = useState<MenuItem[]>([]);
   const [featuredHalls, setFeaturedHalls] = useState<Hall[]>([]);
@@ -22,6 +23,12 @@ export default function Home() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setCmsData(docSnap.data().data as CmsHome);
+        }
+
+        const contactRef = doc(db, 'settings', 'cms_contact');
+        const contactSnap = await getDoc(contactRef);
+        if (contactSnap.exists()) {
+          setContactData(contactSnap.data().data);
         }
 
         // Fetch a few rooms
@@ -373,7 +380,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-bold text-neutral-900 mb-1">Address</h3>
-                    <p className="text-neutral-600">Woliso City Center, Main Road<br/>Woliso, Oromia, Ethiopia</p>
+                    <p className="text-neutral-600 whitespace-pre-wrap">{contactData?.address || 'Woliso City Center, Main Road\nWoliso, Oromia, Ethiopia'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -382,7 +389,11 @@ export default function Home() {
                   </div>
                   <div>
                     <h3 className="font-bold text-neutral-900 mb-1">Contact</h3>
-                    <p className="text-neutral-600">+251 91 123 4567<br/>info@wolisohotel.com</p>
+                    <p className="text-neutral-600">
+                      {contactData?.phonePrimary || '+251 91 123 4567'}
+                      <br/>
+                      {contactData?.emailPrimary || 'info@wolisohotel.com'}
+                    </p>
                   </div>
                 </div>
               </div>

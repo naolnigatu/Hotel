@@ -16,7 +16,8 @@ import {
   Phone,
   Users,
   Sparkles,
-  ChefHat
+  ChefHat,
+  PieChart
 } from 'lucide-react';
 
 import NotificationCenter from './NotificationCenter';
@@ -37,6 +38,7 @@ export default function AdminLayout() {
 
   const allNavItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard, roles: ['admin', 'reception'] },
+    { name: 'Analytics', path: '/admin/analytics', icon: PieChart, roles: ['admin'] },
     { name: 'Reservations', path: '/admin/reservations', icon: Users, roles: ['admin', 'reception'] },
     { name: 'Housekeeping', path: '/admin/housekeeping', icon: Sparkles, roles: ['admin', 'reception', 'housekeeping'] },
     { name: 'Waiter Dashboard', path: '/admin/waiter', icon: UtensilsCrossed, roles: ['admin', 'waiter'] },

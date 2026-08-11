@@ -64,14 +64,16 @@ service cloud.firestore {
     // Restaurant Orders
     match /restaurant_orders/{orderId} {
       allow create: if true; // Guests can place orders
-      allow read, update: if true; // Public tracking & staff management
+      allow read: if true; // Public tracking & staff management
+      allow update: if isStaff() || (isSignedIn() && request.auth.uid == resource.data.customerUid);
       allow delete: if isAdmin();
     }
 
     // Service Requests (Call Waiter, Bill Requests)
     match /service_requests/{requestId} {
       allow create: if true; // Guests can request service
-      allow read, update: if true;
+      allow read: if true;
+      allow update: if isStaff();
       allow delete: if isAdmin();
     }
 
@@ -139,7 +141,8 @@ service cloud.firestore {
     // Bookings & Halls
     match /bookings/{bookingId} {
       allow create: if true;
-      allow read, update: if true;
+      allow read: if true;
+      allow update: if isStaff() || (isSignedIn() && request.auth.uid == resource.data.guestId);
       allow delete: if isAdmin();
     }
 

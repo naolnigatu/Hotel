@@ -46,6 +46,7 @@ import AdminKitchenStations from './pages/admin/AdminKitchenStations';
 import AdminStaff from './pages/admin/AdminStaff';
 import AdminHotelSettings from './pages/admin/AdminHotelSettings';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
 import OrderTracker from './pages/OrderTracker';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -104,6 +105,7 @@ export default function App() {
               <Route path="staff" element={<AdminStaff />} />
               <Route path="settings" element={<AdminHotelSettings />} />
               <Route path="audit-logs" element={<AdminAuditLogs />} />
+              <Route path="analytics" element={<AdminAnalytics />} />
             </Route>
           </Routes>
         </BrowserRouter>
