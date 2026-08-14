@@ -38,7 +38,11 @@ export default function About() {
   }
 
   const fallbackAboutImage = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1000";
-  const aboutImage = imageError ? fallbackAboutImage : (cmsData?.imageUrl || fallbackAboutImage);
+  let initialAboutImage = cmsData?.imageUrl || fallbackAboutImage;
+  if (initialAboutImage.includes("1551882547-ff40c0d5b5df")) {
+    initialAboutImage = fallbackAboutImage;
+  }
+  const aboutImage = imageError ? fallbackAboutImage : initialAboutImage;
 
   return (
     <div className="bg-neutral-50 min-h-screen pb-20">

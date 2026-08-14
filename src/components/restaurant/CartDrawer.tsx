@@ -86,6 +86,9 @@ export default function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
                   src={item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'} 
                   alt={item.name} 
                   className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
+                  }}
                 />
 
                 <div className="flex-1 min-w-0">

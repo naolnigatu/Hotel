@@ -332,6 +332,9 @@ export default function Restaurant() {
                     src={item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
                     alt={item.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
+                    }}
                   />
                   
                   <div className="absolute top-3 right-3 bg-neutral-900/90 backdrop-blur text-white px-3 py-1 rounded-full text-xs font-black shadow-xs">

@@ -53,6 +53,9 @@ export default function Rooms() {
                   src={category.imageUrls?.[0] || 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=1000'} 
                   alt={category.name} 
                   className="absolute inset-0 w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=1000';
+                  }}
                 />
               </div>
               <div className="p-6 flex flex-col flex-1">

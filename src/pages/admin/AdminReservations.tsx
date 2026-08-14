@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, doc, updateDoc, orderBy, getDocs, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, updateDoc, orderBy, getDocs, where, runTransaction } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Booking, RoomCategory, Room, BookingStatus } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -171,18 +171,34 @@ export default function AdminReservations() {
       };
 
       const updatedTimeline = [...(booking.timeline || []), timelineEvent];
+      const bookingRef = doc(db, 'bookings', id);
 
-      await updateDoc(doc(db, 'bookings', id), {
-        status: newStatus,
-        timeline: updatedTimeline,
-        updatedAt: Date.now()
-      });
+      if (newStatus === 'Checked In' && booking.roomId) {
+        // Atomic check-in and room occupation
+        await runTransaction(db, async (transaction) => {
+          const roomRef = doc(db, 'rooms', booking.roomId!);
+          const roomDoc = await transaction.get(roomRef);
+          if (!roomDoc.exists() || roomDoc.data().status === 'Occupied') {
+            throw new Error(`Room ${booking.roomId} is already occupied. Please assign a different room before checking in.`);
+          }
+          
+          transaction.update(roomRef, { status: 'Occupied' });
+          transaction.update(bookingRef, {
+            status: newStatus,
+            timeline: updatedTimeline,
+            updatedAt: Date.now()
+          });
+        });
+      } else {
+        // Normal update for other statuses
+        await updateDoc(bookingRef, {
+          status: newStatus,
+          timeline: updatedTimeline,
+          updatedAt: Date.now()
+        });
 
-      // Update Room status/condition
-      if (booking.roomId) {
-        if (newStatus === 'Checked In') {
-          await updateDoc(doc(db, 'rooms', booking.roomId), { status: 'Occupied' });
-        } else if (['Checked Out', 'Cancelled', 'No Show'].includes(newStatus)) {
+        // Update Room status/condition on checkout/cancel
+        if (booking.roomId && ['Checked Out', 'Cancelled', 'No Show'].includes(newStatus)) {
           await updateDoc(doc(db, 'rooms', booking.roomId), { 
             status: 'Available', 
             condition: newStatus === 'Checked Out' ? 'Needs Cleaning' : 'Clean' 
@@ -293,16 +309,29 @@ export default function AdminReservations() {
 
       const updatedTimeline = [...(booking.timeline || []), timelineEvent];
 
-      // If reassigning while checked in, update old room to available
-      if (isReassign && booking.roomId && booking.status === 'Checked In') {
-        await updateDoc(doc(db, 'rooms', booking.roomId), { status: 'Available', condition: 'Needs Cleaning' });
-        await updateDoc(doc(db, 'rooms', roomToAssign), { status: 'Occupied' });
-      }
+      const bookingRef = doc(db, 'bookings', id);
+      const newRoomRef = doc(db, 'rooms', roomToAssign);
+      const oldRoomRef = (isReassign && booking.roomId) ? doc(db, 'rooms', booking.roomId) : null;
 
-      await updateDoc(doc(db, 'bookings', id), {
-        roomId: roomToAssign,
-        timeline: updatedTimeline,
-        updatedAt: Date.now()
+      await runTransaction(db, async (transaction) => {
+        // If the booking is checked in, we are moving the guest right now, so we must atomically check and claim the new room.
+        if (booking.status === 'Checked In') {
+          const newRoomDoc = await transaction.get(newRoomRef);
+          if (!newRoomDoc.exists() || newRoomDoc.data().status === 'Occupied') {
+            throw new Error('The target room is already occupied. Please select a different room.');
+          }
+
+          if (isReassign && oldRoomRef) {
+            transaction.update(oldRoomRef, { status: 'Available', condition: 'Needs Cleaning' });
+          }
+          transaction.update(newRoomRef, { status: 'Occupied' });
+        }
+
+        transaction.update(bookingRef, {
+          roomId: roomToAssign,
+          timeline: updatedTimeline,
+          updatedAt: Date.now()
+        });
       });
 
       if (selectedBooking && selectedBooking.id === id) {

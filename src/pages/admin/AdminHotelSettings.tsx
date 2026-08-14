@@ -350,6 +350,65 @@ export default function AdminHotelSettings() {
           </div>
         </div>
       </div>
+
+      {/* Deposit Settings */}
+      <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs space-y-6">
+        <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2 border-b border-neutral-100 pb-3">
+          <CreditCard className="w-5 h-5 text-neutral-700" />
+          Deposit / ቀብድ Configuration
+        </h2>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="depositEnabled"
+            checked={settings.depositEnabled || false}
+            onChange={(e) => setSettings(prev => ({ ...prev, depositEnabled: e.target.checked }))}
+            className="w-5 h-5 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+          />
+          <label htmlFor="depositEnabled" className="font-bold text-neutral-800">Enable Deposit (ቀብድ) for Reservations</label>
+        </div>
+
+        {settings.depositEnabled && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t border-neutral-100">
+            <div>
+              <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-2">Deposit Type</label>
+              <select
+                value={settings.depositType || 'percentage'}
+                onChange={(e) => setSettings(prev => ({ ...prev, depositType: e.target.value as 'percentage' | 'fixed' }))}
+                className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-800 focus:outline-none focus:border-neutral-900"
+              >
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (ETB)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-2">Deposit Value</label>
+              <input
+                type="number"
+                min="0"
+                step={settings.depositType === 'percentage' ? "1" : "any"}
+                max={settings.depositType === 'percentage' ? "100" : undefined}
+                value={settings.depositValue || 0}
+                onChange={(e) => setSettings(prev => ({ ...prev, depositValue: parseFloat(e.target.value) || 0 }))}
+                className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-800 focus:outline-none focus:border-neutral-900"
+              />
+            </div>
+
+            <div className="md:col-span-2 lg:col-span-3">
+              <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-2">Payment Instructions / Requirements</label>
+              <textarea
+                rows={3}
+                value={settings.depositInstructions || ''}
+                onChange={(e) => setSettings(prev => ({ ...prev, depositInstructions: e.target.value }))}
+                placeholder="e.g. Please send the screenshot of your deposit via Telegram or WhatsApp to..."
+                className="w-full p-4 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-800 focus:outline-none focus:border-neutral-900"
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </form>
   );
 }

@@ -57,7 +57,14 @@ export default function Halls() {
               >
                 <div className="w-full lg:w-1/2 rounded-2xl overflow-hidden aspect-[4/3] bg-neutral-100 relative">
                   {hall.imageUrls?.[0] ? (
-                    <img src={hall.imageUrls[0]} alt={hall.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={hall.imageUrls[0]} 
+                      alt={hall.name} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=1000';
+                      }}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-neutral-400">No Image</div>
                   )}
@@ -71,7 +78,7 @@ export default function Halls() {
                         <Users className="w-5 h-5" />
                         Up to {hall.capacity} guests
                       </span>
-                      <span className="font-semibold text-neutral-900">${hall.price}/day</span>
+                      <span className="font-semibold text-neutral-900">{hall.price} ETB / day</span>
                     </div>
                   </div>
                   

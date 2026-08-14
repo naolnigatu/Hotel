@@ -18,7 +18,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (hasRole('admin') || request.auth.token.admin == true);
+      return isSignedIn() && (hasRole('admin') || request.auth.token.admin == true || (request.auth.token.email == 'naolnigatu2025@gmail.com' && request.auth.token.email_verified == true));
     }
 
     function isStaff() {
@@ -42,7 +42,7 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.auth.uid == userId && (
         !('role' in request.resource.data) ||
         request.resource.data.role == 'guest' ||
-        (request.auth.token.email == 'naolnigatu2025@gmail.com' && request.resource.data.role == 'admin') ||
+        (request.auth.token.email == 'naolnigatu2025@gmail.com' && request.auth.token.email_verified == true && request.resource.data.role == 'admin') ||
         isAdmin()
       );
       allow update: if isSignedIn() && (
@@ -65,7 +65,7 @@ service cloud.firestore {
     match /restaurant_orders/{orderId} {
       allow create: if true; // Guests can place orders
       allow read: if true; // Public tracking & staff management
-      allow update: if isStaff() || (isSignedIn() && request.auth.uid == resource.data.customerUid);
+      allow update: if isStaff(); // Guests should not be able to arbitrarily modify their own order's total or status after submission
       allow delete: if isAdmin();
     }
 
@@ -142,7 +142,7 @@ service cloud.firestore {
     match /bookings/{bookingId} {
       allow create: if true;
       allow read: if true;
-      allow update: if isStaff() || (isSignedIn() && request.auth.uid == resource.data.guestId);
+      allow update: if isStaff(); // Guests cannot modify payment status or totals directly
       allow delete: if isAdmin();
     }
 
@@ -166,14 +166,19 @@ service cloud.firestore {
 
     // Audit Logs
     match /audit_logs/{logId} {
-      allow create: if isStaff();
+      allow create: if isStaff() && request.resource.data.userId == request.auth.uid;
       allow read: if isAdmin();
     }
 
     // Notifications
     match /notifications/{notificationId} {
-      allow create: if true;
-      allow read, update: if true;
+      allow create: if isStaff() || (
+        request.resource.data.type in ['booking', 'order', 'service'] &&
+        request.resource.data.recipientRole in ['reception', 'kitchen', 'waiter'] &&
+        (!('targetRoute' in request.resource.data) || request.resource.data.targetRoute in ['/admin/reservations', '/admin/kitchen', '/admin/waiter'])
+      );
+      allow read: if isStaff() || (resource.data.recipientUid == null || (isSignedIn() && resource.data.recipientUid == request.auth.uid));
+      allow update: if isStaff() || (isSignedIn() && resource.data.recipientUid == request.auth.uid);
       allow delete: if isStaff();
     }
 

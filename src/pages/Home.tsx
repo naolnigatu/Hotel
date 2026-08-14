@@ -5,7 +5,8 @@ import { MapPin, Wifi, Coffee, Car, Star, Phone, Mail, ArrowRight } from 'lucide
 import { motion } from 'motion/react';
 import { collection, doc, getDoc, getDocs, query, limit, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { CmsHome, RoomCategory, MenuItem, Hall, CmsContact } from '../types';
+import { CmsHome, RoomCategory, MenuItem, Hall, CmsContact, CmsAmenity } from '../types';
+import * as Icons from 'lucide-react';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -14,6 +15,7 @@ export default function Home() {
   const [featuredRooms, setFeaturedRooms] = useState<RoomCategory[]>([]);
   const [featuredDishes, setFeaturedDishes] = useState<MenuItem[]>([]);
   const [featuredHalls, setFeaturedHalls] = useState<Hall[]>([]);
+  const [amenities, setAmenities] = useState<CmsAmenity[]>([]);
 
   const [heroImageError, setHeroImageError] = useState(false);
 
@@ -31,6 +33,12 @@ export default function Home() {
         const contactSnap = await getDoc(contactRef);
         if (contactSnap.exists()) {
           setContactData(contactSnap.data().data);
+        }
+
+        const amenitiesRef = doc(db, 'settings', 'cms_amenities');
+        const amenitiesSnap = await getDoc(amenitiesRef);
+        if (amenitiesSnap.exists()) {
+          setAmenities((amenitiesSnap.data().data || []).slice(0, 4));
         }
 
         // Fetch a few rooms
@@ -55,8 +63,12 @@ export default function Home() {
     fetchData();
   }, []);
 
-  const fallbackHeroImage = "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=2850";
-  const heroImage = heroImageError ? fallbackHeroImage : (cmsData?.heroImageUrl || fallbackHeroImage);
+  const fallbackHeroImage = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=2850";
+  let initialHeroImage = cmsData?.heroImageUrl || fallbackHeroImage;
+  if (initialHeroImage.includes("1542314831-c6a4d1409e1f") || initialHeroImage.includes("1566073771259-6a8506099945")) {
+    initialHeroImage = fallbackHeroImage;
+  }
+  const heroImage = heroImageError ? fallbackHeroImage : initialHeroImage;
 
   return (
     <div className="flex flex-col bg-neutral-50">
@@ -126,12 +138,16 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { icon: Wifi, title: 'High-Speed WiFi', desc: 'Free throughout the property' },
-              { icon: Coffee, title: 'Restaurant & Cafe', desc: 'Local and international cuisine' },
-              { icon: MapPin, title: 'Central Location', desc: 'Heart of Woliso city' },
-              { icon: Car, title: 'Secure Parking', desc: '24/7 guarded parking lot' }
-            ].map((amenity, idx) => {
+            {(amenities.length > 0 ? amenities.map(a => ({
+              icon: (Icons as any)[a.icon] || Icons.HelpCircle,
+              title: a.title,
+              desc: a.description
+            })) : [
+              { icon: Icons.Wifi, title: 'High-Speed WiFi', desc: 'Free throughout the property' },
+              { icon: Icons.Coffee, title: 'Restaurant & Cafe', desc: 'Local and international cuisine' },
+              { icon: Icons.MapPin, title: 'Central Location', desc: 'Heart of Woliso city' },
+              { icon: Icons.Car, title: 'Secure Parking', desc: '24/7 guarded parking lot' }
+            ]).map((amenity, idx) => {
               return (
               <motion.div 
                 key={idx}
@@ -142,7 +158,7 @@ export default function Home() {
                 className="flex flex-col items-center p-8 bg-neutral-50 rounded-3xl text-center hover:bg-neutral-100 transition-colors"
               >
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
-                  {React.createElement(amenity.icon, { className: "w-8 h-8 text-neutral-900" })}
+                  {React.createElement(amenity.icon, { className: "w-8 h-8 text-neutral-900" } as any)}
                 </div>
                 <h3 className="text-lg font-bold text-neutral-900 mb-2">{amenity.title}</h3>
                 <p className="text-sm text-neutral-500">{amenity.desc}</p>
@@ -158,8 +174,8 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-end mb-12">
               <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">Our Accommodations</h2>
-                <p className="text-lg text-neutral-600 max-w-2xl">Experience comfort and luxury in our thoughtfully designed rooms.</p>
+                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">{cmsData?.roomsSectionTitle || 'Our Accommodations'}</h2>
+                <p className="text-lg text-neutral-600 max-w-2xl">{cmsData?.roomsSectionSubtitle || 'Experience comfort and luxury in our thoughtfully designed rooms.'}</p>
               </div>
               <Link to="/rooms" className="hidden md:flex items-center gap-2 font-semibold text-neutral-900 hover:text-neutral-600 transition-colors">
                 View All Rooms <ArrowRight className="w-5 h-5" />
@@ -177,15 +193,28 @@ export default function Home() {
                   className="bg-white rounded-3xl overflow-hidden shadow-sm group border border-neutral-100"
                 >
                   <div className="aspect-[4/3] overflow-hidden bg-neutral-100 relative">
-                    {room.imageUrls?.[0] && (
-                      <img src={room.imageUrls[0]} alt={room.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    {room.imageUrls?.[0] ? (
+                      <img 
+                        src={room.imageUrls[0]} 
+                        alt={room.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=1000';
+                        }}
+                      />
+                    ) : (
+                      <img 
+                        src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=1000" 
+                        alt={room.name} 
+                        className="w-full h-full object-cover" 
+                      />
                     )}
                   </div>
                   <div className="p-8">
                     <div className="flex justify-between items-start mb-4">
                       <h3 className="text-2xl font-bold text-neutral-900">{room.name}</h3>
                       <div className="text-right">
-                        <span className="block text-xl font-bold text-neutral-900">${room.basePrice}</span>
+                        <span className="block text-xl font-bold text-neutral-900">{room.basePrice} ETB</span>
                         <span className="text-sm text-neutral-500">/ night</span>
                       </div>
                     </div>
@@ -212,8 +241,8 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-end mb-12">
               <div className="max-w-2xl">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Event Spaces</h2>
-                <p className="text-lg text-neutral-400">Host your next corporate meeting, wedding, or special event in our premium venues equipped with modern facilities.</p>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">{cmsData?.hallsSectionTitle || 'Event Spaces'}</h2>
+                <p className="text-lg text-neutral-400">{cmsData?.hallsSectionSubtitle || 'Host your next corporate meeting, wedding, or special event in our premium venues equipped with modern facilities.'}</p>
               </div>
               <Link to="/halls" className="hidden md:flex items-center gap-2 font-semibold text-white hover:text-neutral-300 transition-colors mt-6 md:mt-0">
                 View All Spaces <ArrowRight className="w-5 h-5" />
@@ -263,9 +292,9 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row gap-16 items-center">
               <div className="w-full md:w-1/3">
-                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Culinary Excellence</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">{cmsData?.restaurantSectionTitle || 'Culinary Excellence'}</h2>
                 <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
-                  Indulge in a rich variety of local and international dishes prepared by our expert chefs. From traditional Ethiopian cuisine to continental favorites.
+                  {cmsData?.restaurantSectionSubtitle || 'Indulge in a rich variety of local and international dishes prepared by our expert chefs. From traditional Ethiopian cuisine to continental favorites.'}
                 </p>
                 <Link to="/restaurant" className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors">
                   Explore Menu
@@ -283,7 +312,14 @@ export default function Home() {
                   >
                     <div className="aspect-square bg-neutral-200 relative overflow-hidden">
                       {dish.imageUrl ? (
-                        <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img 
+                          src={dish.imageUrl} 
+                          alt={dish.name} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
+                          }}
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Coffee className="w-8 h-8 text-neutral-400" />
@@ -292,7 +328,7 @@ export default function Home() {
                     </div>
                     <div className="p-4 text-center">
                       <h4 className="font-bold text-neutral-900 truncate">{dish.name}</h4>
-                      <p className="text-sm font-semibold text-neutral-600 mt-1">${dish.price}</p>
+                      <p className="text-sm font-semibold text-neutral-600 mt-1">{dish.price} ETB</p>
                     </div>
                   </motion.div>
                 ))}

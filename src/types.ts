@@ -331,6 +331,12 @@ export interface CmsHome {
   heroPrimaryButtonLink: string;
   featuredSectionTitle: string;
   featuredSectionSubtitle: string;
+  roomsSectionTitle?: string;
+  roomsSectionSubtitle?: string;
+  hallsSectionTitle?: string;
+  hallsSectionSubtitle?: string;
+  restaurantSectionTitle?: string;
+  restaurantSectionSubtitle?: string;
   testimonialsTitle: string;
   testimonialsSubtitle: string;
   testimonials: Testimonial[];
@@ -439,6 +445,10 @@ export interface HotelSettings {
   bankDetails?: BankDetail[];
   telebirrNo?: string;
   telebirrAccountName?: string;
+  depositEnabled?: boolean;
+  depositType?: 'percentage' | 'fixed';
+  depositValue?: number;
+  depositInstructions?: string;
 }
 
 export interface AuditLog {

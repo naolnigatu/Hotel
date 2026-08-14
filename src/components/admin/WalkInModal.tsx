@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs, doc, setDoc, where } from 'firebase/firestore';
+import { collection, query, getDocs, doc, setDoc, where, runTransaction } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Booking, RoomCategory, Room, ReservationTimelineEvent } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -225,11 +225,21 @@ export default function WalkInModal({ categories, rooms, existingBookings, onClo
         updatedAt: Date.now()
       };
 
-      await setDoc(doc(db, 'bookings', id), newBooking);
+      const bookingRef = doc(db, 'bookings', id);
 
-      // If checking in, update room status to Occupied
       if (initialStatus === 'Checked In' && selectedRoomId) {
-        await setDoc(doc(db, 'rooms', selectedRoomId), { status: 'Occupied' }, { merge: true });
+        const roomRef = doc(db, 'rooms', selectedRoomId);
+        await runTransaction(db, async (transaction) => {
+          const roomDoc = await transaction.get(roomRef);
+          if (!roomDoc.exists() || roomDoc.data().status === 'Occupied') {
+            throw new Error('This room was just occupied by another staff member. Please select another room.');
+          }
+          
+          transaction.set(bookingRef, newBooking);
+          transaction.update(roomRef, { status: 'Occupied' });
+        });
+      } else {
+        await setDoc(bookingRef, newBooking);
       }
 
       onSuccess();

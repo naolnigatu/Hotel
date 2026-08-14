@@ -37,6 +37,9 @@ export default function ItemDetailModal({ item, onClose }: ItemDetailModalProps)
             src={item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'} 
             alt={item.name} 
             className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
+            }}
           />
           <button 
             onClick={onClose}

@@ -15,6 +15,12 @@ export default function AdminCmsHome() {
     heroPrimaryButtonLink: '',
     featuredSectionTitle: '',
     featuredSectionSubtitle: '',
+    roomsSectionTitle: '',
+    roomsSectionSubtitle: '',
+    hallsSectionTitle: '',
+    hallsSectionSubtitle: '',
+    restaurantSectionTitle: '',
+    restaurantSectionSubtitle: '',
     testimonialsTitle: '',
     testimonialsSubtitle: '',
     testimonials: [],
@@ -42,6 +48,12 @@ export default function AdminCmsHome() {
             heroPrimaryButtonLink: fetchedData.heroPrimaryButtonLink || '',
             featuredSectionTitle: fetchedData.featuredSectionTitle || '',
             featuredSectionSubtitle: fetchedData.featuredSectionSubtitle || '',
+            roomsSectionTitle: fetchedData.roomsSectionTitle || '',
+            roomsSectionSubtitle: fetchedData.roomsSectionSubtitle || '',
+            hallsSectionTitle: fetchedData.hallsSectionTitle || '',
+            hallsSectionSubtitle: fetchedData.hallsSectionSubtitle || '',
+            restaurantSectionTitle: fetchedData.restaurantSectionTitle || '',
+            restaurantSectionSubtitle: fetchedData.restaurantSectionSubtitle || '',
             testimonialsTitle: fetchedData.testimonialsTitle || '',
             testimonialsSubtitle: fetchedData.testimonialsSubtitle || '',
             testimonials: fetchedData.testimonials || [],
@@ -209,27 +221,102 @@ export default function AdminCmsHome() {
 
         {/* Featured Amenities Section */}
         <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm">
-          <h2 className="text-lg font-bold text-neutral-900 mb-4">Featured Amenities Section</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Section Title</label>
-              <input 
-                type="text" 
-                value={data.featuredSectionTitle}
-                onChange={e => setData({...data, featuredSectionTitle: e.target.value})}
-                className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500" 
-                required
-              />
+          <h2 className="text-lg font-bold text-neutral-900 mb-4">Featured Sections Headings</h2>
+          <div className="space-y-6">
+            <div className="border border-neutral-100 p-4 rounded-lg bg-neutral-50">
+              <h3 className="font-semibold text-neutral-800 mb-3">Amenities Section</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Title</label>
+                  <input 
+                    type="text" 
+                    value={data.featuredSectionTitle}
+                    onChange={e => setData({...data, featuredSectionTitle: e.target.value})}
+                    className="w-full border-neutral-300 rounded-md shadow-sm p-2 text-sm border focus:ring-neutral-500 focus:border-neutral-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Subtitle</label>
+                  <textarea 
+                    value={data.featuredSectionSubtitle}
+                    onChange={e => setData({...data, featuredSectionSubtitle: e.target.value})}
+                    className="w-full border-neutral-300 rounded-md shadow-sm p-2 text-sm border focus:ring-neutral-500 focus:border-neutral-500" 
+                    rows={2}
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Section Subtitle</label>
-              <textarea 
-                value={data.featuredSectionSubtitle}
-                onChange={e => setData({...data, featuredSectionSubtitle: e.target.value})}
-                className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500" 
-                rows={2}
-                required
-              />
+
+            <div className="border border-neutral-100 p-4 rounded-lg bg-neutral-50">
+              <h3 className="font-semibold text-neutral-800 mb-3">Rooms Section</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Title</label>
+                  <input 
+                    type="text" 
+                    value={data.roomsSectionTitle || ''}
+                    onChange={e => setData({...data, roomsSectionTitle: e.target.value})}
+                    className="w-full border-neutral-300 rounded-md shadow-sm p-2 text-sm border focus:ring-neutral-500 focus:border-neutral-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Subtitle</label>
+                  <textarea 
+                    value={data.roomsSectionSubtitle || ''}
+                    onChange={e => setData({...data, roomsSectionSubtitle: e.target.value})}
+                    className="w-full border-neutral-300 rounded-md shadow-sm p-2 text-sm border focus:ring-neutral-500 focus:border-neutral-500" 
+                    rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-neutral-100 p-4 rounded-lg bg-neutral-50">
+              <h3 className="font-semibold text-neutral-800 mb-3">Halls & Events Section</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Title</label>
+                  <input 
+                    type="text" 
+                    value={data.hallsSectionTitle || ''}
+                    onChange={e => setData({...data, hallsSectionTitle: e.target.value})}
+                    className="w-full border-neutral-300 rounded-md shadow-sm p-2 text-sm border focus:ring-neutral-500 focus:border-neutral-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Subtitle</label>
+                  <textarea 
+                    value={data.hallsSectionSubtitle || ''}
+                    onChange={e => setData({...data, hallsSectionSubtitle: e.target.value})}
+                    className="w-full border-neutral-300 rounded-md shadow-sm p-2 text-sm border focus:ring-neutral-500 focus:border-neutral-500" 
+                    rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-neutral-100 p-4 rounded-lg bg-neutral-50">
+              <h3 className="font-semibold text-neutral-800 mb-3">Restaurant Section</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Title</label>
+                  <input 
+                    type="text" 
+                    value={data.restaurantSectionTitle || ''}
+                    onChange={e => setData({...data, restaurantSectionTitle: e.target.value})}
+                    className="w-full border-neutral-300 rounded-md shadow-sm p-2 text-sm border focus:ring-neutral-500 focus:border-neutral-500" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">Subtitle</label>
+                  <textarea 
+                    value={data.restaurantSectionSubtitle || ''}
+                    onChange={e => setData({...data, restaurantSectionSubtitle: e.target.value})}
+                    className="w-full border-neutral-300 rounded-md shadow-sm p-2 text-sm border focus:ring-neutral-500 focus:border-neutral-500" 
+                    rows={2}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

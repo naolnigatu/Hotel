@@ -102,17 +102,21 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         return false;
       }
 
-      // If reservation code was provided, verify match
-      if (reservationCode.trim()) {
-        const codeClean = reservationCode.trim().toUpperCase();
-        if (
-          roomMatch.id.toUpperCase() !== codeClean && 
-          roomMatch.reservationCode?.toUpperCase() !== codeClean
-        ) {
-          setRoomVerificationError(`Reservation code does not match active guest for Room ${roomNumber}.`);
-          setVerifyingRoom(false);
-          return false;
-        }
+      // Reservation code is now strictly required for room charging
+      if (!reservationCode.trim()) {
+        setRoomVerificationError(`Reservation code is required to authorize room charges.`);
+        setVerifyingRoom(false);
+        return false;
+      }
+      
+      const codeClean = reservationCode.trim().toUpperCase();
+      if (
+        roomMatch.id.toUpperCase() !== codeClean && 
+        roomMatch.reservationCode?.toUpperCase() !== codeClean
+      ) {
+        setRoomVerificationError(`Reservation code does not match active guest for Room ${roomNumber}.`);
+        setVerifyingRoom(false);
+        return false;
       }
 
       setVerifiedBooking(roomMatch);
@@ -413,7 +417,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                 <div>
                   <label className="block text-[11px] font-bold text-neutral-700 mb-1">
-                    Reservation Code / ID (Optional)
+                    Reservation Code / ID <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -421,6 +425,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     value={reservationCode}
                     onChange={(e) => setReservationCode(e.target.value)}
                     className="w-full p-2 text-xs border border-neutral-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    required
                   />
                 </div>
               </div>

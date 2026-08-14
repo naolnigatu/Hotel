@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { collection, query, getDocs, addDoc, serverTimestamp, where, doc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
-import { RoomCategory, Booking, Room } from '../types';
+import { RoomCategory, Booking, Room, HotelSettings } from '../types';
 import { format, addDays, startOfDay } from 'date-fns';
 import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -36,12 +36,13 @@ export default function Book() {
   const [specialRequests, setSpecialRequests] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Pay at Hotel');
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [hotelSettings, setHotelSettings] = useState<HotelSettings | null>(null);
   
   const [submitting, setSubmitting] = useState(false);
   const [reservationCode, setReservationCode] = useState('');
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchInitialData = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'room_categories'));
         const catsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RoomCategory));
@@ -50,13 +51,18 @@ export default function Book() {
           const preSelected = catsData.find(c => c.id === preSelectedCategoryId);
           if (preSelected) setSelectedCategory(preSelected);
         }
+
+        const settingsDoc = await getDoc(doc(db, 'app_settings', 'hotel'));
+        if (settingsDoc.exists()) {
+          setHotelSettings(settingsDoc.data() as HotelSettings);
+        }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchCategories();
+    fetchInitialData();
   }, [preSelectedCategoryId]);
 
   const checkAvailability = async (category: RoomCategory) => {
@@ -177,11 +183,13 @@ export default function Book() {
       const code = generateCode();
       
       let proofUrl = '';
-      if (paymentMethod === 'Bank Transfer' && paymentFile) {
+      if ((paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ') && paymentFile) {
         const storageRef = ref(storage, `payment_proofs/${code}_${paymentFile.name}`);
         const uploadTask = await uploadBytesResumable(storageRef, paymentFile);
         proofUrl = await getDownloadURL(uploadTask.ref);
       }
+
+      const isAwaitingVerification = paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ';
 
       const newBooking: Omit<Booking, 'id'> = {
         reservationCode: code,
@@ -193,7 +201,7 @@ export default function Book() {
         specialRequests,
         checkIn: inDate,
         checkOut: outDate,
-        status: paymentMethod === 'Bank Transfer' ? 'Awaiting Payment Verification' : 'Pending',
+        status: isAwaitingVerification ? 'Awaiting Payment Verification' : 'Pending',
         totalAmount: calculateTotal(),
         paymentMethod,
         paymentProofUrl: proofUrl,
@@ -359,8 +367,12 @@ export default function Book() {
               </div>
 
               <h2 className="text-xl font-bold text-neutral-900 pt-4 border-t border-neutral-100">Payment Details</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {['Pay at Hotel', 'Bank Transfer'].map(method => (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  'Pay at Hotel',
+                  ...(hotelSettings?.depositEnabled ? ['Deposit / ቀብድ'] : []),
+                  'Bank Transfer'
+                ].map(method => (
                   <div 
                     key={method} 
                     onClick={() => setPaymentMethod(method)}
@@ -370,24 +382,72 @@ export default function Book() {
                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === method ? 'border-neutral-900' : 'border-neutral-300'}`}>
                         {paymentMethod === method && <div className="w-3 h-3 rounded-full bg-neutral-900" />}
                       </div>
-                      <span className="font-bold text-neutral-900">{method}</span>
+                      <span className="font-bold text-neutral-900 text-sm">{method}</span>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {paymentMethod === 'Bank Transfer' && (
-                <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
-                  <h3 className="font-bold text-neutral-900 mb-2">Bank Details</h3>
-                  <p className="text-sm text-neutral-600 mb-4">Please transfer the total amount to the following account and upload the receipt.</p>
-                  <div className="bg-white p-4 rounded-lg border border-neutral-200 mb-4">
-                    <p className="font-mono text-neutral-900">Bank: Commercial Bank of Ethiopia</p>
-                    <p className="font-mono text-neutral-900">Account Name: Woliso Hotel</p>
-                    <p className="font-mono text-neutral-900">Account Number: 1000123456789</p>
+              {paymentMethod === 'Deposit / ቀብድ' && hotelSettings?.depositEnabled && (
+                <div className="bg-amber-50/60 p-6 rounded-xl border border-amber-200/80 space-y-4">
+                  <h3 className="font-bold text-amber-950 flex items-center gap-2">
+                    Deposit (ቀብድ) Requirement
+                  </h3>
+                  <p className="text-sm text-amber-900">
+                    A deposit is required to confirm your room reservation.
+                  </p>
+                  <div className="bg-white p-4 rounded-lg border border-amber-200 font-medium text-sm space-y-1">
+                    <p className="text-neutral-700">
+                      Deposit Amount:{' '}
+                      <span className="font-bold text-neutral-900">
+                        {hotelSettings.depositType === 'fixed'
+                          ? `${hotelSettings.depositValue || 0} ETB`
+                          : `${((calculateTotal() * (hotelSettings.depositValue || 0)) / 100).toFixed(0)} ETB (${hotelSettings.depositValue}% of total ${calculateTotal()} ETB)`}
+                      </span>
+                    </p>
+                    {hotelSettings.depositInstructions && (
+                      <p className="text-xs text-neutral-600 pt-2 border-t border-neutral-100 mt-2">
+                        {hotelSettings.depositInstructions}
+                      </p>
+                    )}
                   </div>
+                </div>
+              )}
+
+              {(paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ') && (
+                <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
+                  <h3 className="font-bold text-neutral-900 mb-2">Payment Details</h3>
+                  <p className="text-sm text-neutral-600 mb-4">Please make your payment to one of the accounts below and upload your proof of transfer.</p>
+                  
+                  <div className="space-y-3 mb-4">
+                    {hotelSettings?.bankDetails && hotelSettings.bankDetails.length > 0 ? (
+                      hotelSettings.bankDetails.map((bank, i) => (
+                        <div key={i} className="bg-white p-4 rounded-lg border border-neutral-200">
+                          <p className="font-bold text-neutral-900 text-sm">{bank.bankName}</p>
+                          <p className="font-mono text-xs text-neutral-700">Account Name: {bank.accountName}</p>
+                          <p className="font-mono text-sm font-semibold text-neutral-900">Account No: {bank.accountNumber}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="bg-white p-4 rounded-lg border border-neutral-200">
+                        <p className="font-mono text-neutral-900">Bank: Commercial Bank of Ethiopia</p>
+                        <p className="font-mono text-neutral-900">Account Name: Woliso Hotel</p>
+                        <p className="font-mono text-neutral-900">Account Number: 1000123456789</p>
+                      </div>
+                    )}
+
+                    {hotelSettings?.telebirrNo && (
+                      <div className="bg-white p-4 rounded-lg border border-neutral-200">
+                        <p className="font-bold text-neutral-900 text-sm">Telebirr Mobile Money</p>
+                        {hotelSettings.telebirrAccountName && <p className="font-mono text-xs text-neutral-700">Account Name: {hotelSettings.telebirrAccountName}</p>}
+                        <p className="font-mono text-sm font-semibold text-neutral-900">Number: {hotelSettings.telebirrNo}</p>
+                      </div>
+                    )}
+                  </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Upload Payment Receipt</label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-neutral-300 border-dashed rounded-lg">
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">Upload Payment Receipt (Proof)</label>
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-neutral-300 border-dashed rounded-lg bg-white">
                       <div className="space-y-1 text-center">
                         <Upload className="mx-auto h-12 w-12 text-neutral-400" />
                         <div className="flex text-sm text-neutral-600 justify-center">
@@ -412,7 +472,7 @@ export default function Book() {
                 </div>
               )}
 
-              <button type="submit" disabled={submitting || (paymentMethod === 'Bank Transfer' && !paymentFile)} className="w-full flex items-center justify-center py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 mt-6">
+              <button type="submit" disabled={submitting || ((paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ') && !paymentFile)} className="w-full flex items-center justify-center py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 mt-6">
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
                 Confirm Booking
               </button>

@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(user);
       
       if (user) {
-        const isAdminEmail = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+        const isAdminEmail = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() && user.emailVerified;
         const userRef = doc(db, 'users', user.uid);
         
         try {

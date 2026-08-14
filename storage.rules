@@ -1,0 +1,94 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'naolnigatu2025@gmail.com' && request.auth.token.email_verified == true) ||
+        request.auth.token.admin == true ||
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+    
+    function isStaff() {
+      return isSignedIn() && (
+        isAdmin() ||
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['reception', 'kitchen', 'waiter', 'housekeeping']
+      );
+    }
+
+    // Size and Type validation
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+    }
+
+    function isValidPaymentProof() {
+      return request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*|application/pdf');
+    }
+
+    // Payment Proofs
+    match /payment_proofs/{fileName} {
+      allow read: if isStaff();
+      // Allow create if the file doesn't exist to prevent overwriting
+      allow create: if isValidPaymentProof();
+      allow update: if false; // Prevent modifying uploaded proofs
+      allow delete: if isAdmin();
+    }
+
+    match /cms/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /rooms/{fileName} {
+      allow read: if true;
+      allow write: if (isAdmin() || (isSignedIn() && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'reception')) && isValidImage();
+    }
+
+    match /menu/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /gallery/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /offers/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /cms_home/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /halls/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /cms_about/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /attractions/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImage();
+    }
+
+    match /housekeeping/{fileName} {
+      allow read: if isStaff();
+      allow write: if isStaff() && isValidImage();
+    }
+
+  }
+}
