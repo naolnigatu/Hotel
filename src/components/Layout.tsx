@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Menu, X, Globe, User, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { signOut } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import Footer from './Footer';
 
 export default function Layout() {
@@ -12,6 +13,21 @@ export default function Layout() {
   const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hotelName, setHotelName] = useState('');
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'app_settings', 'hotel'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.hotelName) {
+          setHotelName(data.hotelName);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const displayHotelName = hotelName || t('hotel_name');
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -38,7 +54,7 @@ export default function Layout() {
               {mobileMenuOpen ? <X className="w-5 h-5 text-neutral-900" /> : <Menu className="w-5 h-5 text-neutral-600" />}
             </button>
             <Link to="/" className="text-xl font-bold text-neutral-900 tracking-tight">
-              {t('hotel_name')}
+              {displayHotelName}
             </Link>
           </div>
           

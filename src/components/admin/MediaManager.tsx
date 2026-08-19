@@ -64,34 +64,43 @@ export default function MediaManager({ onImageSelected, currentImageUrl, folder 
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image exceeds 5MB size limit.');
+      return;
+    }
+
     setUploading(true);
+    setProgress(0);
     setError('');
 
     try {
       const compressedBlob = await compressImage(file);
-      const storageRef = ref(storage, `${folder}/${Date.now()}_${file.name}`);
+      // Ensure file name is safe
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storageRef = ref(storage, `${folder}/${Date.now()}_${safeName}`);
+      
       const uploadTask = uploadBytesResumable(storageRef, compressedBlob, { contentType: 'image/jpeg' });
-
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const prog = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setProgress(prog);
-        },
-        (err) => {
-          setError(err.message);
-          setUploading(false);
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          onImageSelected(downloadURL);
-          setUploading(false);
-          setProgress(0);
-        }
-      );
-    } catch (err: any) {
-      setError(err.message || 'Error compressing image');
+      
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const prog = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setProgress(prog);
+          },
+          (err) => reject(err),
+          () => resolve()
+        );
+      });
+      
+      const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+      onImageSelected(downloadURL);
       setUploading(false);
+      setProgress(0);
+    } catch (err: any) {
+      setError(`Upload error: ${err.message || 'Unknown error'}`);
+      setUploading(false);
+      setProgress(0);
     }
   };
 

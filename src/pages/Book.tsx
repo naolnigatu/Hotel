@@ -5,7 +5,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import { RoomCategory, Booking, Room, HotelSettings } from '../types';
 import { format, addDays, startOfDay } from 'date-fns';
-import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload } from 'lucide-react';
+import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { sendNotification } from '../lib/notificationService';
@@ -246,6 +246,14 @@ export default function Book() {
   return (
     <div className="bg-neutral-50 min-h-screen py-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center text-neutral-500 hover:text-neutral-900 mb-8 transition-colors"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back
+        </button>
         {step === 1 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-100">
             <h1 className="text-3xl font-bold text-neutral-900 mb-8">Make a Reservation</h1>

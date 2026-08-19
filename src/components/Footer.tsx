@@ -9,6 +9,7 @@ export default function Footer() {
   const { t } = useTranslation();
   const [contactData, setContactData] = useState<CmsContact | null>(null);
   const [footerData, setFooterData] = useState<CmsFooter | null>(null);
+  const [hotelName, setHotelName] = useState('');
 
   useEffect(() => {
     const fetchFooterData = async () => {
@@ -20,6 +21,12 @@ export default function Footer() {
         const footerRef = doc(db, 'settings', 'cms_footer');
         const footerSnap = await getDoc(footerRef);
         if (footerSnap.exists()) setFooterData(footerSnap.data().data as CmsFooter);
+
+        const hotelRef = doc(db, 'app_settings', 'hotel');
+        const hotelSnap = await getDoc(hotelRef);
+        if (hotelSnap.exists() && hotelSnap.data().hotelName) {
+          setHotelName(hotelSnap.data().hotelName);
+        }
       } catch (error) {
         console.error("Error fetching footer data:", error);
       }
@@ -27,13 +34,15 @@ export default function Footer() {
     fetchFooterData();
   }, []);
 
+  const displayHotelName = hotelName || t('hotel_name');
+
   return (
     <footer className="bg-neutral-900 text-neutral-400 py-16 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
         
         {/* Brand & Contact Info */}
         <div>
-          <h3 className="text-white text-xl font-bold mb-6">{t('hotel_name')}</h3>
+          <h3 className="text-white text-xl font-bold mb-6">{displayHotelName}</h3>
           <div className="space-y-3 text-sm">
             <p className="whitespace-pre-wrap">{contactData?.address || 'Woliso, Ethiopia'}</p>
             {contactData?.emailPrimary && (
@@ -99,7 +108,7 @@ export default function Footer() {
       </div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-neutral-800 text-sm text-center">
-        {footerData?.copyrightText || `© ${new Date().getFullYear()} ${t('hotel_name')}. All rights reserved.`}
+        {footerData?.copyrightText || `© ${new Date().getFullYear()} ${displayHotelName}. All rights reserved.`}
       </div>
     </footer>
   );

@@ -11,14 +11,14 @@ service firebase.storage {
       return isSignedIn() && (
         (request.auth.token.email == 'naolnigatu2025@gmail.com' && request.auth.token.email_verified == true) ||
         request.auth.token.admin == true ||
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        firestore.get(/databases/ai-studio-wolisohotel-3dd413fe-3f77-422e-894e-fd8fef8316c4/documents/users/$(request.auth.uid)).data.role == 'admin'
       );
     }
     
     function isStaff() {
       return isSignedIn() && (
         isAdmin() ||
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['reception', 'kitchen', 'waiter', 'housekeeping']
+        firestore.get(/databases/ai-studio-wolisohotel-3dd413fe-3f77-422e-894e-fd8fef8316c4/documents/users/$(request.auth.uid)).data.role in ['reception', 'kitchen', 'waiter', 'housekeeping']
       );
     }
 
@@ -47,7 +47,7 @@ service firebase.storage {
 
     match /rooms/{fileName} {
       allow read: if true;
-      allow write: if (isAdmin() || (isSignedIn() && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'reception')) && isValidImage();
+      allow write: if (isAdmin() || (isSignedIn() && firestore.get(/databases/ai-studio-wolisohotel-3dd413fe-3f77-422e-894e-fd8fef8316c4/documents/users/$(request.auth.uid)).data.role == 'reception')) && isValidImage();
     }
 
     match /menu/{fileName} {
