@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { initializeAuth, browserLocalPersistence, browserPopupRedirectResolver } from 'firebase/auth';
-import { getFirestore, enableMultiTabIndexedDbPersistence, initializeFirestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
+import { initializeFirestore, memoryLocalCache } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -17,13 +17,12 @@ export const auth = initializeAuth(app, {
   popupRedirectResolver: browserPopupRedirectResolver
 });
 
-// Initialize Firestore with memory cache to handle offline/iframe environments better
-// We avoid IndexedDB because it crashes the iframe in AI Studio with "Database is closing"
-import { memoryLocalCache } from 'firebase/firestore';
-
+// Initialize Firestore with memory cache to avoid IndexedDB sandbox bugs in iframe
+// Auto-detect long polling allows seamless WebSocket fallback without hard-forcing timeouts
 export const db = initializeFirestore(app, {
   localCache: memoryLocalCache(),
-  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true,
 }, firebaseConfig.firestoreDatabaseId);
 
 export const storage = getStorage(app);
+

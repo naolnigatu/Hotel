@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { collection, query, getDocs, addDoc, serverTimestamp, where, doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import { RoomCategory, Booking, Room, HotelSettings } from '../types';
 import { format, addDays, startOfDay } from 'date-fns';
@@ -184,9 +184,22 @@ export default function Book() {
       
       let proofUrl = '';
       if ((paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ') && paymentFile) {
-        const storageRef = ref(storage, `payment_proofs/${code}_${paymentFile.name}`);
-        const uploadTask = await uploadBytesResumable(storageRef, paymentFile);
-        proofUrl = await getDownloadURL(uploadTask.ref);
+        try {
+          const storageRef = ref(storage, `payment_proofs/${code}_${paymentFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`);
+          const uploadTask = await Promise.race([
+            uploadBytes(storageRef, paymentFile),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Storage timeout')), 4000))
+          ]) as any;
+          proofUrl = await getDownloadURL(uploadTask.ref);
+        } catch {
+          // Robust Base64 fallback if cloud storage is blocked or slow
+          proofUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string || '');
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(paymentFile);
+          });
+        }
       }
 
       const isAwaitingVerification = paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ';
