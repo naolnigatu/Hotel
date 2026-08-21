@@ -27,7 +27,8 @@ import {
   Award,
   Send,
   ShieldCheck,
-  User
+  User,
+  X
 } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 
@@ -60,6 +61,7 @@ export default function AdminReservations() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [selectedGuestProfile, setSelectedGuestProfile] = useState<{ phone: string; email: string; name: string } | null>(null);
+  const [previewPaymentImage, setPreviewPaymentImage] = useState<string | null>(null);
 
   // Action states
   const [actionLoading, setActionLoading] = useState(false);
@@ -992,21 +994,26 @@ export default function AdminReservations() {
                       <span className="text-neutral-500">Total Amount</span>
                       <span className="font-extrabold text-green-700 text-sm">{selectedBooking.totalAmount.toLocaleString()} ETB</span>
                     </div>
-                    <div className="flex justify-between py-1">
+                    <div className="flex justify-between py-1 border-b border-neutral-200/60">
                       <span className="text-neutral-500">Payment Method</span>
                       <span className="font-medium text-neutral-900">{selectedBooking.paymentMethod}</span>
                     </div>
 
+                    {selectedBooking.transactionId && (
+                      <div className="flex justify-between py-1">
+                        <span className="text-neutral-500">Transaction ID</span>
+                        <span className="font-mono text-neutral-900">{selectedBooking.transactionId}</span>
+                      </div>
+                    )}
+
                     {selectedBooking.paymentProofUrl && (
                       <div className="mt-3 pt-2 border-t border-neutral-200">
-                        <a 
-                          href={selectedBooking.paymentProofUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-blue-600 hover:underline font-bold flex items-center gap-1.5"
+                        <button 
+                          onClick={() => setPreviewPaymentImage(selectedBooking.paymentProofUrl || null)} 
+                          className="text-blue-600 hover:underline font-bold flex items-center gap-1.5 cursor-pointer"
                         >
                           <CreditCard className="w-4 h-4 text-blue-600" /> View Bank Payment Proof / Receipt
-                        </a>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1261,6 +1268,36 @@ export default function AdminReservations() {
           onClose={() => setSelectedGuestProfile(null)}
           onRefresh={() => {}}
         />
+      )}
+
+      {/* PAYMENT PROOF MODAL */}
+      {previewPaymentImage && (
+        <div className="fixed inset-0 z-[100] bg-neutral-900/90 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-neutral-100 shrink-0">
+              <h3 className="font-bold text-neutral-900">Payment Proof / Receipt</h3>
+              <button 
+                onClick={() => setPreviewPaymentImage(null)} 
+                className="p-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto bg-neutral-100 flex items-center justify-center p-4">
+              {previewPaymentImage.includes('.pdf') || previewPaymentImage.includes('%2Fpdf') ? (
+                <div className="text-center p-8">
+                  <FileText className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
+                  <p className="text-neutral-700 font-medium mb-4">PDF Document Uploaded</p>
+                  <a href={previewPaymentImage} target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition">
+                    Open Document in New Tab
+                  </a>
+                </div>
+              ) : (
+                <img src={previewPaymentImage} alt="Payment Proof" className="max-w-full max-h-[80vh] object-contain rounded shadow-sm" />
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -5,7 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import { RoomCategory, Booking, Room, HotelSettings } from '../types';
 import { format, addDays, startOfDay } from 'date-fns';
-import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload, ArrowLeft } from 'lucide-react';
+import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload, ArrowLeft, X, FileText } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { sendNotification } from '../lib/notificationService';
@@ -36,6 +36,8 @@ export default function Book() {
   const [specialRequests, setSpecialRequests] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Pay at Hotel');
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [paymentPreviewUrl, setPaymentPreviewUrl] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState('');
   const [hotelSettings, setHotelSettings] = useState<HotelSettings | null>(null);
   
   const [submitting, setSubmitting] = useState(false);
@@ -85,9 +87,15 @@ export default function Book() {
       }
 
       // Count total rooms in category (that are not out of service)
-      const roomsQ = query(collection(db, 'rooms'), where('categoryId', '==', category.id), where('status', '!=', 'Out of Service'));
+      const roomsQ = query(collection(db, 'rooms'), where('categoryId', '==', category.id));
       const roomsSnap = await getDocs(roomsQ);
-      const totalRooms = roomsSnap.size;
+      
+      let totalRooms = 0;
+      roomsSnap.forEach(doc => {
+        if (doc.data().status !== 'Out of Service') {
+          totalRooms++;
+        }
+      });
 
       // Find overlapping bookings for this category
       const bookingsQ = query(collection(db, 'bookings'), where('categoryId', '==', category.id));
@@ -103,6 +111,12 @@ export default function Book() {
           overlappingCount++;
         }
       });
+
+      if (totalRooms === 0) {
+        setAvailabilityError('No physical rooms have been added to this category in the inventory yet. (Admin: Please add rooms in the Room Inventory section).');
+        setCheckingAvailability(false);
+        return false;
+      }
 
       if (totalRooms - overlappingCount > 0) {
         setCheckingAvailability(false);
@@ -157,9 +171,15 @@ export default function Book() {
       const outDate = startOfDay(new Date(checkOut)).getTime();
       
       // Re-verify availability to prevent race conditions during checkout
-      const roomsQ = query(collection(db, 'rooms'), where('categoryId', '==', selectedCategory!.id), where('status', '!=', 'Out of Service'));
+      const roomsQ = query(collection(db, 'rooms'), where('categoryId', '==', selectedCategory!.id));
       const roomsSnap = await getDocs(roomsQ);
-      const totalRooms = roomsSnap.size;
+      
+      let totalRooms = 0;
+      roomsSnap.forEach(doc => {
+        if (doc.data().status !== 'Out of Service') {
+          totalRooms++;
+        }
+      });
 
       const bookingsQ = query(collection(db, 'bookings'), where('categoryId', '==', selectedCategory!.id));
       const bookingsSnap = await getDocs(bookingsQ);
@@ -183,7 +203,9 @@ export default function Book() {
       const code = generateCode();
       
       let proofUrl = '';
-      if ((paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ') && paymentFile) {
+      const requiresPaymentProof = ['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr'].includes(paymentMethod);
+
+      if (requiresPaymentProof && paymentFile) {
         try {
           const storageRef = ref(storage, `payment_proofs/${code}_${paymentFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`);
           const uploadTask = await Promise.race([
@@ -202,7 +224,7 @@ export default function Book() {
         }
       }
 
-      const isAwaitingVerification = paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ';
+      const isAwaitingVerification = requiresPaymentProof;
 
       const newBooking: Omit<Booking, 'id'> = {
         reservationCode: code,
@@ -218,6 +240,7 @@ export default function Book() {
         totalAmount: calculateTotal(),
         paymentMethod,
         paymentProofUrl: proofUrl,
+        transactionId: transactionId || null,
         timeline: [{
           status: 'Created',
           timestamp: Date.now(),
@@ -234,11 +257,11 @@ export default function Book() {
         recipientRole: 'reception',
         title: 'New Online Reservation',
         message: `New reservation ${code} received from ${guestDetails.firstName} ${guestDetails.lastName} (${selectedCategory?.name}).`,
-        type: paymentMethod === 'Bank Transfer' ? 'payment' : 'reservation',
+        type: requiresPaymentProof ? 'payment' : 'reservation',
         relatedEntityId: createdDocRef.id,
         relatedEntityType: 'booking',
         targetRoute: '/admin/reservations',
-        priority: paymentMethod === 'Bank Transfer' ? 'Important' : 'Normal',
+        priority: requiresPaymentProof ? 'Important' : 'Normal',
         eventId: `res_new_${code}`,
       });
 
@@ -390,9 +413,8 @@ export default function Book() {
               <h2 className="text-xl font-bold text-neutral-900 pt-4 border-t border-neutral-100">Payment Details</h2>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {[
-                  'Pay at Hotel',
-                  ...(hotelSettings?.depositEnabled ? ['Deposit / ቀብድ'] : []),
-                  'Bank Transfer'
+                  ...(hotelSettings?.acceptedPaymentMethods || ['Pay at Hotel']),
+                  ...(hotelSettings?.depositEnabled && !hotelSettings?.acceptedPaymentMethods?.includes('Deposit / ቀብድ') ? ['Deposit / ቀብድ'] : [])
                 ].map(method => (
                   <div 
                     key={method} 
@@ -435,65 +457,130 @@ export default function Book() {
                 </div>
               )}
 
-              {(paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ') && (
+              {['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr'].includes(paymentMethod) && (
                 <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
                   <h3 className="font-bold text-neutral-900 mb-2">Payment Details</h3>
                   <p className="text-sm text-neutral-600 mb-4">Please make your payment to one of the accounts below and upload your proof of transfer.</p>
                   
                   <div className="space-y-3 mb-4">
-                    {hotelSettings?.bankDetails && hotelSettings.bankDetails.length > 0 ? (
-                      hotelSettings.bankDetails.map((bank, i) => (
-                        <div key={i} className="bg-white p-4 rounded-lg border border-neutral-200">
-                          <p className="font-bold text-neutral-900 text-sm">{bank.bankName}</p>
-                          <p className="font-mono text-xs text-neutral-700">Account Name: {bank.accountName}</p>
-                          <p className="font-mono text-sm font-semibold text-neutral-900">Account No: {bank.accountNumber}</p>
+                    {paymentMethod === 'Telebirr' ? (
+                      hotelSettings?.telebirrNo ? (
+                        <div className="bg-white p-4 rounded-lg border border-neutral-200">
+                          <p className="font-bold text-neutral-900 text-sm">Telebirr Mobile Money</p>
+                          {hotelSettings.telebirrAccountName && <p className="font-mono text-xs text-neutral-700">Account Name: {hotelSettings.telebirrAccountName}</p>}
+                          <p className="font-mono text-sm font-semibold text-neutral-900">Number: {hotelSettings.telebirrNo}</p>
                         </div>
-                      ))
+                      ) : (
+                        <div className="bg-white p-4 rounded-lg border border-neutral-200">
+                          <p className="text-sm text-neutral-500">Telebirr account details are not configured.</p>
+                        </div>
+                      )
                     ) : (
-                      <div className="bg-white p-4 rounded-lg border border-neutral-200">
-                        <p className="font-mono text-neutral-900">Bank: Commercial Bank of Ethiopia</p>
-                        <p className="font-mono text-neutral-900">Account Name: Woliso Hotel</p>
-                        <p className="font-mono text-neutral-900">Account Number: 1000123456789</p>
-                      </div>
-                    )}
-
-                    {hotelSettings?.telebirrNo && (
-                      <div className="bg-white p-4 rounded-lg border border-neutral-200">
-                        <p className="font-bold text-neutral-900 text-sm">Telebirr Mobile Money</p>
-                        {hotelSettings.telebirrAccountName && <p className="font-mono text-xs text-neutral-700">Account Name: {hotelSettings.telebirrAccountName}</p>}
-                        <p className="font-mono text-sm font-semibold text-neutral-900">Number: {hotelSettings.telebirrNo}</p>
-                      </div>
+                      hotelSettings?.bankDetails && hotelSettings.bankDetails.length > 0 ? (
+                        hotelSettings.bankDetails.map((bank, i) => (
+                          <div key={i} className="bg-white p-4 rounded-lg border border-neutral-200">
+                            <p className="font-bold text-neutral-900 text-sm">{bank.bankName}</p>
+                            <p className="font-mono text-xs text-neutral-700">Account Name: {bank.accountName}</p>
+                            <p className="font-mono text-sm font-semibold text-neutral-900">Account No: {bank.accountNumber}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="bg-white p-4 rounded-lg border border-neutral-200">
+                          <p className="font-mono text-neutral-900">Bank: Commercial Bank of Ethiopia</p>
+                          <p className="font-mono text-neutral-900">Account Name: Woliso Hotel</p>
+                          <p className="font-mono text-neutral-900">Account Number: 1000123456789</p>
+                        </div>
+                      )
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">Upload Payment Receipt (Proof)</label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-neutral-300 border-dashed rounded-lg bg-white">
-                      <div className="space-y-1 text-center">
-                        <Upload className="mx-auto h-12 w-12 text-neutral-400" />
-                        <div className="flex text-sm text-neutral-600 justify-center">
-                          <label className="relative cursor-pointer bg-white rounded-md font-medium text-neutral-900 hover:text-neutral-700 focus-within:outline-none">
-                            <span>Upload a file</span>
-                            <input type="file" required className="sr-only" accept="image/*,.pdf" onChange={e => {
-                              const file = e.target.files?.[0] || null;
-                              if (file && file.size > 5 * 1024 * 1024) {
-                                alert('File size exceeds 5MB limit. Please upload a smaller file (under 5MB).');
-                                e.target.value = '';
-                                setPaymentFile(null);
-                                return;
-                              }
-                              setPaymentFile(file);
-                            }} />
-                          </label>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">Upload Payment Receipt (Proof)</label>
+                      
+                      {!paymentPreviewUrl ? (
+                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-neutral-300 border-dashed rounded-lg bg-white hover:bg-neutral-50 transition-colors">
+                          <div className="space-y-1 text-center">
+                            <Upload className="mx-auto h-12 w-12 text-neutral-400" />
+                            <div className="flex text-sm text-neutral-600 justify-center">
+                              <label className="relative cursor-pointer bg-transparent rounded-md font-medium text-neutral-900 hover:text-neutral-700 focus-within:outline-none">
+                                <span>Upload a file</span>
+                                <input type="file" required className="sr-only" accept="image/*,.pdf" onChange={e => {
+                                  const file = e.target.files?.[0] || null;
+                                  if (file && file.size > 5 * 1024 * 1024) {
+                                    alert('File size exceeds 5MB limit. Please upload a smaller file (under 5MB).');
+                                    e.target.value = '';
+                                    setPaymentFile(null);
+                                    setPaymentPreviewUrl(null);
+                                    return;
+                                  }
+                                  setPaymentFile(file);
+                                  if (file && file.type.startsWith('image/')) {
+                                    setPaymentPreviewUrl(URL.createObjectURL(file));
+                                  } else if (file && file.type === 'application/pdf') {
+                                    setPaymentPreviewUrl('pdf');
+                                  } else {
+                                    setPaymentPreviewUrl(null);
+                                  }
+                                }} />
+                              </label>
+                            </div>
+                            <p className="text-xs text-neutral-500">PNG, JPG, PDF up to 5MB</p>
+                          </div>
                         </div>
-                        <p className="text-xs text-neutral-500">{paymentFile ? paymentFile.name : 'PNG, JPG, PDF up to 5MB'}</p>
-                      </div>
+                      ) : (
+                        <div className="mt-1 border border-neutral-200 rounded-lg bg-neutral-50 p-4 relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPaymentFile(null);
+                              setPaymentPreviewUrl(null);
+                            }}
+                            className="absolute top-2 right-2 p-1.5 bg-white border border-neutral-200 text-red-600 rounded-lg shadow-sm hover:bg-red-50 transition"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          
+                          {paymentPreviewUrl === 'pdf' ? (
+                            <div className="flex items-center justify-center h-40 bg-neutral-200/50 rounded-lg border border-neutral-200">
+                              <div className="text-center">
+                                <FileText className="w-8 h-8 text-neutral-500 mx-auto mb-2" />
+                                <span className="text-sm font-semibold text-neutral-700">{paymentFile?.name}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="relative h-48 w-full">
+                              <img 
+                                src={paymentPreviewUrl} 
+                                alt="Payment Proof" 
+                                className="w-full h-full object-contain rounded-lg bg-neutral-200/50"
+                              />
+                            </div>
+                          )}
+                          <p className="text-xs text-center text-emerald-600 font-medium mt-3">Receipt attached successfully</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">Transaction ID / Reference Number (Optional)</label>
+                      <input 
+                        type="text" 
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value)}
+                        className="w-full border-neutral-300 rounded-lg focus:ring-neutral-900 focus:border-neutral-900 text-sm"
+                        placeholder="e.g. FT2308..."
+                      />
                     </div>
                   </div>
                 </div>
               )}
 
-              <button type="submit" disabled={submitting || ((paymentMethod === 'Bank Transfer' || paymentMethod === 'Deposit / ቀብድ') && !paymentFile)} className="w-full flex items-center justify-center py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 mt-6">
+              <button 
+                type="submit" 
+                disabled={submitting || (['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr'].includes(paymentMethod) && !paymentFile)} 
+                className="w-full flex items-center justify-center py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 mt-6"
+              >
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
                 Confirm Booking
               </button>
@@ -518,9 +605,14 @@ export default function Book() {
 
             <p className="text-neutral-500 text-sm mb-8">Please save this code for future reference. We will contact you shortly to confirm your booking.</p>
 
-            <button onClick={() => navigate('/')} className="px-8 py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors">
-              Return to Home
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button onClick={() => navigate('/track-reservation')} className="px-8 py-4 bg-white border border-neutral-200 text-neutral-900 rounded-xl font-medium hover:bg-neutral-50 transition-colors w-full sm:w-auto">
+                Track Status
+              </button>
+              <button onClick={() => navigate('/')} className="px-8 py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors w-full sm:w-auto">
+                Return to Home
+              </button>
+            </div>
           </motion.div>
         )}
       </div>

@@ -47,6 +47,7 @@ import AdminStaff from './pages/admin/AdminStaff';
 import AdminHotelSettings from './pages/admin/AdminHotelSettings';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
+import TrackReservation from './pages/TrackReservation';
 import OrderTracker from './pages/OrderTracker';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="restaurant" element={<Restaurant />} />
               <Route path="restaurant/track" element={<OrderTracker />} />
               <Route path="restaurant/track/:orderId" element={<OrderTracker />} />
+              <Route path="track-reservation" element={<TrackReservation />} />
               <Route path="privacy" element={<PrivacyPolicy />} />
               <Route path="terms" element={<TermsConditions />} />
               <Route path="login" element={<Login />} />

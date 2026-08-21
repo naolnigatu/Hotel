@@ -117,6 +117,27 @@ export default function AdminHotelSettings() {
     });
   };
 
+  const addBankDetail = () => {
+    setSettings(prev => ({
+      ...prev,
+      bankDetails: [...(prev.bankDetails || []), { id: Date.now().toString(), bankName: '', accountName: '', accountNumber: '' }]
+    }));
+  };
+
+  const updateBankDetail = (id: string, field: keyof BankDetail, value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      bankDetails: prev.bankDetails?.map(bank => bank.id === id ? { ...bank, [field]: value } : bank)
+    }));
+  };
+
+  const removeBankDetail = (id: string) => {
+    setSettings(prev => ({
+      ...prev,
+      bankDetails: prev.bankDetails?.filter(bank => bank.id !== id)
+    }));
+  };
+
   if (loading) {
     return <div className="p-8 text-center text-neutral-500">Loading hotel configuration...</div>;
   }
@@ -347,6 +368,68 @@ export default function AdminHotelSettings() {
               placeholder="e.g. Woliso Hotel PLC"
               className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium"
             />
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-neutral-100 space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-bold text-neutral-900">Bank Accounts (Bank Transfer & Deposit)</label>
+            <button 
+              type="button" 
+              onClick={addBankDetail}
+              className="text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-900 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
+            >
+              <Plus className="w-3 h-3" /> Add Bank Account
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            {settings.bankDetails?.map((bank) => (
+              <div key={bank.id} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3 items-start bg-neutral-50 p-4 rounded-xl border border-neutral-200">
+                <div>
+                  <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">Bank Name</label>
+                  <input 
+                    type="text" 
+                    value={bank.bankName}
+                    onChange={(e) => updateBankDetail(bank.id, 'bankName', e.target.value)}
+                    placeholder="e.g. CBE"
+                    className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-sm font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">Account Name</label>
+                  <input 
+                    type="text" 
+                    value={bank.accountName}
+                    onChange={(e) => updateBankDetail(bank.id, 'accountName', e.target.value)}
+                    placeholder="e.g. Woliso Hotel PLC"
+                    className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-sm font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-neutral-500 uppercase mb-1">Account Number</label>
+                  <input 
+                    type="text" 
+                    value={bank.accountNumber}
+                    onChange={(e) => updateBankDetail(bank.id, 'accountNumber', e.target.value)}
+                    placeholder="e.g. 1000123456789"
+                    className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-sm font-medium"
+                  />
+                </div>
+                <div className="pt-5">
+                  <button 
+                    type="button" 
+                    onClick={() => removeBankDetail(bank.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {(!settings.bankDetails || settings.bankDetails.length === 0) && (
+              <p className="text-sm text-neutral-500 italic">No bank accounts added. Customers will see default fallback details.</p>
+            )}
           </div>
         </div>
       </div>

@@ -161,6 +161,7 @@ export interface Booking {
   totalAmount: number;
   paymentMethod: string; // 'Pay at Hotel', 'Bank Transfer', 'Cash', 'POS', 'Credit Card'
   paymentProofUrl?: string;
+  transactionId?: string;
   timeline: ReservationTimelineEvent[];
   notes?: ReservationNote[];
   createdAt: number;

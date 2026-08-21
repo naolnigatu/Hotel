@@ -114,6 +114,9 @@ export default function Layout() {
             <Link to="/gallery" className={`text-sm font-medium transition-colors ${location.pathname === '/gallery' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
               Gallery
             </Link>
+            <Link to="/track-reservation" className={`text-sm font-medium transition-colors ${location.pathname === '/track-reservation' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+              Track Reservation
+            </Link>
             <Link to="/contact" className={`text-sm font-medium transition-colors ${location.pathname === '/contact' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
               Contact
             </Link>
@@ -184,6 +187,9 @@ export default function Layout() {
             </Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/gallery" className="block text-sm font-medium text-neutral-800 hover:text-neutral-950 py-2 border-b border-neutral-50">
               Gallery
+            </Link>
+            <Link onClick={() => setMobileMenuOpen(false)} to="/track-reservation" className="block text-sm font-medium text-neutral-800 hover:text-neutral-950 py-2 border-b border-neutral-50">
+              Track Reservation
             </Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/contact" className="block text-sm font-medium text-neutral-800 hover:text-neutral-950 py-2 border-b border-neutral-50">
               Contact
