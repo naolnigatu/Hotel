@@ -3,6 +3,7 @@ import { collection, query, getDocs, doc, setDoc, where, runTransaction } from '
 import { db } from '../../firebase';
 import { Booking, RoomCategory, Room, ReservationTimelineEvent } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { cleanFirestoreData } from '../../lib/firestoreUtils';
 import { X, Loader2, Calendar, User, Phone, Mail, DollarSign, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 
@@ -197,7 +198,7 @@ export default function WalkInModal({ categories, rooms, existingBookings, onClo
         createdAt: Date.now()
       }] : [];
 
-      const newBooking: Booking = {
+      const newBooking: Booking = cleanFirestoreData({
         id,
         reservationCode: code,
         type: 'room',
@@ -209,9 +210,9 @@ export default function WalkInModal({ categories, rooms, existingBookings, onClo
           phone: phone.trim()
         },
         categoryId: selectedCategoryId,
-        roomId: selectedRoomId || undefined,
+        roomId: selectedRoomId || '',
         numberOfGuests: Number(guestsCount),
-        specialRequests: specialRequests.trim() || undefined,
+        specialRequests: specialRequests.trim() || '',
         isVip,
         bookingSource,
         checkIn: startTs,
@@ -223,7 +224,7 @@ export default function WalkInModal({ categories, rooms, existingBookings, onClo
         notes: notesArr,
         createdAt: Date.now(),
         updatedAt: Date.now()
-      };
+      });
 
       const bookingRef = doc(db, 'bookings', id);
 

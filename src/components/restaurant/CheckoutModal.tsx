@@ -5,6 +5,7 @@ import { db } from '../../firebase';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { Booking, Order, OrderTimelineEvent } from '../../types';
 import { sendNotification } from '../../lib/notificationService';
+import { cleanFirestoreData } from '../../lib/firestoreUtils';
 import { X, CheckCircle, ShieldCheck, Hotel, UtensilsCrossed, CreditCard, DollarSign, Building2, AlertCircle, Loader2, FileText, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -255,14 +256,14 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         orderNumber,
         type: orderType,
         locationRef: locationRefStr,
-        tableNumber: tableNumber ? tableNumber : undefined,
-        roomNumber: roomNumber ? roomNumber : undefined,
-        reservationCode: verifiedBooking?.id || reservationCode || undefined,
-        reservationId: verifiedBooking?.id || undefined,
+        tableNumber: tableNumber ? tableNumber : '',
+        roomNumber: roomNumber ? roomNumber : '',
+        reservationCode: verifiedBooking?.id || reservationCode || '',
+        reservationId: verifiedBooking?.id || '',
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail.trim(),
-        customerUid: currentUser?.uid || undefined,
+        customerUid: currentUser?.uid || '',
         items: orderItemsList,
         subtotal,
         taxRate: vatRate,
@@ -280,8 +281,9 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         updatedAt: Date.now()
       };
 
-      // Save to Firestore
-      const docRef = await addDoc(collection(db, 'restaurant_orders'), orderData);
+      // Save to Firestore with clean payload
+      const cleanedData = cleanFirestoreData(orderData);
+      const docRef = await addDoc(collection(db, 'restaurant_orders'), cleanedData);
 
       // Trigger Kitchen notification
       const locLabel = orderType === 'Dine-In' ? `Table ${tableNumber}` : orderType === 'Room Delivery' ? `Room ${roomNumber}` : 'Takeaway';

@@ -9,6 +9,7 @@ import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload, ArrowLeft, 
 import { motion } from 'motion/react';
 
 import { sendNotification } from '../lib/notificationService';
+import { cleanFirestoreData } from '../lib/firestoreUtils';
 
 export default function Book() {
   const [searchParams] = useSearchParams();
@@ -250,7 +251,7 @@ export default function Book() {
         updatedAt: Date.now()
       };
 
-      const createdDocRef = await addDoc(collection(db, 'bookings'), newBooking);
+      const createdDocRef = await addDoc(collection(db, 'bookings'), cleanFirestoreData(newBooking));
 
       // Trigger reception notification
       await sendNotification({
