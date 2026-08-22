@@ -93,6 +93,38 @@
       },
       "required": ["id", "name", "displayOrder", "isActive"]
     },
+    "MenuCategory": {
+      "title": "Menu Category",
+      "description": "Restaurant menu food & drink category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "displayOrder": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "name", "displayOrder", "isActive"]
+    },
+    "MenuItem": {
+      "title": "Menu Item",
+      "description": "Restaurant food and beverage item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "category": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "isAvailable": { "type": "boolean" },
+        "kitchenStationId": { "type": "string" },
+        "kitchenStationName": { "type": "string" }
+      },
+      "required": ["id", "category", "name", "price", "isAvailable"]
+    },
     "AuditLog": {
       "title": "Audit Log Entry",
       "description": "Audit record of management actions",
@@ -134,6 +166,14 @@
     "/kitchen_stations/{stationId}": {
       "schema": "KitchenStation",
       "description": "Kitchen prep stations"
+    },
+    "/menu_categories/{catId}": {
+      "schema": "MenuCategory",
+      "description": "Restaurant menu categories"
+    },
+    "/menu_items/{itemId}": {
+      "schema": "MenuItem",
+      "description": "Restaurant menu items"
     },
     "/audit_logs/{logId}": {
       "schema": "AuditLog",

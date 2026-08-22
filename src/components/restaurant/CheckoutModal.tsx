@@ -237,7 +237,12 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         price: item.price,
         notes: notes || '',
         category: item.category,
-        imageUrl: item.imageUrl || ''
+        imageUrl: item.imageUrl || '',
+        isSpicy: item.isSpicy || false,
+        isVegetarian: item.isVegetarian || false,
+        kitchenStationId: item.kitchenStationId || '',
+        kitchenStationName: item.kitchenStationName || '',
+        status: 'Pending' as const
       }));
 
       const locationRefStr = 

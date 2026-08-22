@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, orderBy, getDocs, limit } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Order, OrderStatus, RestaurantSettings } from '../../types';
+import { Order, OrderStatus, RestaurantSettings, KitchenStation } from '../../types';
 import { sendNotification } from '../../lib/notificationService';
 import { 
   UtensilsCrossed, Clock, CheckCircle2, ChevronRight, Volume2, VolumeX, AlertCircle, 
@@ -16,6 +16,7 @@ export default function KitchenDashboard() {
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [completedOrders, setCompletedOrders] = useState<Order[]>([]);
   const [settings, setSettings] = useState<RestaurantSettings | null>(null);
+  const [stations, setStations] = useState<KitchenStation[]>([]);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [filterStation, setFilterStation] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'Active' | 'History'>('Active');
@@ -24,6 +25,17 @@ export default function KitchenDashboard() {
   // To track new orders for sound
   const prevOrderCount = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Fetch Kitchen Stations
+    const qStations = query(collection(db, 'kitchen_stations'), orderBy('displayOrder', 'asc'));
+    const unsubStations = onSnapshot(qStations, (snapshot) => {
+      const stData = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as KitchenStation));
+      setStations(stData);
+    });
+
+    return () => unsubStations();
+  }, []);
 
   useEffect(() => {
     audioRef.current = new Audio('/notification.mp3'); // We'll need a generic notification sound or just synthesize beep
@@ -280,9 +292,18 @@ export default function KitchenDashboard() {
 
           <div className="space-y-2 mb-4">
             {order.items.map((item, idx) => (
-              <div key={idx} className="flex justify-between text-sm py-1 border-b border-neutral-50 last:border-0">
+              <div key={idx} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 last:border-0">
                 <div className="flex-1">
-                  <span className="font-bold text-neutral-800">{item.quantity}×</span> {item.name}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-neutral-900">{item.quantity}×</span>
+                    <span className="font-medium text-neutral-800">{item.name}</span>
+                    {item.kitchenStationName && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold border border-blue-100">
+                        <ChefHat className="w-3 h-3 text-blue-500" />
+                        {item.kitchenStationName}
+                      </span>
+                    )}
+                  </div>
                   {item.notes && (
                     <div className="text-xs text-rose-600 mt-0.5 font-medium flex items-start gap-1">
                       <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
@@ -359,6 +380,13 @@ export default function KitchenDashboard() {
     { title: 'Ready', status: 'Ready' }
   ];
 
+  const filteredActiveOrders = useMemo(() => {
+    if (filterStation === 'All') return activeOrders;
+    return activeOrders.filter(order => 
+      order.items.some(i => i.kitchenStationId === filterStation || i.kitchenStationName === filterStation)
+    );
+  }, [activeOrders, filterStation]);
+
   if (!navigator.onLine) {
     return (
       <div className="p-8 text-center text-rose-600">
@@ -372,13 +400,32 @@ export default function KitchenDashboard() {
   return (
     <div className="flex flex-col h-screen bg-neutral-100 overflow-hidden">
       {/* Header */}
-      <header className="bg-neutral-900 text-white p-4 flex justify-between items-center flex-shrink-0">
+      <header className="bg-neutral-900 text-white p-4 flex flex-wrap justify-between items-center gap-3 flex-shrink-0">
         <div className="flex items-center gap-3">
           <UtensilsCrossed className="w-6 h-6 text-emerald-400" />
           <h1 className="text-xl font-bold tracking-tight">KDS - Kitchen Display System</h1>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Station Filter */}
+          {stations.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-neutral-800 px-3 py-1.5 rounded-lg text-xs border border-neutral-700">
+              <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
+              <select
+                value={filterStation}
+                onChange={(e) => setFilterStation(e.target.value)}
+                className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer"
+              >
+                <option value="All" className="bg-neutral-800 text-white">All Stations</option>
+                {stations.map(st => (
+                  <option key={st.id} value={st.id} className="bg-neutral-800 text-white">
+                    Station: {st.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex bg-neutral-800 rounded-lg p-1">
             <button
               onClick={() => setViewMode('Active')}
@@ -412,7 +459,7 @@ export default function KitchenDashboard() {
         ) : viewMode === 'Active' ? (
           <div className="flex gap-6 h-full items-start w-max min-w-full">
             {columns.map(col => {
-              const columnOrders = activeOrders.filter(o => o.status === col.status);
+              const columnOrders = filteredActiveOrders.filter(o => o.status === col.status);
               return (
                 <div key={col.status} className="w-80 flex-shrink-0 flex flex-col h-full max-h-full">
                   <div className="flex justify-between items-center mb-3">

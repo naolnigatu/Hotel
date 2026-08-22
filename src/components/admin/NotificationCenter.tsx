@@ -340,7 +340,7 @@ export default function NotificationCenter() {
           {/* Footer */}
           <div className="p-2.5 bg-neutral-50 border-t border-neutral-200 text-center">
             <span className="text-[10px] text-neutral-400 font-medium">
-              Woliso Hotel Notification System • Real-time Active
+              Hotel Notification Center • Real-time Live
             </span>
           </div>
         </div>

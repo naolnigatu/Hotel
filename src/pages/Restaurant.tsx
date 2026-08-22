@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy, doc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { MenuItem, OrderType } from '../types';
+import { MenuItem, MenuCategory, OrderType } from '../types';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -46,6 +46,8 @@ export default function Restaurant() {
 
   // Firestore Menu State
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [dbCategories, setDbCategories] = useState<MenuCategory[]>([]);
+  const [hotelName, setHotelName] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Filter & Search States
@@ -74,7 +76,32 @@ export default function Restaurant() {
     }
   }, [searchParams]);
 
-  // Real-time Firestore Menu Listener
+  // Real-time Firestore Hotel Settings Listener
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'app_settings', 'hotel'), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().hotelName) {
+        setHotelName(docSnap.data().hotelName);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  // Real-time Firestore Menu Categories Listener
+  useEffect(() => {
+    const qCat = query(collection(db, 'menu_categories'), orderBy('displayOrder', 'asc'));
+    const unsubCat = onSnapshot(qCat, (snapshot) => {
+      const catList = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() } as MenuCategory))
+        .filter(c => c.isActive !== false);
+      setDbCategories(catList);
+    }, (error) => {
+      console.error("Error listening to menu categories:", error);
+    });
+
+    return () => unsubCat();
+  }, []);
+
+  // Real-time Firestore Menu Items Listener
   useEffect(() => {
     const q = query(collection(db, 'menu_items'));
     const unsub = onSnapshot(q, (snapshot) => {
@@ -92,11 +119,13 @@ export default function Restaurant() {
     return () => unsub();
   }, []);
 
-  // Compute Categories
+  // Compute Ordered Categories
   const categories = useMemo(() => {
-    const catSet = new Set(['All', ...items.map(item => item.category)]);
-    return Array.from(catSet);
-  }, [items]);
+    const fromDb = dbCategories.map(c => c.name);
+    const fromItems = items.map(item => item.category).filter(Boolean);
+    const combined = Array.from(new Set(['All', ...fromDb, ...fromItems]));
+    return combined;
+  }, [dbCategories, items]);
 
   // Filter Items
   const filteredItems = useMemo(() => {
@@ -136,7 +165,7 @@ export default function Restaurant() {
         <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider mb-2">
-              <Sparkles className="w-4 h-4" /> Woliso Hotel Dining Experience
+              <Sparkles className="w-4 h-4" /> {hotelName ? `${hotelName} Dining Experience` : 'Hotel Dining Experience'}
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               Traditional & Gourmet Cuisine

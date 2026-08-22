@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { 
   LayoutDashboard, 
@@ -32,6 +33,18 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [hotelName, setHotelName] = useState('');
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'app_settings', 'hotel'), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().hotelName) {
+        setHotelName(docSnap.data().hotelName);
+      }
+    }, (err) => {
+      console.error("Error loading hotel name in AdminLayout:", err);
+    });
+    return () => unsub();
+  }, []);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -124,8 +137,8 @@ export default function AdminLayout() {
       <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col hidden md:flex shrink-0">
         <div className="h-16 flex items-center justify-between px-6 border-b border-neutral-200">
           <Link to="/" className="flex items-center gap-2 text-neutral-900 font-bold text-lg hover:text-neutral-700 transition">
-            <Building2 className="w-6 h-6 text-neutral-900" />
-            <span>Woliso Admin</span>
+            <Building2 className="w-6 h-6 text-neutral-900 shrink-0" />
+            <span className="truncate">{hotelName ? `${hotelName} Admin` : 'Hotel Admin'}</span>
           </Link>
         </div>
         
@@ -184,13 +197,13 @@ export default function AdminLayout() {
           {/* Drawer Content */}
           <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             <div className="h-16 flex items-center justify-between px-5 border-b border-neutral-200">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-6 h-6 text-neutral-900" />
-                <span className="font-bold text-base text-neutral-900">Woliso Portal</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Building2 className="w-6 h-6 text-neutral-900 shrink-0" />
+                <span className="font-bold text-base text-neutral-900 truncate">{hotelName ? `${hotelName} Portal` : 'Staff Portal'}</span>
               </div>
               <button 
                 onClick={() => setMobileDrawerOpen(false)}
-                className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 cursor-pointer"
+                className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 cursor-pointer shrink-0"
                 aria-label="Close navigation drawer"
               >
                 <X className="w-5 h-5" />
@@ -289,7 +302,7 @@ export default function AdminLayout() {
             </button>
 
             <h2 className="text-sm sm:text-lg md:text-xl font-bold text-neutral-900 truncate max-w-[150px] sm:max-w-xs md:max-w-md">
-              {currentRoute?.name || 'Woliso Staff Portal'}
+              {currentRoute?.name || (hotelName ? `${hotelName} Staff Portal` : 'Staff Portal')}
             </h2>
           </div>
 

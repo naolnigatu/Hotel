@@ -178,9 +178,19 @@ export interface Table {
   status: 'Available' | 'Occupied' | 'Reserved';
 }
 
+export interface MenuCategory {
+  id: string;
+  name: string;
+  description?: string;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt?: number;
+}
+
 export interface MenuItem {
   id: string;
   category: string;
+  categoryId?: string;
   name: string;
   description: string;
   price: number;
@@ -194,6 +204,8 @@ export interface MenuItem {
   isVegan?: boolean;
   isHalal?: boolean;
   calories?: number;
+  kitchenStationId?: string;
+  kitchenStationName?: string;
 }
 
 export type OrderType = 'Dine-In' | 'QR Table' | 'Room Service' | 'Website Order' | 'Takeaway' | 'Delivery';
@@ -221,6 +233,8 @@ export interface OrderItem {
   isSpicy?: boolean;
   isVegetarian?: boolean;
   status?: 'Pending' | 'Preparing' | 'Ready';
+  kitchenStationId?: string;
+  kitchenStationName?: string;
 }
 
 export interface OrderTimelineEvent {
