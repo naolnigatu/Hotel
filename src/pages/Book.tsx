@@ -10,6 +10,7 @@ import { motion } from 'motion/react';
 
 import { sendNotification } from '../lib/notificationService';
 import { cleanFirestoreData } from '../lib/firestoreUtils';
+import { saveRecentReservation } from '../lib/trackingStorage';
 
 export default function Book() {
   const [searchParams] = useSearchParams();
@@ -252,6 +253,22 @@ export default function Book() {
       };
 
       const createdDocRef = await addDoc(collection(db, 'bookings'), cleanFirestoreData(newBooking));
+
+      // Save to local recent tracking cache
+      saveRecentReservation({
+        code,
+        id: createdDocRef.id,
+        categoryName: selectedCategory?.name || 'Room',
+        guestName: `${guestDetails.firstName} ${guestDetails.lastName}`.trim(),
+        guestPhone: guestDetails.phone,
+        guestEmail: guestDetails.email,
+        checkIn: new Date(checkIn).getTime(),
+        checkOut: new Date(checkOut).getTime(),
+        numberOfGuests: Number(guests),
+        totalAmount: calculateTotal(),
+        status: isAwaitingVerification ? 'Awaiting Payment Verification' : 'Pending',
+        createdAt: Date.now()
+      });
 
       // Trigger reception notification
       await sendNotification({
@@ -607,7 +624,7 @@ export default function Book() {
             <p className="text-neutral-500 text-sm mb-8">Please save this code for future reference. We will contact you shortly to confirm your booking.</p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button onClick={() => navigate('/track-reservation')} className="px-8 py-4 bg-white border border-neutral-200 text-neutral-900 rounded-xl font-medium hover:bg-neutral-50 transition-colors w-full sm:w-auto">
+              <button onClick={() => navigate(`/track-reservation?code=${encodeURIComponent(reservationCode)}`)} className="px-8 py-4 bg-white border border-neutral-200 text-neutral-900 rounded-xl font-medium hover:bg-neutral-50 transition-colors w-full sm:w-auto">
                 Track Status
               </button>
               <button onClick={() => navigate('/')} className="px-8 py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors w-full sm:w-auto">

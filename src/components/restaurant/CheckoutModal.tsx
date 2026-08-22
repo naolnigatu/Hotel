@@ -6,6 +6,7 @@ import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { Booking, Order, OrderTimelineEvent } from '../../types';
 import { sendNotification } from '../../lib/notificationService';
 import { cleanFirestoreData } from '../../lib/firestoreUtils';
+import { saveRecentOrder } from '../../lib/trackingStorage';
 import { X, CheckCircle, ShieldCheck, Hotel, UtensilsCrossed, CreditCard, DollarSign, Building2, AlertCircle, Loader2, FileText, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -284,6 +285,21 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       // Save to Firestore with clean payload
       const cleanedData = cleanFirestoreData(orderData);
       const docRef = await addDoc(collection(db, 'restaurant_orders'), cleanedData);
+
+      // Save to local recent tracking cache
+      saveRecentOrder({
+        id: docRef.id,
+        orderNumber,
+        type: orderType,
+        locationRef: locationRefStr,
+        totalAmount: grandTotal,
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
+        status: 'Order Submitted',
+        itemsCount: orderItemsList.reduce((sum, item) => sum + item.quantity, 0),
+        itemsSummary: orderItemsList.map(i => `${i.quantity}x ${i.name}`).join(', '),
+        createdAt: Date.now()
+      });
 
       // Trigger Kitchen notification
       const locLabel = orderType === 'Dine-In' ? `Table ${tableNumber}` : orderType === 'Room Delivery' ? `Room ${roomNumber}` : 'Takeaway';
