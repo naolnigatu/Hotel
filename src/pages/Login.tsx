@@ -1,14 +1,27 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '../firebase';
-import { Building2 } from 'lucide-react';
+import { 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from 'firebase/auth';
+import { auth, db } from '../firebase';
+import { Building2, Mail, Lock, User, ArrowRight } from 'lucide-react';
 
 export default function Login() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  // Form states
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   // If already logged in, redirect
   React.useEffect(() => {
@@ -21,35 +34,156 @@ export default function Login() {
 
   const handleGoogleSignIn = async () => {
     try {
+      setLoading(true);
+      setError('');
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
       console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    if (isSignUp && !name) {
+      setError('Please provide your name.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      if (isSignUp) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
+        // Ensure name is written correctly to Firestore before context creates a 'Guest' document due to async race
+        const { setDoc, doc } = await import('firebase/firestore');
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email || email,
+          name: name,
+          role: 'guest',
+          createdAt: Date.now()
+        }, { merge: true });
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      navigate('/dashboard');
+    } catch (err: any) {
+      // Improve Firebase error messages slightly for user presentation
+      let msg = err.message;
+      if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in.';
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';
+      if (err.code === 'auth/weak-password') msg = 'Password should be at least 6 characters.';
+      
+      setError(msg);
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-neutral-50 px-4">
+    <div className="min-h-[80vh] flex items-center justify-center bg-neutral-50 px-4 py-12">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-neutral-100 p-8">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-neutral-900 rounded-xl mb-4">
             <Building2 className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-neutral-900">Sign In</h2>
-          <p className="text-neutral-500 mt-2">Welcome back to Woliso Hotel</p>
+          <h2 className="text-2xl font-bold text-neutral-900">
+            {isSignUp ? 'Create an Account' : 'Sign In'}
+          </h2>
+          <p className="text-neutral-500 mt-2">
+            {isSignUp ? 'Join Woliso Hotel to manage your stays and orders' : 'Welcome back to Woliso Hotel'}
+          </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+          <div className="mb-6 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">
             {error}
           </div>
         )}
 
+        <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+          {isSignUp && (
+            <div>
+              <label className="block text-xs font-bold text-neutral-700 uppercase mb-1">Full Name</label>
+              <div className="relative">
+                <User className="w-5 h-5 text-neutral-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:outline-none transition-all"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-xs font-bold text-neutral-700 uppercase mb-1">Email Address</label>
+            <div className="relative">
+              <Mail className="w-5 h-5 text-neutral-400 absolute left-3 top-2.5" />
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:outline-none transition-all"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-neutral-700 uppercase mb-1">Password</label>
+            <div className="relative">
+              <Lock className="w-5 h-5 text-neutral-400 absolute left-3 top-2.5" />
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:outline-none transition-all"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-neutral-900 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50 mt-2"
+          >
+            {isSignUp ? 'Create Account' : 'Sign In'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </form>
+
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-neutral-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-neutral-500 font-medium">Or continue with</span>
+          </div>
+        </div>
+
         <button
           onClick={handleGoogleSignIn}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-neutral-300 text-neutral-700 px-4 py-3 rounded-lg font-medium hover:bg-neutral-50 transition-colors"
+          disabled={loading}
+          type="button"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-neutral-200 text-neutral-700 px-4 py-2.5 rounded-xl font-bold hover:bg-neutral-50 transition-colors shadow-sm disabled:opacity-50"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -69,8 +203,26 @@ export default function Login() {
               fill="#EA4335"
             />
           </svg>
-          Continue with Google
+          Google
         </button>
+
+        <div className="mt-8 text-center text-sm text-neutral-600">
+          {isSignUp ? (
+            <>
+              Already have an account?{' '}
+              <button onClick={() => setIsSignUp(false)} className="font-bold text-neutral-900 hover:underline">
+                Sign in
+              </button>
+            </>
+          ) : (
+            <>
+              Don't have an account yet?{' '}
+              <button onClick={() => setIsSignUp(true)} className="font-bold text-neutral-900 hover:underline">
+                Create one
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

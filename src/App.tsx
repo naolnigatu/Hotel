@@ -44,6 +44,7 @@ import AdminRestaurantSettings from './pages/admin/AdminRestaurantSettings';
 import AdminTables from './pages/admin/AdminTables';
 import AdminKitchenStations from './pages/admin/AdminKitchenStations';
 import AdminStaff from './pages/admin/AdminStaff';
+import AdminUsers from './pages/admin/AdminUsers';
 import AdminHotelSettings from './pages/admin/AdminHotelSettings';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
@@ -105,6 +106,7 @@ export default function App() {
               <Route path="stations" element={<AdminKitchenStations />} />
               <Route path="restaurant-settings" element={<AdminRestaurantSettings />} />
               <Route path="staff" element={<AdminStaff />} />
+              <Route path="users" element={<AdminUsers />} />
               <Route path="settings" element={<AdminHotelSettings />} />
               <Route path="audit-logs" element={<AdminAuditLogs />} />
               <Route path="analytics" element={<AdminAnalytics />} />
