@@ -37,7 +37,7 @@ export default function AdminUsers() {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), (snapshot) => {
-      const list: User[] = snapshot.docs.map(d => d.data() as User);
+      const list: User[] = snapshot.docs.map(d => ({ ...d.data(), uid: d.id } as User));
       setUsers(list.sort((a, b) => b.createdAt - a.createdAt));
       setLoading(false);
     });
