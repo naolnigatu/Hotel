@@ -146,9 +146,16 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /hall_requests/{requestId} {
+      allow create: if true;
+      allow read: if true;
+      allow update: if isStaff();
+      allow delete: if isStaff();
+    }
+
     match /halls/{hallId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
 
     // Housekeeping & Maintenance

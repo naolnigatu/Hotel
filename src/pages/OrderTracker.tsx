@@ -34,6 +34,7 @@ import {
   X
 } from 'lucide-react';
 import { sendNotification } from '../lib/notificationService';
+import CopyButton from '../components/common/CopyButton';
 
 const STATUS_STEPS: OrderStatus[] = [
   'Order Submitted',
@@ -344,11 +345,17 @@ export default function OrderTracker() {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <div>
+                      <div className="flex items-center gap-1.5">
                         <span className="font-mono font-bold text-xs text-neutral-900">
                           #{rec.orderNumber || rec.id.slice(-6).toUpperCase()}
                         </span>
-                        <span className="text-[10px] uppercase font-bold text-neutral-500 ml-2 px-1.5 py-0.5 bg-neutral-100 rounded">
+                        <CopyButton
+                          text={rec.orderNumber || rec.id.slice(-6).toUpperCase()}
+                          size="xs"
+                          variant="ghost"
+                          tooltip="Copy order code"
+                        />
+                        <span className="text-[10px] uppercase font-bold text-neutral-500 ml-1 px-1.5 py-0.5 bg-neutral-100 rounded">
                           {rec.type}
                         </span>
                       </div>
@@ -416,9 +423,19 @@ export default function OrderTracker() {
                     {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <h2 className="text-2xl font-black text-neutral-900 mt-2">
-                  Order #{order.orderNumber || order.id.slice(-6).toUpperCase()}
-                </h2>
+                <div className="flex items-center gap-3 mt-2">
+                  <h2 className="text-2xl font-black text-neutral-900">
+                    Order #{order.orderNumber || order.id.slice(-6).toUpperCase()}
+                  </h2>
+                  <CopyButton
+                    text={order.orderNumber || order.id.slice(-6).toUpperCase()}
+                    variant="neutral"
+                    size="sm"
+                    label="Copy"
+                    showText={true}
+                    tooltip="Copy order code"
+                  />
+                </div>
                 <p className="text-xs text-neutral-600 mt-1 flex items-center gap-2">
                   <strong>Location:</strong> {order.locationRef} • <strong>Customer:</strong> {order.customerName}
                 </p>

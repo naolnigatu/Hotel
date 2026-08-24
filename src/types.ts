@@ -118,6 +118,29 @@ export interface Hall {
   status: boolean; // active/inactive
 }
 
+export interface HallBookingRequest {
+  id: string;
+  reservationCode: string; // e.g. WH-H78X9A
+  hallId: string;
+  hallName: string;
+  eventType: string; // e.g. 'Meeting / Conference', 'Wedding', 'Workshop', 'Party', 'Other'
+  organizerName: string;
+  email: string;
+  phone: string;
+  startDate: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
+  timeSlot?: 'Full Day' | 'Morning' | 'Afternoon' | 'Evening' | 'Custom';
+  numberOfGuests: number;
+  requestedEquipment?: string[];
+  message?: string;
+  totalEstimatedPrice: number;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Cancelled' | 'Confirmed';
+  adminNotes?: string;
+  guestId?: string | null;
+  createdAt: number;
+  updatedAt?: number;
+}
+
 // Bookings
 export type BookingType = 'room' | 'hall';
 export type BookingStatus = 'Draft' | 'Pending' | 'Deposit Pending' | 'Awaiting Payment Verification' | 'Approved' | 'Rejected' | 'Checked In' | 'Checked Out' | 'Cancelled' | 'No Show' | 'Refunded';
@@ -150,9 +173,12 @@ export interface Booking {
     phone: string;
   };
   categoryId: string; // Room category or Hall ID
+  hallName?: string;
+  eventType?: string;
   roomId?: string; // Assigned room number (for rooms)
   numberOfGuests: number;
   specialRequests?: string;
+  requestedEquipment?: string[];
   isVip?: boolean;
   bookingSource?: 'Online' | 'Walk-in' | 'Phone' | 'Government/VIP';
   checkIn: number; // Timestamp (midnight of check-in date)
@@ -481,6 +507,7 @@ export interface AuditLog {
 
 export type NotificationType = 
   | 'reservation' 
+  | 'booking'
   | 'payment' 
   | 'order' 
   | 'service_request' 

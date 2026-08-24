@@ -35,6 +35,7 @@ import { format, isToday } from 'date-fns';
 import ReservationCalendar from './ReservationCalendar';
 import WalkInModal from '../../components/admin/WalkInModal';
 import GuestProfileModal from '../../components/admin/GuestProfileModal';
+import CopyButton from '../../components/common/CopyButton';
 
 import { sendNotification } from '../../lib/notificationService';
 
@@ -720,7 +721,15 @@ export default function AdminReservations() {
                       <tr key={booking.id} className="hover:bg-neutral-50/80 transition-colors">
                         <td className="px-6 py-4 font-mono font-bold text-neutral-900">
                           <div className="flex flex-col">
-                            <span>{booking.reservationCode}</span>
+                            <div className="flex items-center gap-1">
+                              <span>{booking.reservationCode}</span>
+                              <CopyButton
+                                text={booking.reservationCode}
+                                size="xs"
+                                variant="ghost"
+                                tooltip="Copy reservation code"
+                              />
+                            </div>
                             <span className="text-[10px] text-neutral-500 font-normal mt-0.5">
                               {booking.bookingSource || 'Online'}
                             </span>
@@ -884,6 +893,14 @@ export default function AdminReservations() {
               <div>
                 <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-bold font-mono">Reservation {selectedBooking.reservationCode}</h2>
+                  <CopyButton
+                    text={selectedBooking.reservationCode}
+                    variant="dark"
+                    size="sm"
+                    label="Copy"
+                    showText={true}
+                    tooltip="Copy reservation code"
+                  />
                   <span className={`px-3 py-0.5 rounded-full text-xs font-extrabold ${
                     ['Approved', 'Checked In'].includes(selectedBooking.status) ? 'bg-emerald-500 text-white' :
                     selectedBooking.status === 'Checked Out' ? 'bg-neutral-700 text-white' :

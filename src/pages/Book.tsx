@@ -11,6 +11,7 @@ import { motion } from 'motion/react';
 import { sendNotification } from '../lib/notificationService';
 import { cleanFirestoreData } from '../lib/firestoreUtils';
 import { saveRecentReservation } from '../lib/trackingStorage';
+import CopyButton from '../components/common/CopyButton';
 
 export default function Book() {
   const [searchParams] = useSearchParams();
@@ -616,9 +617,21 @@ export default function Book() {
               Thank you for choosing Woliso Hotel. Your reservation request has been received and is being processed.
             </p>
             
-            <div className="bg-neutral-50 p-6 rounded-xl inline-block mb-8 border border-neutral-200">
-              <p className="text-sm text-neutral-500 mb-1">Your Reservation Code</p>
-              <p className="text-3xl font-mono font-bold text-neutral-900 tracking-wider">{reservationCode}</p>
+            <div className="bg-neutral-50 p-6 rounded-2xl inline-flex flex-col items-center justify-center mb-8 border border-neutral-200 shadow-xs max-w-sm w-full mx-auto">
+              <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1">Your Reservation Code</p>
+              <div className="flex items-center gap-3 my-1">
+                <p className="text-3xl sm:text-4xl font-mono font-black text-neutral-900 tracking-wider">{reservationCode}</p>
+                <CopyButton
+                  text={reservationCode}
+                  label="Copy"
+                  copiedLabel="Copied!"
+                  showText={false}
+                  variant="dark"
+                  size="md"
+                  tooltip="Copy reservation code"
+                />
+              </div>
+              <p className="text-[11px] text-neutral-400 mt-1">Click the copy icon to quickly copy this code.</p>
             </div>
 
             <p className="text-neutral-500 text-sm mb-8">Please save this code for future reference. We will contact you shortly to confirm your booking.</p>

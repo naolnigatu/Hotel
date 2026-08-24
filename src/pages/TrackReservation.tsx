@@ -32,6 +32,7 @@ import {
   removeRecentReservation, 
   RecentReservation 
 } from '../lib/trackingStorage';
+import CopyButton from '../components/common/CopyButton';
 
 export default function TrackReservation() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -288,9 +289,17 @@ export default function TrackReservation() {
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <span className="font-mono font-bold text-xs text-neutral-900">
-                        {rec.code}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-xs text-neutral-900">
+                          {rec.code}
+                        </span>
+                        <CopyButton
+                          text={rec.code}
+                          size="xs"
+                          variant="ghost"
+                          tooltip="Copy reservation code"
+                        />
+                      </div>
                       <button
                         onClick={(e) => handleRemoveRecent(e, rec.code)}
                         className="text-neutral-400 hover:text-rose-600 p-0.5 rounded transition opacity-0 group-hover:opacity-100"
@@ -376,13 +385,25 @@ export default function TrackReservation() {
             <div className="p-6 sm:p-7 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-neutral-900 text-white">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Reservation Code</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">
+                    {booking.type === 'hall' ? 'Hall Reservation Code' : 'Room Reservation Code'}
+                  </span>
                   <span className="text-neutral-400">•</span>
                   <span className="text-xs text-neutral-400 flex items-center gap-1">
                     <RefreshCw className="w-3 h-3 text-emerald-400 animate-spin" /> Live Updates
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-black font-mono tracking-wider">{booking.reservationCode}</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl sm:text-3xl font-black font-mono tracking-wider">{booking.reservationCode}</h2>
+                  <CopyButton
+                    text={booking.reservationCode}
+                    variant="dark"
+                    size="sm"
+                    label="Copy"
+                    showText={true}
+                    tooltip="Copy reservation code"
+                  />
+                </div>
               </div>
               
               <div className="flex items-center gap-3">
