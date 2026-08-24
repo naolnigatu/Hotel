@@ -24,7 +24,8 @@ import {
   ExternalLink,
   ShieldCheck,
   TrendingUp,
-  RefreshCw
+  RefreshCw,
+  Megaphone
 } from 'lucide-react';
 import { Booking, Room, Order, HousekeepingTask } from '../../types';
 
@@ -242,6 +243,14 @@ export default function AdminDashboardIndex() {
       description: 'Hero banners, headings, featured sections, and guest reviews.',
       category: 'CMS & Website',
       roles: ['admin'],
+    },
+    {
+      name: 'Hotel Announcements',
+      path: '/admin/announcements',
+      icon: Megaphone,
+      description: 'Publish public hotel news, notices, and events with pictures and formatted text.',
+      category: 'CMS & Website',
+      roles: ['admin', 'reception'],
     },
     {
       name: 'Special Offers',

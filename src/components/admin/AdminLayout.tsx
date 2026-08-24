@@ -23,7 +23,8 @@ import {
   X,
   ArrowLeft,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Megaphone
 } from 'lucide-react';
 
 import NotificationCenter from './NotificationCenter';
@@ -73,6 +74,7 @@ export default function AdminLayout() {
     { name: 'Users Management', path: '/admin/users', icon: Users, roles: ['admin'] },
     { name: 'Audit Logs', path: '/admin/audit-logs', icon: FileText, roles: ['admin'] },
     { name: 'Special Offers', path: '/admin/cms/offers', icon: FileText, roles: ['admin'] },
+    { name: 'Announcements', path: '/admin/announcements', icon: Megaphone, roles: ['admin', 'reception'] },
     { name: 'CMS: Home', path: '/admin/cms/home', icon: Home, roles: ['admin'] },
     { name: 'CMS: About', path: '/admin/cms/about', icon: Info, roles: ['admin'] },
     { name: 'CMS: Contact', path: '/admin/cms/contact', icon: Phone, roles: ['admin'] },

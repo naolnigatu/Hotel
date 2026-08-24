@@ -140,6 +140,26 @@
         "timestamp": { "type": "number" }
       },
       "required": ["id", "userId", "userName", "userRole", "action", "module", "timestamp"]
+    },
+    "Announcement": {
+      "title": "Hotel Announcement",
+      "description": "Hotel public announcements with pictures, title, paragraph, category, and publication status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "paragraph": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "imageCaption": { "type": "string" },
+        "category": { "type": "string" },
+        "isPublished": { "type": "boolean" },
+        "isPinned": { "type": "boolean" },
+        "badge": { "type": "string" },
+        "publishedBy": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "title", "paragraph", "category", "isPublished", "isPinned", "publishedBy", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
@@ -174,6 +194,10 @@
     "/menu_items/{itemId}": {
       "schema": "MenuItem",
       "description": "Restaurant menu items"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Hotel news and announcements"
     },
     "/audit_logs/{logId}": {
       "schema": "AuditLog",

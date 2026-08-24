@@ -13,6 +13,7 @@ import Gallery from './pages/Gallery';
 import Amenities from './pages/Amenities';
 import Attractions from './pages/Attractions';
 import Offers from './pages/Offers';
+import Announcements from './pages/Announcements';
 import Halls from './pages/Halls';
 import Rooms from './pages/Rooms';
 import Book from './pages/Book';
@@ -32,6 +33,7 @@ import AdminCmsPolicies from './pages/admin/AdminCmsPolicies';
 import AdminCmsAmenities from './pages/admin/AdminCmsAmenities';
 import AdminCmsAttractions from './pages/admin/AdminCmsAttractions';
 import AdminCmsOffers from './pages/admin/AdminCmsOffers';
+import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AdminRooms from './pages/admin/AdminRooms';
 import AdminRoomInventory from './pages/admin/AdminRoomInventory';
 import AdminReservations from './pages/admin/AdminReservations';
@@ -68,6 +70,8 @@ export default function App() {
               <Route path="amenities" element={<Amenities />} />
               <Route path="attractions" element={<Attractions />} />
               <Route path="offers" element={<Offers />} />
+              <Route path="announcements" element={<Announcements />} />
+              <Route path="announcements/:id" element={<Announcements />} />
               <Route path="halls" element={<Halls />} />
               <Route path="rooms" element={<Rooms />} />
               <Route path="book" element={<Book />} />
@@ -93,6 +97,7 @@ export default function App() {
               <Route path="cms/amenities" element={<AdminCmsAmenities />} />
               <Route path="cms/attractions" element={<AdminCmsAttractions />} />
               <Route path="cms/offers" element={<AdminCmsOffers />} />
+              <Route path="announcements" element={<AdminAnnouncements />} />
               <Route path="cms/policies" element={<AdminCmsPolicies />} />
               <Route path="rooms" element={<AdminRooms />} />
               <Route path="room-inventory" element={<AdminRoomInventory />} />

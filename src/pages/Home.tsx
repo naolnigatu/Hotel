@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { MapPin, Wifi, Coffee, Car, Star, Phone, Mail, ArrowRight } from 'lucide-react';
+import { MapPin, Wifi, Coffee, Car, Star, Phone, Mail, ArrowRight, Megaphone, Pin, Calendar, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
-import { collection, doc, getDoc, getDocs, query, limit, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, limit, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
-import { CmsHome, RoomCategory, MenuItem, Hall, CmsContact, CmsAmenity } from '../types';
+import { CmsHome, RoomCategory, MenuItem, Hall, CmsContact, CmsAmenity, Announcement } from '../types';
 import * as Icons from 'lucide-react';
 
 export default function Home() {
@@ -16,6 +16,8 @@ export default function Home() {
   const [featuredDishes, setFeaturedDishes] = useState<MenuItem[]>([]);
   const [featuredHalls, setFeaturedHalls] = useState<Hall[]>([]);
   const [amenities, setAmenities] = useState<CmsAmenity[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [pinnedAnnouncement, setPinnedAnnouncement] = useState<Announcement | null>(null);
 
   const [heroImageError, setHeroImageError] = useState(false);
 
@@ -55,6 +57,25 @@ export default function Home() {
         const hallsQ = query(collection(db, 'halls'), where('status', '==', true), limit(2));
         const hallsSnap = await getDocs(hallsQ);
         setFeaturedHalls(hallsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Hall)));
+
+        // Fetch announcements
+        try {
+          const annQ = query(
+            collection(db, 'announcements'), 
+            where('isPublished', '==', true),
+            limit(6)
+          );
+          const annSnap = await getDocs(annQ);
+          const annList = annSnap.docs
+            .map(d => ({ id: d.id, ...d.data() } as Announcement))
+            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          
+          setAnnouncements(annList.slice(0, 3));
+          const pinned = annList.find(a => a.isPinned);
+          if (pinned) setPinnedAnnouncement(pinned);
+        } catch (annErr) {
+          console.warn("Announcements fetch fallback:", annErr);
+        }
 
       } catch (error) {
         console.error("Error fetching homepage data:", error);
@@ -128,6 +149,32 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      {/* Pinned Announcement Notice Strip (if any active) */}
+      {pinnedAnnouncement && (
+        <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-white py-3.5 px-4 shadow-sm relative z-20">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div className="flex items-center gap-2.5">
+              <span className="p-1.5 bg-white/20 rounded-lg shrink-0">
+                <Megaphone className="w-4 h-4 text-white" />
+              </span>
+              <span className="text-[11px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded text-white">
+                {pinnedAnnouncement.badge || 'Hotel Notice'}
+              </span>
+              <p className="text-xs sm:text-sm font-bold truncate max-w-2xl text-white">
+                {pinnedAnnouncement.title}
+              </p>
+            </div>
+            <Link 
+              to={`/announcements?id=${pinnedAnnouncement.id}`}
+              className="shrink-0 text-xs font-bold bg-white text-neutral-900 px-4 py-1.5 rounded-full hover:bg-neutral-100 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Read Announcement</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Featured Amenities Section */}
       <section className="py-24 bg-white">
@@ -333,6 +380,91 @@ export default function Home() {
                   </motion.div>
                 ))}
               </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Hotel Announcements & News Section */}
+      {announcements.length > 0 && (
+        <section className="py-24 bg-neutral-900 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.1),transparent_50%)]" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-12">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-wider text-amber-400 mb-3">
+                  <Megaphone className="w-3.5 h-3.5" />
+                  <span>Updates & Events</span>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Hotel Announcements & News</h2>
+                <p className="text-neutral-400 text-lg mt-2 max-w-2xl">
+                  Stay updated on seasonal culinary feasts, weekend cultural music, and spa wellness programs.
+                </p>
+              </div>
+              <Link 
+                to="/announcements" 
+                className="inline-flex items-center gap-2 font-bold text-amber-400 hover:text-amber-300 transition-colors mt-4 md:mt-0"
+              >
+                All Announcements <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {announcements.slice(0, 3).map((item, idx) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="bg-neutral-800/90 rounded-3xl overflow-hidden border border-neutral-700/60 shadow-lg hover:border-neutral-600 transition-all flex flex-col group"
+                >
+                  <div className="relative aspect-[16/10] bg-neutral-900 overflow-hidden">
+                    <img
+                      src={item.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800'}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800';
+                      }}
+                    />
+                    <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 items-center">
+                      <span className="px-2.5 py-0.5 bg-black/80 backdrop-blur-xs text-white text-[11px] font-bold rounded-md">
+                        {item.category}
+                      </span>
+                      {item.badge && (
+                        <span className="px-2.5 py-0.5 bg-amber-400 text-neutral-950 text-[11px] font-black rounded-md">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="text-xs text-neutral-400 font-medium">
+                        {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                      <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition line-clamp-2 leading-snug">
+                        {item.title}
+                      </h3>
+                      <p className="text-neutral-400 text-sm line-clamp-3 leading-relaxed">
+                        {item.paragraph}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-neutral-700/60 flex items-center justify-between">
+                      <span className="text-xs text-neutral-500 font-medium">By {item.publishedBy}</span>
+                      <Link
+                        to={`/announcements?id=${item.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                      >
+                        Read Details &rarr;
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>

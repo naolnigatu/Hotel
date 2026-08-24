@@ -19,6 +19,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/amenities': 'Amenities',
   '/attractions': 'Attractions',
   '/offers': 'Special Offers',
+  '/announcements': 'Announcements & News',
   '/contact': 'Contact Us',
   '/book': 'Book a Room',
   '/privacy': 'Privacy Policy',
@@ -115,6 +116,9 @@ export default function Layout() {
             <Link to="/gallery" className={`text-sm font-medium transition-colors ${location.pathname === '/gallery' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
               Gallery
             </Link>
+            <Link to="/announcements" className={`text-sm font-medium transition-colors ${location.pathname.startsWith('/announcements') ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+              Announcements
+            </Link>
             <Link to="/track-reservation" className={`text-sm font-medium transition-colors ${location.pathname === '/track-reservation' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
               Track Reservation
             </Link>
@@ -188,6 +192,9 @@ export default function Layout() {
             </Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/gallery" className="block text-sm font-medium text-neutral-800 hover:text-neutral-950 py-2 border-b border-neutral-50">
               Gallery
+            </Link>
+            <Link onClick={() => setMobileMenuOpen(false)} to="/announcements" className="block text-sm font-medium text-neutral-800 hover:text-neutral-950 py-2 border-b border-neutral-50">
+              Announcements & News
             </Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/track-reservation" className="block text-sm font-medium text-neutral-800 hover:text-neutral-950 py-2 border-b border-neutral-50">
               Track Reservation

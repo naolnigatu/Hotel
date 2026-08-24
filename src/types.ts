@@ -436,6 +436,32 @@ export interface CmsOffer {
   active: boolean;
 }
 
+export type AnnouncementCategory = 
+  | 'General' 
+  | 'Event' 
+  | 'Dining & Bar' 
+  | 'Maintenance' 
+  | 'Special Notice' 
+  | 'Facility & Amenities' 
+  | 'Seasonal Celebration';
+
+export interface Announcement {
+  id: string;
+  title: string;
+  paragraph: string;
+  imageUrl?: string;
+  imageCaption?: string;
+  category: AnnouncementCategory;
+  isPublished: boolean;
+  isPinned: boolean;
+  badge?: string;
+  publishedBy: string;
+  publishedByRole?: Role;
+  createdAt: number;
+  updatedAt: number;
+  expiresAt?: number;
+}
+
 export interface GalleryImage {
   id: string;
   url: string;

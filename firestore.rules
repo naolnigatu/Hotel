@@ -105,10 +105,15 @@ service cloud.firestore {
       allow read, update, delete: if isStaff();
     }
 
-    // Offers & Gallery
+    // Offers & Gallery & Announcements
     match /offers/{offerId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isStaff();
     }
 
     match /gallery/{imageId} {
