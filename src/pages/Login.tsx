@@ -9,7 +9,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth, db } from '../firebase';
-import { Building2, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Building2, Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const { currentUser } = useAuth();
@@ -17,6 +17,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form states
   const [name, setName] = useState('');
@@ -150,13 +151,21 @@ export default function Login() {
             <div className="relative">
               <Lock className="w-5 h-5 text-neutral-400 absolute left-3 top-2.5" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:outline-none transition-all"
+                className="w-full pl-10 pr-10 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-neutral-900 focus:outline-none transition-all"
                 disabled={loading}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 text-neutral-400 hover:text-neutral-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
 

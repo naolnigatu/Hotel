@@ -175,7 +175,7 @@ export default function AdminDashboardIndex() {
       roles: ['admin'],
     },
     {
-      name: 'Kitchen Stations',
+      name: 'Stations',
       path: '/admin/stations',
       icon: ChefHat,
       description: 'Order routing to Grill, Bar, Pastry, and Hot Kitchen stations.',

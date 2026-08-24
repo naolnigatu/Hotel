@@ -67,7 +67,7 @@ export default function AdminLayout() {
     { name: 'Kitchen KDS', path: '/admin/kitchen', icon: UtensilsCrossed, roles: ['admin', 'kitchen'] },
     { name: 'Restaurant Menu', path: '/admin/menu', icon: UtensilsCrossed, roles: ['admin'] },
     { name: 'Restaurant Tables', path: '/admin/tables', icon: UtensilsCrossed, roles: ['admin'] },
-    { name: 'Kitchen Stations', path: '/admin/stations', icon: ChefHat, roles: ['admin'] },
+    { name: 'Stations', path: '/admin/stations', icon: ChefHat, roles: ['admin'] },
     { name: 'Restaurant Settings', path: '/admin/restaurant-settings', icon: Settings, roles: ['admin'] },
     { name: 'Staff Profiles', path: '/admin/staff', icon: Users, roles: ['admin'] },
     { name: 'Users Management', path: '/admin/users', icon: Users, roles: ['admin'] },

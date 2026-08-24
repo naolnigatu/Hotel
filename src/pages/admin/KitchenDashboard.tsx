@@ -291,7 +291,16 @@ export default function KitchenDashboard() {
           </div>
 
           <div className="space-y-2 mb-4">
-            {order.items.map((item, idx) => (
+            {order.items
+              .filter(item => {
+                if (userData?.role === 'admin') return true;
+                const assigned = stations.filter(st => st.assignedStaffIds?.includes(userData?.uid || ''));
+                if (assigned.length === 0) return true;
+                const assignedIds = assigned.map(st => st.id);
+                const assignedNames = assigned.map(st => st.name);
+                return assignedIds.includes(item.kitchenStationId!) || assignedNames.includes(item.kitchenStationName!);
+              })
+              .map((item, idx) => (
               <div key={idx} className="flex justify-between text-sm py-1.5 border-b border-neutral-100 last:border-0">
                 <div className="flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -381,11 +390,35 @@ export default function KitchenDashboard() {
   ];
 
   const filteredActiveOrders = useMemo(() => {
-    if (filterStation === 'All') return activeOrders;
-    return activeOrders.filter(order => 
-      order.items.some(i => i.kitchenStationId === filterStation || i.kitchenStationName === filterStation)
-    );
-  }, [activeOrders, filterStation]);
+    let result = activeOrders;
+    
+    // Role-based Station Assignment Filtering
+    if (userData?.role !== 'admin') {
+      const assigned = stations.filter(st => st.assignedStaffIds?.includes(userData?.uid || ''));
+      if (assigned.length > 0) {
+         const assignedIds = assigned.map(st => st.id);
+         const assignedNames = assigned.map(st => st.name);
+         result = result.filter(order => 
+           order.items.some(i => assignedIds.includes(i.kitchenStationId!) || assignedNames.includes(i.kitchenStationName!))
+         );
+      }
+    }
+
+    // Tab filtering
+    if (filterStation !== 'All') {
+      result = result.filter(order => 
+        order.items.some(i => i.kitchenStationId === filterStation || i.kitchenStationName === filterStation)
+      );
+    }
+    
+    return result;
+  }, [activeOrders, filterStation, stations, userData]);
+
+  const visibleStations = useMemo(() => {
+    if (userData?.role === 'admin') return stations;
+    const assigned = stations.filter(st => st.assignedStaffIds?.includes(userData?.uid || ''));
+    return assigned.length > 0 ? assigned : stations;
+  }, [stations, userData]);
 
   if (!navigator.onLine) {
     return (
@@ -408,7 +441,7 @@ export default function KitchenDashboard() {
         
         <div className="flex flex-wrap items-center gap-3">
           {/* Station Filter */}
-          {stations.length > 0 && (
+          {visibleStations.length > 0 && (
             <div className="flex items-center gap-1.5 bg-neutral-800 px-3 py-1.5 rounded-lg text-xs border border-neutral-700">
               <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
               <select
@@ -417,7 +450,7 @@ export default function KitchenDashboard() {
                 className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer"
               >
                 <option value="All" className="bg-neutral-800 text-white">All Stations</option>
-                {stations.map(st => (
+                {visibleStations.map(st => (
                   <option key={st.id} value={st.id} className="bg-neutral-800 text-white">
                     Station: {st.name}
                   </option>

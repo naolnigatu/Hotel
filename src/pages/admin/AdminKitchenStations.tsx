@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { KitchenStation } from '../../types';
+import { KitchenStation, User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';
 import { 
@@ -13,12 +13,14 @@ import {
   AlertCircle,
   ToggleLeft,
   ToggleRight,
-  X
+  X,
+  Users
 } from 'lucide-react';
 
 export default function AdminKitchenStations() {
   const { userData } = useAuth();
   const [stations, setStations] = useState<KitchenStation[]>([]);
+  const [staffUsers, setStaffUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<KitchenStation | null>(null);
@@ -27,7 +29,8 @@ export default function AdminKitchenStations() {
     name: '',
     description: '',
     displayOrder: 1,
-    isActive: true
+    isActive: true,
+    assignedStaffIds: [] as string[]
   });
 
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -52,14 +55,17 @@ export default function AdminKitchenStations() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const list = snapshot.docs.map(d => ({ ...d.data(), uid: d.id } as User));
+      setStaffUsers(list.filter(u => u.role !== 'guest'));
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleOpenAdd = () => {
     setEditingStation(null);
-    setFormData({
-      name: '',
-      description: '',
-      displayOrder: stations.length + 1,
-      isActive: true
-    });
+    setFormData({ name: '', description: '', displayOrder: stations.length + 1, isActive: true, assignedStaffIds: [] });
     setIsModalOpen(true);
   };
 
@@ -69,7 +75,8 @@ export default function AdminKitchenStations() {
       name: station.name,
       description: station.description || '',
       displayOrder: station.displayOrder || 1,
-      isActive: station.isActive ?? true
+      isActive: station.isActive ?? true,
+      assignedStaffIds: station.assignedStaffIds || []
     });
     setIsModalOpen(true);
   };
@@ -82,35 +89,35 @@ export default function AdminKitchenStations() {
       const stationId = editingStation ? editingStation.id : `station_${Date.now()}`;
       const stationRef = doc(db, 'kitchen_stations', stationId);
 
-      const payload: KitchenStation = {
+      const payload: Partial<KitchenStation> = {
         id: stationId,
         name: formData.name.trim(),
-        description: formData.description.trim(),
+        description: formData.description?.trim() || '',
         displayOrder: Number(formData.displayOrder) || 1,
-        isActive: formData.isActive
+        isActive: formData.isActive ?? true,
+        assignedStaffIds: formData.assignedStaffIds.filter(Boolean)
       };
 
       await setDoc(stationRef, payload, { merge: true });
 
-      setNotice({ type: 'success', text: `Kitchen station "${formData.name}" saved.` });
+      setNotice({ type: 'success', text: `Station "${formData.name}" saved.` });
       await logAuditAction(
         userData?.uid || 'admin',
         userData?.name || 'Manager',
         userData?.role || 'admin',
-        `${editingStation ? 'Updated' : 'Created'} Kitchen Station "${formData.name}"`,
-        'Stations',
-        `Active: ${formData.isActive}`
+        `${editingStation ? 'Updated' : 'Created'} Station "${formData.name}"`,
+        'Stations'
       );
-
       setIsModalOpen(false);
     } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, 'kitchen_stations');
+      handleFirestoreError(err, editingStation ? OperationType.UPDATE : OperationType.CREATE, 'kitchen_stations');
       setNotice({ type: 'error', text: 'Failed to save station.' });
     }
   };
 
   const handleDeleteStation = async (station: KitchenStation) => {
-    if (!window.confirm(`Delete station "${station.name}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete "${station.name}"?`)) return;
+
     try {
       await deleteDoc(doc(db, 'kitchen_stations', station.id));
       setNotice({ type: 'success', text: `Station "${station.name}" removed.` });
@@ -118,7 +125,7 @@ export default function AdminKitchenStations() {
         userData?.uid || 'admin',
         userData?.name || 'Manager',
         userData?.role || 'admin',
-        `Deleted Kitchen Station "${station.name}"`,
+        `Deleted Station "${station.name}"`,
         'Stations'
       );
     } catch (err) {
@@ -135,11 +142,10 @@ export default function AdminKitchenStations() {
             <ChefHat className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Kitchen Stations Configuration</h1>
-            <p className="text-sm text-neutral-500">Manage preparation stations for Kitchen Display Systems (KDS)</p>
+            <h1 className="text-2xl font-bold text-neutral-900">Stations Configuration</h1>
+            <p className="text-sm text-neutral-500">Manage preparation stations for Orders</p>
           </div>
         </div>
-
         <button
           onClick={handleOpenAdd}
           className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition-colors"
@@ -162,7 +168,7 @@ export default function AdminKitchenStations() {
       ) : stations.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-2xl border border-neutral-200">
           <ChefHat className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
-          <p className="text-base font-semibold text-neutral-700">No kitchen stations defined</p>
+          <p className="text-base font-semibold text-neutral-700">No stations defined</p>
           <p className="text-sm text-neutral-400 mt-1">Add stations like "Hot Kitchen", "Beverage Bar", "Grill", "Pastry" to direct order items.</p>
         </div>
       ) : (
@@ -183,10 +189,15 @@ export default function AdminKitchenStations() {
                   {station.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
-
+              
               {station.description && (
                 <p className="text-xs text-neutral-500">{station.description}</p>
               )}
+
+              <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 bg-neutral-50 px-2.5 py-1.5 rounded-lg inline-flex w-fit">
+                <Users className="w-3.5 h-3.5" />
+                {station.assignedStaffIds?.length || 0} Staff Assigned
+              </div>
 
               <div className="pt-3 border-t border-neutral-100 flex items-center justify-end gap-2">
                 <button
@@ -210,16 +221,16 @@ export default function AdminKitchenStations() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-6 shadow-xl">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <h2 className="text-lg font-bold text-neutral-900">
-                {editingStation ? 'Edit Station' : 'Add Kitchen Station'}
+                {editingStation ? 'Edit Station' : 'Add Station'}
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-neutral-400 hover:text-neutral-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
-
+            
             <form onSubmit={handleSaveStation} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-neutral-700 uppercase mb-1">Station Name</label>
@@ -242,6 +253,32 @@ export default function AdminKitchenStations() {
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium text-xs text-neutral-900"
                 />
+              </div>
+
+              <div>
+                <label className="block font-bold text-neutral-700 uppercase mb-1">Assigned Staff</label>
+                <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-neutral-50 border border-neutral-200 rounded-xl">
+                  {staffUsers.length === 0 && <span className="text-neutral-400">No staff found.</span>}
+                  {staffUsers.map(user => (
+                    <label key={user.uid} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.assignedStaffIds.includes(user.uid)}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            assignedStaffIds: isChecked
+                              ? [...prev.assignedStaffIds, user.uid]
+                              : prev.assignedStaffIds.filter(id => id !== user.uid)
+                          }));
+                        }}
+                        className="rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+                      />
+                      <span className="font-medium text-neutral-900">{user.name} <span className="text-[10px] text-neutral-500 uppercase">({user.role})</span></span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div>

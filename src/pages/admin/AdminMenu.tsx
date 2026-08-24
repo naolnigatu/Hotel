@@ -112,7 +112,7 @@ export default function AdminMenu() {
       })) as KitchenStation[];
       setStations(data);
     }, (error) => {
-      console.error("Error loading kitchen stations in AdminMenu:", error);
+      console.error("Error loading stations in AdminMenu:", error);
     });
 
     return () => unsubStations();
@@ -493,7 +493,7 @@ export default function AdminMenu() {
           <div>
             <h1 className="text-2xl font-bold text-neutral-900">Restaurant Menu Management</h1>
             <p className="text-sm text-neutral-500">
-              Manage food & beverage catalog, categories, pricing (ETB), and kitchen station routing
+              Manage food & beverage catalog, categories, pricing (ETB), and station routing
             </p>
           </div>
         </div>
@@ -596,14 +596,14 @@ export default function AdminMenu() {
                 </select>
               </div>
 
-              {/* Kitchen Station Filter */}
+              {/* Station Filter */}
               <div>
                 <select
                   value={filterStation}
                   onChange={(e) => setFilterStation(e.target.value)}
                   className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-800 focus:ring-2 focus:ring-neutral-900 focus:outline-none"
                 >
-                  <option value="All">All Kitchen Stations</option>
+                  <option value="All">All Stations</option>
                   {stations.map(st => (
                     <option key={st.id} value={st.id}>Station: {st.name}</option>
                   ))}
@@ -665,7 +665,7 @@ export default function AdminMenu() {
                   <tr>
                     <th className="px-5 py-3.5 text-xs font-bold text-neutral-500 uppercase tracking-wider">Item</th>
                     <th className="px-5 py-3.5 text-xs font-bold text-neutral-500 uppercase tracking-wider">Category</th>
-                    <th className="px-5 py-3.5 text-xs font-bold text-neutral-500 uppercase tracking-wider">Kitchen Station</th>
+                    <th className="px-5 py-3.5 text-xs font-bold text-neutral-500 uppercase tracking-wider">Station</th>
                     <th className="px-5 py-3.5 text-xs font-bold text-neutral-500 uppercase tracking-wider">Price (ETB)</th>
                     <th className="px-5 py-3.5 text-xs font-bold text-neutral-500 uppercase tracking-wider">Status</th>
                     <th className="px-5 py-3.5 text-xs font-bold text-neutral-500 uppercase tracking-wider text-right">Actions</th>
@@ -719,7 +719,7 @@ export default function AdminMenu() {
                           </span>
                         </td>
 
-                        {/* Kitchen Station */}
+                        {/* Station */}
                         <td className="px-5 py-4">
                           {assignedStation ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-800 rounded-lg text-xs font-bold border border-blue-200">
@@ -943,7 +943,7 @@ export default function AdminMenu() {
                 </div>
               </div>
 
-              {/* Row 2: Category & Kitchen Station */}
+              {/* Row 2: Category & Station */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Category Selector with Quick Add */}
                 <div>
@@ -981,10 +981,10 @@ export default function AdminMenu() {
                   </select>
                 </div>
 
-                {/* Kitchen Station Selector */}
+                {/* Station Selector */}
                 <div>
                   <label className="block font-bold text-neutral-700 uppercase mb-1 flex items-center justify-between">
-                    <span>Assigned Kitchen Station</span>
+                    <span>Assigned Station</span>
                     {stations.length === 0 && (
                       <span className="text-[10px] text-amber-600 normal-case font-medium">
                         No stations defined in KDS yet
