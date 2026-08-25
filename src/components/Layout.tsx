@@ -21,7 +21,8 @@ const ROUTE_LABELS: Record<string, string> = {
   '/offers': 'Special Offers',
   '/announcements': 'Announcements & News',
   '/contact': 'Contact Us',
-  '/book': 'Book a Room',
+  '/book': 'Make a Reservation',
+  '/book-room': 'Book a Room',
   '/privacy': 'Privacy Policy',
   '/terms': 'Terms & Conditions',
   '/login': 'Sign In',
@@ -157,7 +158,7 @@ export default function Layout() {
               </Link>
             )}
             
-            <Link to="/rooms" className="inline-flex items-center justify-center px-3.5 py-2 bg-neutral-900 text-white text-xs sm:text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors shadow-2xs">
+            <Link to="/book" className="inline-flex items-center justify-center px-3.5 py-2 bg-neutral-900 text-white text-xs sm:text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors shadow-2xs">
               {t('book_now')}
             </Link>
           </div>
@@ -213,7 +214,7 @@ export default function Layout() {
             </div>
 
             <div className="pt-3">
-              <Link onClick={() => setMobileMenuOpen(false)} to="/rooms" className="block w-full py-2.5 text-center bg-neutral-900 text-white rounded-xl font-bold text-sm shadow-sm">
+              <Link onClick={() => setMobileMenuOpen(false)} to="/book" className="block w-full py-2.5 text-center bg-neutral-900 text-white rounded-xl font-bold text-sm shadow-sm">
                 {t('book_now')}
               </Link>
             </div>

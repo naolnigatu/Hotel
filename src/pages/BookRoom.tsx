@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { collection, query, getDocs, addDoc, serverTimestamp, where, doc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import { RoomCategory, Booking, Room, HotelSettings } from '../types';
 import { format, addDays, startOfDay } from 'date-fns';
-import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload, ArrowLeft, X, FileText } from 'lucide-react';
+import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload, ArrowLeft, X, FileText, Maximize2, Eye, Smartphone, Building2, CreditCard } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { sendNotification } from '../lib/notificationService';
 import { cleanFirestoreData } from '../lib/firestoreUtils';
 import { saveRecentReservation } from '../lib/trackingStorage';
 import CopyButton from '../components/common/CopyButton';
+import ReceiptLightboxModal from '../components/common/ReceiptLightboxModal';
 
 export default function Book() {
   const [searchParams] = useSearchParams();
@@ -40,6 +41,9 @@ export default function Book() {
   const [paymentMethod, setPaymentMethod] = useState('Pay at Hotel');
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
   const [paymentPreviewUrl, setPaymentPreviewUrl] = useState<string | null>(null);
+  const [fullscreenReceiptUrl, setFullscreenReceiptUrl] = useState<string | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [transactionId, setTransactionId] = useState('');
   const [hotelSettings, setHotelSettings] = useState<HotelSettings | null>(null);
   
@@ -206,7 +210,7 @@ export default function Book() {
       const code = generateCode();
       
       let proofUrl = '';
-      const requiresPaymentProof = ['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr'].includes(paymentMethod);
+      const requiresPaymentProof = ['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr', 'Mobile Banking'].includes(paymentMethod);
 
       if (requiresPaymentProof && paymentFile) {
         try {
@@ -432,13 +436,15 @@ export default function Book() {
               <h2 className="text-xl font-bold text-neutral-900 pt-4 border-t border-neutral-100">Payment Details</h2>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {[
-                  ...(hotelSettings?.acceptedPaymentMethods || ['Pay at Hotel']),
+                  ...(hotelSettings?.acceptedPaymentMethods?.length 
+                    ? hotelSettings.acceptedPaymentMethods 
+                    : ['Pay at Hotel', 'Mobile Banking', 'Bank Transfer', 'CBE Birr', 'Telebirr']),
                   ...(hotelSettings?.depositEnabled && !hotelSettings?.acceptedPaymentMethods?.includes('Deposit / ቀብድ') ? ['Deposit / ቀብድ'] : [])
                 ].map(method => (
                   <div 
                     key={method} 
                     onClick={() => setPaymentMethod(method)}
-                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${paymentMethod === method ? 'border-neutral-900 bg-neutral-900/5' : 'border-neutral-200 hover:border-neutral-300'}`}
+                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${paymentMethod === method ? 'border-neutral-900 bg-neutral-900/5 ring-1 ring-neutral-900' : 'border-neutral-200 hover:border-neutral-300'}`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === method ? 'border-neutral-900' : 'border-neutral-300'}`}>
@@ -476,38 +482,168 @@ export default function Book() {
                 </div>
               )}
 
-              {['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr'].includes(paymentMethod) && (
+              {['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr', 'Mobile Banking'].includes(paymentMethod) && (
                 <div className="bg-neutral-50 p-6 rounded-xl border border-neutral-200">
-                  <h3 className="font-bold text-neutral-900 mb-2">Payment Details</h3>
-                  <p className="text-sm text-neutral-600 mb-4">Please make your payment to one of the accounts below and upload your proof of transfer.</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-neutral-900">Payment Accounts & Transfer Info</h3>
+                    <span className="text-xs bg-neutral-200 font-bold px-2.5 py-1 rounded-full text-neutral-800">
+                      {paymentMethod}
+                    </span>
+                  </div>
+                  <p className="text-sm text-neutral-600 mb-4">Please make your payment to the specific account details below and upload your receipt.</p>
                   
-                  <div className="space-y-3 mb-4">
+                  <div className="space-y-3 mb-5">
                     {paymentMethod === 'Telebirr' ? (
                       hotelSettings?.telebirrNo ? (
-                        <div className="bg-white p-4 rounded-lg border border-neutral-200">
-                          <p className="font-bold text-neutral-900 text-sm">Telebirr Mobile Money</p>
-                          {hotelSettings.telebirrAccountName && <p className="font-mono text-xs text-neutral-700">Account Name: {hotelSettings.telebirrAccountName}</p>}
-                          <p className="font-mono text-sm font-semibold text-neutral-900">Number: {hotelSettings.telebirrNo}</p>
+                        <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-neutral-900 text-sm flex items-center gap-2">
+                              <Smartphone className="w-4 h-4 text-emerald-600" />
+                              Telebirr Mobile Money
+                            </span>
+                            <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded">
+                              Pay via App or *127#
+                            </span>
+                          </div>
+                          {hotelSettings.telebirrAccountName && (
+                            <div className="flex items-center justify-between text-xs text-neutral-600">
+                              <span>Account Name:</span>
+                              <span className="font-semibold text-neutral-900">{hotelSettings.telebirrAccountName}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
+                            <span className="text-xs text-neutral-600">Telebirr Number:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm font-black text-neutral-900">{hotelSettings.telebirrNo}</span>
+                              <CopyButton text={hotelSettings.telebirrNo} size="sm" />
+                            </div>
+                          </div>
                         </div>
                       ) : (
-                        <div className="bg-white p-4 rounded-lg border border-neutral-200">
-                          <p className="text-sm text-neutral-500">Telebirr account details are not configured.</p>
+                        <div className="bg-white p-4 rounded-xl border border-neutral-200 text-sm text-neutral-500">
+                          Telebirr account details are currently being updated by management.
                         </div>
                       )
-                    ) : (
+                    ) : paymentMethod === 'CBE Birr' ? (
+                      hotelSettings?.cbeBirrNo ? (
+                        <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-neutral-900 text-sm flex items-center gap-2">
+                              <Smartphone className="w-4 h-4 text-purple-600" />
+                              CBE Birr Mobile Wallet / Merchant
+                            </span>
+                            <span className="text-[10px] bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded">
+                              Pay via CBE Birr App or *847#
+                            </span>
+                          </div>
+                          {hotelSettings.cbeBirrAccountName && (
+                            <div className="flex items-center justify-between text-xs text-neutral-600">
+                              <span>Merchant Name:</span>
+                              <span className="font-semibold text-neutral-900">{hotelSettings.cbeBirrAccountName}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
+                            <span className="text-xs text-neutral-600">CBE Birr Phone / Code:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm font-black text-neutral-900">{hotelSettings.cbeBirrNo}</span>
+                              <CopyButton text={hotelSettings.cbeBirrNo} size="sm" />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-white p-4 rounded-xl border border-neutral-200 text-sm text-neutral-500">
+                          CBE Birr account details are currently being updated by management.
+                        </div>
+                      )
+                    ) : paymentMethod === 'Mobile Banking' ? (
+                      /* Mobile Banking Specific View */
                       hotelSettings?.bankDetails && hotelSettings.bankDetails.length > 0 ? (
                         hotelSettings.bankDetails.map((bank, i) => (
-                          <div key={i} className="bg-white p-4 rounded-lg border border-neutral-200">
-                            <p className="font-bold text-neutral-900 text-sm">{bank.bankName}</p>
-                            <p className="font-mono text-xs text-neutral-700">Account Name: {bank.accountName}</p>
-                            <p className="font-mono text-sm font-semibold text-neutral-900">Account No: {bank.accountNumber}</p>
+                          <div key={i} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-neutral-900 text-sm flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-neutral-700" />
+                                {bank.bankName} (Mobile Banking App / USSD *889#)
+                              </span>
+                              <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded">
+                                Mobile Transfer
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-neutral-600">
+                              <span>Account Name:</span>
+                              <span className="font-semibold text-neutral-900">{bank.accountName}</span>
+                            </div>
+                            <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
+                              <span className="text-xs text-neutral-600">Account Number:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-sm font-black text-neutral-900">{bank.accountNumber}</span>
+                                <CopyButton text={bank.accountNumber} size="sm" />
+                              </div>
+                            </div>
                           </div>
                         ))
                       ) : (
-                        <div className="bg-white p-4 rounded-lg border border-neutral-200">
-                          <p className="font-mono text-neutral-900">Bank: Commercial Bank of Ethiopia</p>
-                          <p className="font-mono text-neutral-900">Account Name: Woliso Hotel</p>
-                          <p className="font-mono text-neutral-900">Account Number: 1000123456789</p>
+                        <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-neutral-900 text-sm flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-neutral-700" />
+                              Commercial Bank of Ethiopia (CBE Mobile App)
+                            </span>
+                            <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded">
+                              USSD *889# / App
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-neutral-600">
+                            <span>Account Name:</span>
+                            <span className="font-semibold text-neutral-900">Woliso Hotel</span>
+                          </div>
+                          <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
+                            <span className="text-xs text-neutral-600">Account Number:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm font-black text-neutral-900">1000123456789</span>
+                              <CopyButton text="1000123456789" size="sm" />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      /* Direct Bank Transfer / Deposit */
+                      hotelSettings?.bankDetails && hotelSettings.bankDetails.length > 0 ? (
+                        hotelSettings.bankDetails.map((bank, i) => (
+                          <div key={i} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-neutral-900 text-sm flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-neutral-700" />
+                                {bank.bankName}
+                              </span>
+                              <span className="text-[10px] bg-neutral-100 text-neutral-700 font-bold px-2 py-0.5 rounded">
+                                Bank Transfer
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-neutral-600">
+                              <span>Account Name:</span>
+                              <span className="font-semibold text-neutral-900">{bank.accountName}</span>
+                            </div>
+                            <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
+                              <span className="text-xs text-neutral-600">Account Number:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-sm font-black text-neutral-900">{bank.accountNumber}</span>
+                                <CopyButton text={bank.accountNumber} size="sm" />
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
+                          <p className="font-bold text-neutral-900 text-sm">Commercial Bank of Ethiopia</p>
+                          <p className="text-xs text-neutral-600">Account Name: Woliso Hotel</p>
+                          <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
+                            <span className="text-xs text-neutral-600">Account Number:</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm font-black text-neutral-900">1000123456789</span>
+                              <CopyButton text="1000123456789" size="sm" />
+                            </div>
+                          </div>
                         </div>
                       )
                     )}
@@ -515,79 +651,161 @@ export default function Book() {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">Upload Payment Receipt (Proof)</label>
-                      
-                      {!paymentPreviewUrl ? (
-                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-neutral-300 border-dashed rounded-lg bg-white hover:bg-neutral-50 transition-colors">
-                          <div className="space-y-1 text-center">
-                            <Upload className="mx-auto h-12 w-12 text-neutral-400" />
-                            <div className="flex text-sm text-neutral-600 justify-center">
-                              <label className="relative cursor-pointer bg-transparent rounded-md font-medium text-neutral-900 hover:text-neutral-700 focus-within:outline-none">
-                                <span>Upload a file</span>
-                                <input type="file" required className="sr-only" accept="image/*,.pdf" onChange={e => {
-                                  const file = e.target.files?.[0] || null;
-                                  if (file && file.size > 5 * 1024 * 1024) {
-                                    alert('File size exceeds 5MB limit. Please upload a smaller file (under 5MB).');
-                                    e.target.value = '';
-                                    setPaymentFile(null);
-                                    setPaymentPreviewUrl(null);
-                                    return;
-                                  }
-                                  setPaymentFile(file);
-                                  if (file && file.type.startsWith('image/')) {
-                                    setPaymentPreviewUrl(URL.createObjectURL(file));
-                                  } else if (file && file.type === 'application/pdf') {
-                                    setPaymentPreviewUrl('pdf');
-                                  } else {
-                                    setPaymentPreviewUrl(null);
-                                  }
-                                }} />
-                              </label>
-                            </div>
-                            <p className="text-xs text-neutral-500">PNG, JPG, PDF up to 5MB</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="mt-1 border border-neutral-200 rounded-lg bg-neutral-50 p-4 relative">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-bold text-neutral-800">
+                          Upload Payment Receipt (Proof) <span className="text-red-500">*</span>
+                        </label>
+                        {paymentPreviewUrl && (
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={() => setFullscreenReceiptUrl(paymentPreviewUrl)}
+                            className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer bg-emerald-50 px-2.5 py-1 rounded-lg transition"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View Full Screen
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Hidden Native File Input */}
+                      <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        accept="image/*,.pdf"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0] || null;
+                          if (file && file.size > 5 * 1024 * 1024) {
+                            alert('File size exceeds 5MB limit. Please upload a smaller file (under 5MB).');
+                            e.target.value = '';
+                            setPaymentFile(null);
+                            setPaymentPreviewUrl(null);
+                            return;
+                          }
+                          setPaymentFile(file);
+                          if (file && file.type.startsWith('image/')) {
+                            setPaymentPreviewUrl(URL.createObjectURL(file));
+                          } else if (file && file.type === 'application/pdf') {
+                            setPaymentPreviewUrl('pdf');
+                          } else {
+                            setPaymentPreviewUrl(null);
+                          }
+                        }} 
+                      />
+                      
+                      {!paymentPreviewUrl ? (
+                        <div 
+                          onClick={() => fileInputRef.current?.click()}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setIsDraggingFile(true);
+                          }}
+                          onDragLeave={() => setIsDraggingFile(false)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setIsDraggingFile(false);
+                            const file = e.dataTransfer.files?.[0];
+                            if (file) {
+                              if (file.size > 5 * 1024 * 1024) {
+                                alert('File size exceeds 5MB limit.');
+                                return;
+                              }
+                              setPaymentFile(file);
+                              if (file.type.startsWith('image/')) {
+                                setPaymentPreviewUrl(URL.createObjectURL(file));
+                              } else if (file.type === 'application/pdf') {
+                                setPaymentPreviewUrl('pdf');
+                              }
+                            }
+                          }}
+                          className={`flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                            isDraggingFile 
+                              ? 'border-emerald-600 bg-emerald-50/50' 
+                              : 'border-neutral-300 bg-white hover:bg-neutral-50/80 hover:border-neutral-400'
+                          }`}
+                        >
+                          <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mb-3">
+                            <Upload className="w-6 h-6 text-neutral-500" />
+                          </div>
+                          <p className="text-sm font-bold text-neutral-900 mb-1 text-center">
+                            Click to upload receipt or drag and drop
+                          </p>
+                          <p className="text-xs text-neutral-500 text-center">
+                            PNG, JPG, JPEG or PDF (up to 5MB)
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="border border-neutral-200 rounded-xl bg-white p-4 relative shadow-xs">
+                          {/* Close / Remove button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setPaymentFile(null);
                               setPaymentPreviewUrl(null);
+                              if (fileInputRef.current) fileInputRef.current.value = '';
                             }}
-                            className="absolute top-2 right-2 p-1.5 bg-white border border-neutral-200 text-red-600 rounded-lg shadow-sm hover:bg-red-50 transition"
+                            className="absolute top-3 right-3 z-10 p-1.5 bg-neutral-900/80 hover:bg-red-600 text-white rounded-lg shadow-md transition cursor-pointer"
+                            title="Remove attachment"
                           >
                             <X className="w-4 h-4" />
                           </button>
-                          
+
                           {paymentPreviewUrl === 'pdf' ? (
-                            <div className="flex items-center justify-center h-40 bg-neutral-200/50 rounded-lg border border-neutral-200">
-                              <div className="text-center">
-                                <FileText className="w-8 h-8 text-neutral-500 mx-auto mb-2" />
-                                <span className="text-sm font-semibold text-neutral-700">{paymentFile?.name}</span>
+                            <div 
+                              onClick={() => setFullscreenReceiptUrl('pdf')}
+                              className="flex items-center justify-center h-44 bg-neutral-50 rounded-lg border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition"
+                            >
+                              <div className="text-center p-4">
+                                <FileText className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
+                                <span className="text-xs font-bold text-neutral-800 line-clamp-1">{paymentFile?.name}</span>
+                                <span className="text-[11px] text-emerald-700 font-semibold mt-1 inline-flex items-center gap-1">
+                                  <Eye className="w-3 h-3" /> Click to view details
+                                </span>
                               </div>
                             </div>
                           ) : (
-                            <div className="relative h-48 w-full">
+                            <div 
+                              onClick={() => setFullscreenReceiptUrl(paymentPreviewUrl)}
+                              className="relative h-52 w-full rounded-lg bg-neutral-900/5 overflow-hidden group cursor-pointer border border-neutral-100 flex items-center justify-center"
+                              title="Click to view full screen"
+                            >
                               <img 
                                 src={paymentPreviewUrl} 
                                 alt="Payment Proof" 
-                                className="w-full h-full object-contain rounded-lg bg-neutral-200/50"
+                                className="w-full h-full object-contain"
                               />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-bold text-xs backdrop-blur-xs">
+                                <Maximize2 className="w-4 h-4" />
+                                <span>Click to View Full Screen</span>
+                              </div>
                             </div>
                           )}
-                          <p className="text-xs text-center text-emerald-600 font-medium mt-3">Receipt attached successfully</p>
+
+                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-neutral-100">
+                            <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Receipt Attached
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="text-xs font-bold text-neutral-600 hover:text-neutral-900 underline cursor-pointer"
+                            >
+                              Change file
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">Transaction ID / Reference Number (Optional)</label>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                        Transaction ID / Reference Number (Optional)
+                      </label>
                       <input 
                         type="text" 
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
-                        className="w-full border-neutral-300 rounded-lg focus:ring-neutral-900 focus:border-neutral-900 text-sm"
+                        className="w-full border-neutral-300 rounded-lg focus:ring-neutral-900 focus:border-neutral-900 text-sm px-3.5 py-2.5 border bg-white"
                         placeholder="e.g. FT2308..."
                       />
                     </div>
@@ -597,8 +815,8 @@ export default function Book() {
 
               <button 
                 type="submit" 
-                disabled={submitting || (['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr'].includes(paymentMethod) && !paymentFile)} 
-                className="w-full flex items-center justify-center py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 mt-6"
+                disabled={submitting || (['Bank Transfer', 'Deposit / ቀብድ', 'Telebirr', 'CBE Birr', 'Mobile Banking'].includes(paymentMethod) && !paymentFile)} 
+                className="w-full flex items-center justify-center py-4 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 mt-6 cursor-pointer"
               >
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
                 Confirm Booking
@@ -647,6 +865,13 @@ export default function Book() {
           </motion.div>
         )}
       </div>
+
+      {/* In-Page Fullscreen Receipt Viewer Modal */}
+      <ReceiptLightboxModal
+        imageUrl={fullscreenReceiptUrl}
+        title="Uploaded Payment Receipt"
+        onClose={() => setFullscreenReceiptUrl(null)}
+      />
     </div>
   );
 }

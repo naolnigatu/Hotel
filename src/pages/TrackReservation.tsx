@@ -46,6 +46,7 @@ export default function TrackReservation() {
   const [searched, setSearched] = useState(false);
   const [recentList, setRecentList] = useState<RecentReservation[]>([]);
   const [activeCode, setActiveCode] = useState<string>('');
+  const [previewPaymentImage, setPreviewPaymentImage] = useState<string | null>(null);
 
   // Refresh recent list from storage
   const refreshRecent = () => {
@@ -486,14 +487,12 @@ export default function TrackReservation() {
                   
                   {booking.paymentProofUrl && (
                     <div className="mt-3 pt-3 border-t border-neutral-200">
-                      <a 
-                        href={booking.paymentProofUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5"
+                      <button 
+                        onClick={() => setPreviewPaymentImage(booking.paymentProofUrl || null)}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 cursor-pointer"
                       >
                         View Uploaded Receipt <ArrowRight className="w-3.5 h-3.5" />
-                      </a>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -553,6 +552,38 @@ export default function TrackReservation() {
           </div>
         )}
       </div>
+
+      {/* PAYMENT PROOF MODAL */}
+      {previewPaymentImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-neutral-100 shrink-0">
+              <h3 className="font-bold text-neutral-900">Payment Proof / Receipt</h3>
+              <button 
+                onClick={() => setPreviewPaymentImage(null)} 
+                className="p-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto bg-neutral-100 flex items-center justify-center p-4">
+              {previewPaymentImage.includes('.pdf') || previewPaymentImage.includes('%2Fpdf') ? (
+                <div className="text-center p-8">
+                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                    <span className="font-bold text-neutral-400">PDF</span>
+                  </div>
+                  <p className="text-neutral-700 font-medium mb-4">PDF Document Uploaded</p>
+                  <a href={previewPaymentImage} target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 transition">
+                    Open Document in New Tab
+                  </a>
+                </div>
+              ) : (
+                <img src={previewPaymentImage} alt="Payment Proof" className="max-w-full max-h-[80vh] object-contain rounded shadow-sm" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

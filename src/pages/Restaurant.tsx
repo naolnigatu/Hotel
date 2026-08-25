@@ -27,7 +27,9 @@ import {
   X,
   PhoneCall,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Check
 } from 'lucide-react';
 
 export default function Restaurant() {
@@ -41,6 +43,8 @@ export default function Restaurant() {
     totalItemCount, 
     grandTotal, 
     setIsCartOpen,
+    quickAddToCart,
+    cartItems,
     restaurantSettings
   } = useCart();
 
@@ -350,68 +354,98 @@ export default function Restaurant() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map(item => (
-              <div
-                key={item.id}
-                onClick={() => setSelectedItemForModal(item)}
-                className="bg-white rounded-2xl overflow-hidden shadow-xs border border-neutral-200 flex flex-col hover:shadow-md transition cursor-pointer group"
-              >
-                <div className="aspect-[4/3] relative bg-neutral-100 overflow-hidden">
-                  <img
-                    src={item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
-                    }}
-                  />
-                  
-                  <div className="absolute top-3 right-3 bg-neutral-900/90 backdrop-blur text-white px-3 py-1 rounded-full text-xs font-black shadow-xs">
-                    {item.price} ETB
+            {filteredItems.map(item => {
+              const inCartItem = cartItems.find(ci => ci.item.id === item.id);
+              const inCartQty = inCartItem?.quantity || 0;
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedItemForModal(item)}
+                  className="bg-white rounded-2xl overflow-hidden shadow-xs border border-neutral-200 flex flex-col hover:shadow-md transition cursor-pointer group relative"
+                >
+                  <div className="aspect-[4/3] relative bg-neutral-100 overflow-hidden">
+                    <img
+                      src={item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
+                      }}
+                    />
+                    
+                    <div className="absolute top-3 right-3 bg-neutral-900/90 backdrop-blur text-white px-3 py-1 rounded-full text-xs font-black shadow-xs">
+                      {item.price} ETB
+                    </div>
+
+                    {/* Quick Add to Cart Button on Card */}
+                    {item.isAvailable && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          quickAddToCart(item);
+                        }}
+                        className="absolute bottom-3 right-3 z-10 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white p-2.5 rounded-full shadow-lg transition flex items-center justify-center cursor-pointer group/btn"
+                        title="Quick Add to Cart"
+                      >
+                        {inCartQty > 0 ? (
+                          <div className="flex items-center gap-1">
+                            <Check className="w-4 h-4 stroke-[3]" />
+                            <span className="text-[10px] font-black pr-0.5">{inCartQty}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <ShoppingCart className="w-4 h-4" />
+                            <Plus className="w-3 h-3" />
+                          </div>
+                        )}
+                      </button>
+                    )}
+
+                    {!item.isAvailable && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center">
+                        <span className="bg-red-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg uppercase">
+                          Unavailable
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {!item.isAvailable && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center">
-                      <span className="bg-red-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg uppercase">
-                        Unavailable
+                  <div className="p-5 flex flex-col flex-1 justify-between">
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">{item.category}</span>
+                        {item.prepTimeMinutes && (
+                          <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> ~{item.prepTimeMinutes}m
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="text-base font-bold text-neutral-900 group-hover:text-emerald-700 transition">
+                        {item.name}
+                      </h3>
+
+                      <p className="text-xs text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center">
+                      <div className="flex gap-1.5">
+                        {item.isSpicy && <Flame className="w-3.5 h-3.5 text-red-500" />}
+                        {item.isVegetarian && <Leaf className="w-3.5 h-3.5 text-emerald-500" />}
+                      </div>
+
+                      <span className="text-xs font-bold text-emerald-700 group-hover:translate-x-1 transition flex items-center gap-1">
+                        View Dish <ArrowRight className="w-3.5 h-3.5" />
                       </span>
                     </div>
-                  )}
-                </div>
-
-                <div className="p-5 flex flex-col flex-1 justify-between">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">{item.category}</span>
-                      {item.prepTimeMinutes && (
-                        <span className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> ~{item.prepTimeMinutes}m
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="text-base font-bold text-neutral-900 group-hover:text-emerald-700 transition">
-                      {item.name}
-                    </h3>
-
-                    <p className="text-xs text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-neutral-100 flex justify-between items-center">
-                    <div className="flex gap-1.5">
-                      {item.isSpicy && <Flame className="w-3.5 h-3.5 text-red-500" />}
-                      {item.isVegetarian && <Leaf className="w-3.5 h-3.5 text-emerald-500" />}
-                    </div>
-
-                    <span className="text-xs font-bold text-emerald-700 group-hover:translate-x-1 transition flex items-center gap-1">
-                      View Dish <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -420,7 +454,7 @@ export default function Restaurant() {
       {totalItemCount > 0 && (
         <button
           onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm transition transform active:scale-95 animate-bounce-short"
+          className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm transition transform active:scale-95 animate-bounce-short cursor-pointer"
         >
           <div className="relative">
             <ShoppingCart className="w-5 h-5" />
@@ -439,6 +473,7 @@ export default function Restaurant() {
       <ItemDetailModal
         item={selectedItemForModal}
         onClose={() => setSelectedItemForModal(null)}
+        onOrderNow={() => setShowCheckoutModal(true)}
       />
 
       {/* Cart Drawer */}

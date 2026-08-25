@@ -18,6 +18,7 @@ interface CheckoutModalProps {
 export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { 
     cartItems, 
+    selectedCartItems,
     orderType, 
     locationDetails, 
     setLocationDetails,
@@ -27,6 +28,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     applicableRoomServiceFee,
     grandTotal,
     clearCart,
+    clearSelectedItems,
     restaurantSettings,
     vatRate,
     serviceChargeRate
@@ -231,8 +233,9 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         }
       ];
 
-      // Format order items cleanly
-      const orderItemsList = cartItems.map(({ item, quantity, notes }) => ({
+      // Format order items cleanly (only checked/selected items)
+      const activeCartItems = selectedCartItems.length > 0 ? selectedCartItems : cartItems;
+      const orderItemsList = activeCartItems.map(({ item, quantity, notes }) => ({
         itemId: item.id,
         name: item.name,
         quantity,
@@ -326,8 +329,8 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         paymentMethod
       });
 
-      // Clear Cart
-      clearCart();
+      // Clear Selected Items from Cart
+      clearSelectedItems();
       onClose();
 
       // Navigate to Order Tracker

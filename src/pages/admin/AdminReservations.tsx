@@ -87,7 +87,9 @@ export default function AdminReservations() {
         // Real-time bookings listener
         const bookingsQ = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
         unsubscribeBookings = onSnapshot(bookingsQ, (snap) => {
-          const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+          const list = snap.docs
+            .map(d => ({ id: d.id, ...d.data() } as Booking))
+            .filter(b => b.type === 'room' || !b.type); // Fallback if type is missing on old records
           setBookings(list);
           setLoading(false);
         }, (err) => {

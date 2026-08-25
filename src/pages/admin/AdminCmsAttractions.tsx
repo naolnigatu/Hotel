@@ -3,6 +3,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CmsAttraction } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { Loader2, Plus, Pencil, Trash2, X, Save, MapPin } from 'lucide-react';
 
 export default function AdminCmsAttractions() {
@@ -10,6 +11,8 @@ export default function AdminCmsAttractions() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingItem, setEditingItem] = useState<CmsAttraction | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchAttractions = async () => {
     try {
@@ -56,14 +59,22 @@ export default function AdminCmsAttractions() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this attraction?')) return;
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
     try {
-      const newAttractions = attractions.filter(a => a.id !== id);
+      const newAttractions = attractions.filter(a => a.id !== deletingId);
       await setDoc(doc(db, 'settings', 'cms_attractions'), { data: newAttractions });
       setAttractions(newAttractions);
+      setDeletingId(null);
     } catch (error) {
       console.error("Error deleting attraction:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -195,8 +206,8 @@ export default function AdminCmsAttractions() {
                   <Pencil className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => handleDelete(attraction.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  onClick={() => handleDeleteClick(attraction.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -210,6 +221,16 @@ export default function AdminCmsAttractions() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deletingId}
+        title="Delete Attraction"
+        message="Are you sure you want to permanently delete this nearby attraction? It will be removed from the public website immediately."
+        confirmText="Delete Attraction"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingId(null)}
+      />
     </div>
   );
 }

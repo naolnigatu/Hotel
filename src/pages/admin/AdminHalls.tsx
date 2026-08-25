@@ -17,6 +17,7 @@ import { logAuditAction } from '../../lib/auditLogger';
 import { sendNotification } from '../../lib/notificationService';
 import CopyButton from '../../components/common/CopyButton';
 import MediaManager from '../../components/admin/MediaManager';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { 
   Loader2, 
   Plus, 
@@ -74,6 +75,9 @@ export default function AdminHalls() {
   });
   const [actionLoading, setActionLoading] = useState(false);
   const [actionNotice, setActionNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deletingHall, setDeletingHall] = useState<Hall | null>(null);
+  const [deletingRequest, setDeletingRequest] = useState<HallBookingRequest | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Subscribe to Halls & Hall Booking Requests
   useEffect(() => {
@@ -138,23 +142,30 @@ export default function AdminHalls() {
     }
   };
 
-  const handleDeleteHall = async (id: string) => {
-    const hall = halls.find(h => h.id === id);
-    if (!confirm(`Are you sure you want to delete "${hall?.name || 'this hall'}"?`)) return;
+  const handleDeleteHall = (hall: Hall) => {
+    setDeletingHall(hall);
+  };
+
+  const handleConfirmDeleteHall = async () => {
+    if (!deletingHall) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'halls', id));
+      await deleteDoc(doc(db, 'halls', deletingHall.id));
       await logAuditAction(
         currentUser?.uid || 'admin',
         userData?.name || 'Manager',
         userData?.role || 'admin',
-        `Deleted Hall Space: ${hall?.name || id}`,
+        `Deleted Hall Space: ${deletingHall.name || deletingHall.id}`,
         'Halls'
       );
       setActionNotice({ type: 'success', text: 'Hall deleted.' });
       setTimeout(() => setActionNotice(null), 3000);
+      setDeletingHall(null);
     } catch (error: any) {
       console.error("Error deleting hall:", error);
       setActionNotice({ type: 'error', text: `Failed to delete: ${error.message}` });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -228,20 +239,28 @@ export default function AdminHalls() {
     }
   };
 
-  const handleDeleteRequest = async (requestId: string, code: string) => {
-    if (!confirm(`Are you sure you want to permanently delete Hall Request #${code}?`)) return;
+  const handleDeleteRequest = (req: HallBookingRequest) => {
+    setDeletingRequest(req);
+  };
+
+  const handleConfirmDeleteRequest = async () => {
+    if (!deletingRequest) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'hall_requests', requestId));
+      await deleteDoc(doc(db, 'hall_requests', deletingRequest.id));
       try {
-        await deleteDoc(doc(db, 'bookings', requestId));
+        await deleteDoc(doc(db, 'bookings', deletingRequest.id));
       } catch (e) {}
       
-      setActionNotice({ type: 'success', text: `Request #${code} deleted.` });
+      setActionNotice({ type: 'success', text: `Request #${deletingRequest.reservationCode} deleted.` });
       setTimeout(() => setActionNotice(null), 3000);
-      if (selectedRequest?.id === requestId) setSelectedRequest(null);
+      if (selectedRequest?.id === deletingRequest.id) setSelectedRequest(null);
+      setDeletingRequest(null);
     } catch (err: any) {
       console.error('Error deleting hall request:', err);
       setActionNotice({ type: 'error', text: `Failed to delete request: ${err.message}` });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -601,8 +620,8 @@ export default function AdminHalls() {
                       </button>
 
                       <button
-                        onClick={() => handleDeleteRequest(req.id, req.reservationCode)}
-                        className="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        onClick={() => handleDeleteRequest(req)}
+                        className="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                         title="Delete Request"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -798,8 +817,8 @@ export default function AdminHalls() {
                       <Pencil className="w-4 h-4" /> Edit
                     </button>
                     <button 
-                      onClick={() => handleDeleteHall(hall.id)}
-                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold"
+                      onClick={() => handleDeleteHall(hall)}
+                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" /> Delete
                     </button>
@@ -1072,6 +1091,27 @@ export default function AdminHalls() {
         </div>
       )}
 
+      {/* Delete Hall Space Modal */}
+      <ConfirmModal
+        isOpen={!!deletingHall}
+        title="Delete Event Hall / Venue"
+        message={`Are you sure you want to delete "${deletingHall?.name}"? Any active booking requests for this hall should be reviewed first.`}
+        confirmText="Delete Hall"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteHall}
+        onClose={() => setDeletingHall(null)}
+      />
+
+      {/* Delete Hall Request Modal */}
+      <ConfirmModal
+        isOpen={!!deletingRequest}
+        title="Delete Booking Request"
+        message={`Are you sure you want to delete Hall Booking Request #${deletingRequest?.reservationCode} for ${deletingRequest?.organizerName}?`}
+        confirmText="Delete Request"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteRequest}
+        onClose={() => setDeletingRequest(null)}
+      />
     </div>
   );
 }

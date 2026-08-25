@@ -4,6 +4,7 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy } from '
 import { KitchenStation, User } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { 
   ChefHat, 
   Plus, 
@@ -34,6 +35,8 @@ export default function AdminKitchenStations() {
   });
 
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deletingStation, setDeletingStation] = useState<KitchenStation | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, 'kitchen_stations'), orderBy('displayOrder', 'asc'));
@@ -115,22 +118,29 @@ export default function AdminKitchenStations() {
     }
   };
 
-  const handleDeleteStation = async (station: KitchenStation) => {
-    if (!window.confirm(`Are you sure you want to delete "${station.name}"?`)) return;
+  const handleDeleteStation = (station: KitchenStation) => {
+    setDeletingStation(station);
+  };
 
+  const handleConfirmDeleteStation = async () => {
+    if (!deletingStation) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'kitchen_stations', station.id));
-      setNotice({ type: 'success', text: `Station "${station.name}" removed.` });
+      await deleteDoc(doc(db, 'kitchen_stations', deletingStation.id));
+      setNotice({ type: 'success', text: `Station "${deletingStation.name}" removed.` });
       await logAuditAction(
         userData?.uid || 'admin',
         userData?.name || 'Manager',
         userData?.role || 'admin',
-        `Deleted Station "${station.name}"`,
+        `Deleted Station "${deletingStation.name}"`,
         'Stations'
       );
+      setDeletingStation(null);
     } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `kitchen_stations/${station.id}`);
+      handleFirestoreError(err, OperationType.DELETE, `kitchen_stations/${deletingStation.id}`);
       setNotice({ type: 'error', text: 'Failed to delete station.' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -324,6 +334,16 @@ export default function AdminKitchenStations() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deletingStation}
+        title="Delete Kitchen Station"
+        message={`Are you sure you want to delete "${deletingStation?.name}"? Items mapped to this station may need reassignment.`}
+        confirmText="Delete Station"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteStation}
+        onClose={() => setDeletingStation(null)}
+      />
     </div>
   );
 }

@@ -88,7 +88,7 @@ export default function Rooms() {
                 </div>
                 
                 <Link 
-                  to={`/book?category=${category.id}`} 
+                  to={`/book-room?category=${category.id}`} 
                   className="block w-full py-3 text-center bg-neutral-900 text-white rounded-lg font-medium hover:bg-neutral-800 transition-colors mt-auto"
                 >
                   {t('book_now')}

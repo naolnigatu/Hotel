@@ -5,6 +5,7 @@ import { MenuItem, MenuCategory, KitchenStation } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
 import { useAuth } from '../../context/AuthContext';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { 
   Plus, 
   Pencil, 
@@ -54,6 +55,9 @@ export default function AdminMenu() {
   // Notice & Saving States
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deletingMenuItem, setDeletingMenuItem] = useState<MenuItem | null>(null);
+  const [deletingMenuCategory, setDeletingMenuCategory] = useState<MenuCategory | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form helper for ingredients / allergens
   const [ingredientsText, setIngredientsText] = useState('');
@@ -280,21 +284,29 @@ export default function AdminMenu() {
   };
 
   // Handle deleting Item
-  const handleDeleteItem = async (item: MenuItem) => {
-    if (!window.confirm(`Are you sure you want to delete "${item.name}" from the menu?`)) return;
+  const handleDeleteItem = (item: MenuItem) => {
+    setDeletingMenuItem(item);
+  };
+
+  const handleConfirmDeleteItem = async () => {
+    if (!deletingMenuItem) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'menu_items', item.id));
+      await deleteDoc(doc(db, 'menu_items', deletingMenuItem.id));
       await logAuditAction(
         userData?.uid || 'admin',
         userData?.name || 'Admin Staff',
         userData?.role || 'admin',
-        `Deleted Menu Item "${item.name}"`,
+        `Deleted Menu Item "${deletingMenuItem.name}"`,
         'Menu'
       );
-      setNotice({ type: 'success', text: `Item "${item.name}" removed.` });
+      setNotice({ type: 'success', text: `Item "${deletingMenuItem.name}" removed.` });
+      setDeletingMenuItem(null);
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `menu_items/${item.id}`);
+      handleFirestoreError(error, OperationType.DELETE, `menu_items/${deletingMenuItem.id}`);
       setNotice({ type: 'error', text: 'Failed to delete menu item.' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -370,30 +382,29 @@ export default function AdminMenu() {
     }
   };
 
-  const handleDeleteCategory = async (cat: MenuCategory) => {
-    const attachedItems = items.filter(i => i.category === cat.name || i.categoryId === cat.id);
-    if (attachedItems.length > 0) {
-      const proceed = window.confirm(
-        `Category "${cat.name}" has ${attachedItems.length} menu items attached.\nDeleting it will not delete the items, but their category label may become unmanaged. Proceed?`
-      );
-      if (!proceed) return;
-    } else {
-      if (!window.confirm(`Delete category "${cat.name}"?`)) return;
-    }
+  const handleDeleteCategory = (cat: MenuCategory) => {
+    setDeletingMenuCategory(cat);
+  };
 
+  const handleConfirmDeleteCategory = async () => {
+    if (!deletingMenuCategory) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'menu_categories', cat.id));
+      await deleteDoc(doc(db, 'menu_categories', deletingMenuCategory.id));
       await logAuditAction(
         userData?.uid || 'admin',
         userData?.name || 'Admin Staff',
         userData?.role || 'admin',
-        `Deleted Menu Category "${cat.name}"`,
+        `Deleted Menu Category "${deletingMenuCategory.name}"`,
         'Menu'
       );
-      setNotice({ type: 'success', text: `Category "${cat.name}" deleted.` });
+      setNotice({ type: 'success', text: `Category "${deletingMenuCategory.name}" deleted.` });
+      setDeletingMenuCategory(null);
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `menu_categories/${cat.id}`);
+      handleFirestoreError(error, OperationType.DELETE, `menu_categories/${deletingMenuCategory.id}`);
       setNotice({ type: 'error', text: 'Failed to delete category.' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -1317,6 +1328,28 @@ export default function AdminMenu() {
           </div>
         </div>
       )}
+
+      {/* Delete Menu Item Confirmation */}
+      <ConfirmModal
+        isOpen={!!deletingMenuItem}
+        title="Delete Menu Item"
+        message={`Are you sure you want to permanently delete "${deletingMenuItem?.name}" from the menu?`}
+        confirmText="Delete Item"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteItem}
+        onClose={() => setDeletingMenuItem(null)}
+      />
+
+      {/* Delete Menu Category Confirmation */}
+      <ConfirmModal
+        isOpen={!!deletingMenuCategory}
+        title="Delete Menu Category"
+        message={`Are you sure you want to delete the category "${deletingMenuCategory?.name}"?`}
+        confirmText="Delete Category"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteCategory}
+        onClose={() => setDeletingMenuCategory(null)}
+      />
     </div>
   );
 }

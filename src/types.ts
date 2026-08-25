@@ -512,6 +512,8 @@ export interface HotelSettings {
   bankDetails?: BankDetail[];
   telebirrNo?: string;
   telebirrAccountName?: string;
+  cbeBirrNo?: string;
+  cbeBirrAccountName?: string;
   depositEnabled?: boolean;
   depositType?: 'percentage' | 'fixed';
   depositValue?: number;

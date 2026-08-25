@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CmsAmenity } from '../../types';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { Loader2, Plus, Pencil, Trash2, X, Save } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
@@ -10,6 +11,8 @@ export default function AdminCmsAmenities() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingItem, setEditingItem] = useState<CmsAmenity | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchAmenities = async () => {
     try {
@@ -56,14 +59,22 @@ export default function AdminCmsAmenities() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this amenity?')) return;
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
     try {
-      const newAmenities = amenities.filter(a => a.id !== id);
+      const newAmenities = amenities.filter(a => a.id !== deletingId);
       await setDoc(doc(db, 'settings', 'cms_amenities'), { data: newAmenities });
       setAmenities(newAmenities);
+      setDeletingId(null);
     } catch (error) {
       console.error("Error deleting amenity:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -162,8 +173,8 @@ export default function AdminCmsAmenities() {
                   <Pencil className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => handleDelete(amenity.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  onClick={() => handleDeleteClick(amenity.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -177,6 +188,16 @@ export default function AdminCmsAmenities() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deletingId}
+        title="Delete Amenity"
+        message="Are you sure you want to permanently delete this amenity? It will be removed from the public website immediately."
+        confirmText="Delete Amenity"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingId(null)}
+      />
     </div>
   );
 }

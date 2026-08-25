@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Room, RoomCategory } from '../../types';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { Loader2, Plus, Pencil, Trash2, X, Save } from 'lucide-react';
 
 export default function AdminRoomInventory() {
@@ -10,6 +11,8 @@ export default function AdminRoomInventory() {
   const [loading, setLoading] = useState(true);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -49,13 +52,21 @@ export default function AdminRoomInventory() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this room?')) return;
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'rooms', id));
+      await deleteDoc(doc(db, 'rooms', deletingId));
       await fetchData();
+      setDeletingId(null);
     } catch (error) {
       console.error("Error deleting room:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -108,8 +119,8 @@ export default function AdminRoomInventory() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button onClick={() => setEditingRoom(room)} className="p-2 text-neutral-400 hover:text-neutral-900"><Pencil className="w-4 h-4" /></button>
-                  <button onClick={() => handleDelete(room.id)} className="p-2 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => setEditingRoom(room)} className="p-2 text-neutral-400 hover:text-neutral-900 cursor-pointer"><Pencil className="w-4 h-4" /></button>
+                  <button onClick={() => handleDeleteClick(room.id)} className="p-2 text-red-400 hover:text-red-600 cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                 </td>
               </tr>
             ))}
@@ -168,6 +179,16 @@ export default function AdminRoomInventory() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deletingId}
+        title="Delete Room"
+        message="Are you sure you want to delete this room from the inventory?"
+        confirmText="Delete Room"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingId(null)}
+      />
     </div>
   );
 }

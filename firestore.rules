@@ -23,6 +23,7 @@ service cloud.firestore {
 
     function isStaff() {
       return isSignedIn() && (
+        isAdmin() ||
         hasRole('admin') || 
         hasRole('reception') || 
         hasRole('kitchen') || 
@@ -119,6 +120,12 @@ service cloud.firestore {
     match /gallery/{imageId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+    
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
 
     // Menu items & Categories

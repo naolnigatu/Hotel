@@ -3,6 +3,7 @@ import { collection, query, getDocs, doc, setDoc, deleteDoc } from 'firebase/fir
 import { db } from '../../firebase';
 import { RoomCategory } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { Loader2, Plus, Pencil, Trash2, X, Save } from 'lucide-react';
 
 export default function AdminRooms() {
@@ -10,6 +11,8 @@ export default function AdminRooms() {
   const [loading, setLoading] = useState(true);
   const [editingCat, setEditingCat] = useState<RoomCategory | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchCategories = async () => {
     try {
@@ -48,13 +51,21 @@ export default function AdminRooms() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this room category?')) return;
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'room_categories', id));
-      setCategories(categories.filter(c => c.id !== id));
+      await deleteDoc(doc(db, 'room_categories', deletingId));
+      setCategories(categories.filter(c => c.id !== deletingId));
+      setDeletingId(null);
     } catch (error) {
       console.error("Error deleting category:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -188,8 +199,8 @@ export default function AdminRooms() {
                   <Pencil className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => handleDelete(category.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  onClick={() => handleDeleteClick(category.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -198,6 +209,16 @@ export default function AdminRooms() {
           </div>
         ))}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deletingId}
+        title="Delete Room Category"
+        message="Are you sure you want to delete this room category? This will affect listings in the booking system."
+        confirmText="Delete Category"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingId(null)}
+      />
     </div>
   );
 }

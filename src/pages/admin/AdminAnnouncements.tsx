@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import { logAuditAction } from '../../lib/auditLogger';
 import MediaManager from '../../components/admin/MediaManager';
 import CopyButton from '../../components/common/CopyButton';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { 
   Megaphone, 
   Plus, 
@@ -97,6 +98,9 @@ export default function AdminAnnouncements() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [previewItem, setPreviewItem] = useState<Announcement | null>(null);
+  const [deletingItem, setDeletingItem] = useState<Announcement | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showSeedModal, setShowSeedModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -138,7 +142,7 @@ export default function AdminAnnouncements() {
   };
 
   const handleSeedDefaults = async () => {
-    if (!confirm("Add initial sample announcements for Woliso Hotel?")) return;
+    setShowSeedModal(false);
     setSaving(true);
     try {
       for (const sample of INITIAL_SAMPLE_ANNOUNCEMENTS) {
@@ -248,23 +252,31 @@ export default function AdminAnnouncements() {
     }
   };
 
-  const handleDelete = async (announcement: Announcement) => {
-    if (!confirm(`Are you sure you want to delete the announcement "${announcement.title}"?`)) return;
+  const handleDelete = (announcement: Announcement) => {
+    setDeletingItem(announcement);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingItem) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'announcements', announcement.id));
+      await deleteDoc(doc(db, 'announcements', deletingItem.id));
       await logAuditAction(
         currentUser?.uid || 'admin',
         userData?.name || 'Admin',
         userData?.role || 'admin',
         'Delete Announcement',
         'Announcements',
-        `Deleted announcement "${announcement.title}".`
+        `Deleted announcement "${deletingItem.title}".`
       );
-      setStatusMessage({ type: 'success', text: 'Announcement deleted.' });
+      setStatusMessage({ type: 'success', text: `Announcement "${deletingItem.title}" was deleted.` });
       setTimeout(() => setStatusMessage(null), 3000);
+      setDeletingItem(null);
     } catch (err) {
       console.error("Error deleting announcement:", err);
-      setStatusMessage({ type: 'error', text: 'Failed to delete announcement.' });
+      setStatusMessage({ type: 'error', text: 'Failed to delete announcement. Please check permissions.' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -305,7 +317,7 @@ export default function AdminAnnouncements() {
         <div className="flex flex-wrap items-center gap-2.5">
           {announcements.length === 0 && !loading && (
             <button
-              onClick={handleSeedDefaults}
+              onClick={() => setShowSeedModal(true)}
               disabled={saving}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-sm font-semibold rounded-xl transition cursor-pointer"
             >
@@ -698,8 +710,8 @@ export default function AdminAnnouncements() {
           </div>
           {announcements.length === 0 && (
             <button
-              onClick={handleSeedDefaults}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 text-white text-xs font-bold rounded-xl hover:bg-neutral-800 transition"
+              onClick={() => setShowSeedModal(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 text-white text-xs font-bold rounded-xl hover:bg-neutral-800 transition cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-amber-400" />
               Load Sample Announcements
@@ -841,6 +853,32 @@ export default function AdminAnnouncements() {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deletingItem}
+        title="Delete Announcement"
+        message={`Are you sure you want to permanently delete "${deletingItem?.title}"? This action cannot be undone and will remove it from the website immediately.`}
+        confirmText="Delete Announcement"
+        cancelText="Keep"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingItem(null)}
+      />
+
+      {/* Seed Sample News Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showSeedModal}
+        title="Load Sample News"
+        message="Would you like to publish initial sample announcements and event notices for Woliso Hotel? You can edit or remove them anytime."
+        confirmText="Load Sample News"
+        cancelText="Cancel"
+        variant="info"
+        isLoading={saving}
+        onConfirm={handleSeedDefaults}
+        onClose={() => setShowSeedModal(false)}
+      />
     </div>
   );
 }

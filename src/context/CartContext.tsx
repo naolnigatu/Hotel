@@ -7,6 +7,7 @@ export interface CartItem {
   item: MenuItem;
   quantity: number;
   notes?: string;
+  selected?: boolean;
 }
 
 export interface LocationDetails {
@@ -23,6 +24,8 @@ export interface LocationDetails {
 
 interface CartContextType {
   cartItems: CartItem[];
+  selectedItemIds: string[];
+  selectedCartItems: CartItem[];
   orderType: OrderType;
   locationDetails: LocationDetails;
   isCartOpen: boolean;
@@ -35,22 +38,28 @@ interface CartContextType {
   serviceChargeRate: number; // 5%
   roomServiceFee: number; // 50 ETB
 
-  // Calculations
+  // Calculations (based on selected items, or all if none unselected)
   subtotal: number;
   taxAmount: number;
   serviceChargeAmount: number;
   applicableRoomServiceFee: number;
   grandTotal: number;
   totalItemCount: number;
+  selectedItemCount: number;
 
   // Actions
   setIsCartOpen: (open: boolean) => void;
   setOrderType: (type: OrderType) => void;
-  addToCart: (item: MenuItem, quantity?: number, notes?: string) => void;
+  addToCart: (item: MenuItem, quantity?: number, notes?: string, openDrawer?: boolean) => void;
+  quickAddToCart: (item: MenuItem) => void;
+  toggleSelectItem: (itemId: string) => void;
+  selectAllItems: () => void;
+  deselectAllItems: () => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   updateItemNotes: (itemId: string, notes: string) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
+  clearSelectedItems: () => void;
   
   setLocationDetails: (details: Partial<LocationDetails>) => void;
   resetLocationDetails: () => void;
@@ -144,6 +153,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>(() => {
+    return cartItems.map(i => i.item.id);
+  });
+
+  // Keep selected items synchronized when cart items change
+  useEffect(() => {
+    setSelectedItemIds(prev => {
+      const currentIds = cartItems.map(i => i.item.id);
+      // Keep existing valid selections, plus new items default to selected
+      const retained = prev.filter(id => currentIds.includes(id));
+      const newlyAdded = currentIds.filter(id => !prev.includes(id));
+      return [...retained, ...newlyAdded];
+    });
+  }, [cartItems.length]);
+
+  // Selected Cart Items (items that are currently checked)
+  const selectedCartItems = useMemo(() => {
+    if (selectedItemIds.length === 0) return [];
+    return cartItems.filter(i => selectedItemIds.includes(i.item.id));
+  }, [cartItems, selectedItemIds]);
 
   // Default Tax Rates (from settings)
   const vatRate = restaurantSettings.vatRate;
@@ -177,10 +206,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [locationDetails]);
 
-  // Calculations
+  // Calculations based on active selected items (or all if none deselected)
   const subtotal = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.item.price * item.quantity, 0);
-  }, [cartItems]);
+    const targetItems = selectedCartItems.length > 0 ? selectedCartItems : cartItems;
+    return targetItems.reduce((sum, item) => sum + item.item.price * item.quantity, 0);
+  }, [selectedCartItems, cartItems]);
 
   const taxAmount = useMemo(() => {
     return Math.round(subtotal * (vatRate / 100));
@@ -202,6 +232,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
 
+  const selectedItemCount = useMemo(() => {
+    return selectedCartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [selectedCartItems]);
+
   // Actions
   const setOrderType = (type: OrderType) => {
     setOrderTypeState(type);
@@ -210,7 +244,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addToCart = (item: MenuItem, quantity: number = 1, notes?: string) => {
+  const addToCart = (item: MenuItem, quantity: number = 1, notes?: string, openDrawer: boolean = true) => {
     setCartItems(prev => {
       const existingIndex = prev.findIndex(i => i.item.id === item.id);
       if (existingIndex > -1) {
@@ -222,10 +256,37 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         return updated;
       } else {
-        return [...prev, { item, quantity, notes }];
+        return [...prev, { item, quantity, notes, selected: true }];
       }
     });
-    setIsCartOpen(true);
+
+    setSelectedItemIds(prev => prev.includes(item.id) ? prev : [...prev, item.id]);
+
+    if (openDrawer) {
+      setIsCartOpen(true);
+    }
+  };
+
+  const quickAddToCart = (item: MenuItem) => {
+    addToCart(item, 1, undefined, false);
+  };
+
+  const toggleSelectItem = (itemId: string) => {
+    setSelectedItemIds(prev => {
+      if (prev.includes(itemId)) {
+        return prev.filter(id => id !== itemId);
+      } else {
+        return [...prev, itemId];
+      }
+    });
+  };
+
+  const selectAllItems = () => {
+    setSelectedItemIds(cartItems.map(i => i.item.id));
+  };
+
+  const deselectAllItems = () => {
+    setSelectedItemIds([]);
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
@@ -242,10 +303,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeFromCart = (itemId: string) => {
     setCartItems(prev => prev.filter(i => i.item.id !== itemId));
+    setSelectedItemIds(prev => prev.filter(id => id !== itemId));
   };
 
   const clearCart = () => {
     setCartItems([]);
+    setSelectedItemIds([]);
+  };
+
+  const clearSelectedItems = () => {
+    setCartItems(prev => prev.filter(i => !selectedItemIds.includes(i.item.id)));
+    setSelectedItemIds([]);
   };
 
   const setLocationDetails = (details: Partial<LocationDetails>) => {
@@ -269,6 +337,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <CartContext.Provider value={{
       cartItems,
+      selectedItemIds,
+      selectedCartItems,
       orderType,
       locationDetails,
       isCartOpen,
@@ -282,13 +352,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       applicableRoomServiceFee,
       grandTotal,
       totalItemCount,
+      selectedItemCount,
       setIsCartOpen,
       setOrderType,
       addToCart,
+      quickAddToCart,
+      toggleSelectItem,
+      selectAllItems,
+      deselectAllItems,
       updateQuantity,
       updateItemNotes,
       removeFromCart,
       clearCart,
+      clearSelectedItems,
       setLocationDetails,
       resetLocationDetails
     }}>

@@ -52,7 +52,9 @@ export default function AdminDashboardIndex() {
   useEffect(() => {
     // Real-time listener for bookings
     const unsubBookings = onSnapshot(collection(db, 'bookings'), (snap) => {
-      const bList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Booking[];
+      const bList = snap.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter((b: any) => b.type === 'room' || !b.type) as Booking[];
       setBookings(bList);
       setLoading(false);
     }, (err) => {
@@ -249,6 +251,14 @@ export default function AdminDashboardIndex() {
       path: '/admin/announcements',
       icon: Megaphone,
       description: 'Publish public hotel news, notices, and events with pictures and formatted text.',
+      category: 'CMS & Website',
+      roles: ['admin', 'reception'],
+    },
+    {
+      name: 'Testimonials',
+      path: '/admin/testimonials',
+      icon: Megaphone,
+      description: 'Review and approve guest testimonials.',
       category: 'CMS & Website',
       roles: ['admin', 'reception'],
     },

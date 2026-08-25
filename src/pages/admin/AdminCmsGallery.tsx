@@ -3,6 +3,7 @@ import { collection, query, orderBy, getDocs, doc, setDoc, deleteDoc } from 'fir
 import { db } from '../../firebase';
 import { GalleryImage } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 
 export default function AdminCmsGallery() {
@@ -11,6 +12,8 @@ export default function AdminCmsGallery() {
   const [uploading, setUploading] = useState(false);
   const [newCategory, setNewCategory] = useState('Rooms');
   const [newCaption, setNewCaption] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchImages = async () => {
     try {
@@ -52,13 +55,21 @@ export default function AdminCmsGallery() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this image?')) return;
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'gallery', id));
-      setImages(images.filter(img => img.id !== id));
+      await deleteDoc(doc(db, 'gallery', deletingId));
+      setImages(images.filter(img => img.id !== deletingId));
+      setDeletingId(null);
     } catch (error) {
       console.error("Error deleting image:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -139,8 +150,8 @@ export default function AdminCmsGallery() {
               <img src={image.url} alt={image.caption || 'Gallery Image'} className="w-full h-full object-cover" />
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
-                  onClick={() => handleDelete(image.id)}
-                  className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-sm"
+                  onClick={() => handleDeleteClick(image.id)}
+                  className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-sm cursor-pointer"
                   title="Delete Image"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -159,6 +170,16 @@ export default function AdminCmsGallery() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deletingId}
+        title="Delete Gallery Image"
+        message="Are you sure you want to delete this photo from the gallery?"
+        confirmText="Delete Image"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingId(null)}
+      />
     </div>
   );
 }

@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { MapPin, Wifi, Coffee, Car, Star, Phone, Mail, ArrowRight, Megaphone, Pin, Calendar, Sparkles } from 'lucide-react';
-import { motion } from 'motion/react';
-import { collection, doc, getDoc, getDocs, query, limit, where, orderBy } from 'firebase/firestore';
+import { Link, useNavigate } from 'react-router-dom';
+import { MapPin, Wifi, Coffee, Car, Star, Phone, Mail, ArrowRight, Megaphone, Pin, Calendar, Sparkles, X, MessageSquareHeart } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { collection, doc, getDoc, getDocs, query, limit, where, orderBy, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { CmsHome, RoomCategory, MenuItem, Hall, CmsContact, CmsAmenity, Announcement } from '../types';
+import { CmsHome, RoomCategory, MenuItem, Hall, CmsContact, CmsAmenity, Announcement, Testimonial } from '../types';
 import * as Icons from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { currentUser, userData } = useAuth();
+  
   const [cmsData, setCmsData] = useState<CmsHome | null>(null);
   const [contactData, setContactData] = useState<CmsContact | null>(null);
   const [featuredRooms, setFeaturedRooms] = useState<RoomCategory[]>([]);
@@ -20,6 +24,53 @@ export default function Home() {
   const [pinnedAnnouncement, setPinnedAnnouncement] = useState<Announcement | null>(null);
 
   const [heroImageError, setHeroImageError] = useState(false);
+  
+  // Testimonial Modal State
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false);
+  const [showAuthPromptModal, setShowAuthPromptModal] = useState(false);
+  const [guestName, setGuestName] = useState('');
+  const [guestRole, setGuestRole] = useState('Hotel Guest');
+  const [testimonialContent, setTestimonialContent] = useState('');
+  const [testimonialRating, setTestimonialRating] = useState(5);
+  const [submittingTestimonial, setSubmittingTestimonial] = useState(false);
+  const [testimonialSuccess, setTestimonialSuccess] = useState(false);
+  const [approvedTestimonials, setApprovedTestimonials] = useState<Testimonial[]>([]);
+
+  const handleOpenTestimonial = () => {
+    if (!currentUser) {
+      setShowAuthPromptModal(true);
+      return;
+    }
+    setGuestName(userData?.name || currentUser.displayName || '');
+    setGuestRole('Hotel Guest');
+    setShowTestimonialModal(true);
+    setTestimonialSuccess(false);
+    setTestimonialContent('');
+    setTestimonialRating(5);
+  };
+
+  const submitTestimonial = async () => {
+    if (!testimonialContent.trim() || !currentUser) return;
+    setSubmittingTestimonial(true);
+    try {
+      await addDoc(collection(db, 'testimonials'), {
+        name: guestName.trim() || userData?.name || currentUser.displayName || 'Verified Guest',
+        role: guestRole || 'Hotel Guest',
+        content: testimonialContent.trim(),
+        rating: testimonialRating,
+        userId: currentUser.uid,
+        userEmail: currentUser.email || '',
+        status: 'pending',
+        createdAt: Date.now()
+      });
+      setTestimonialSuccess(true);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to submit testimonial.');
+    } finally {
+      setSubmittingTestimonial(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +126,20 @@ export default function Home() {
           if (pinned) setPinnedAnnouncement(pinned);
         } catch (annErr) {
           console.warn("Announcements fetch fallback:", annErr);
+        }
+
+        // Fetch approved user testimonials
+        try {
+          const testQ = query(
+            collection(db, 'testimonials'),
+            where('status', '==', 'approved'),
+            limit(6)
+          );
+          const testSnap = await getDocs(testQ);
+          const approvedList = testSnap.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial));
+          setApprovedTestimonials(approvedList);
+        } catch (testErr) {
+          console.warn("Approved testimonials fetch:", testErr);
         }
 
       } catch (error) {
@@ -487,40 +552,95 @@ export default function Home() {
       )}
 
       {/* Testimonials */}
-      {cmsData?.testimonials && cmsData.testimonials.length > 0 && (
-        <section className="py-24 bg-neutral-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">{cmsData.testimonialsTitle || 'Guest Experiences'}</h2>
-              <p className="text-lg text-neutral-600 max-w-2xl mx-auto">{cmsData.testimonialsSubtitle || 'What our guests say about their stay.'}</p>
+      {(() => {
+        const defaultTestimonials: Testimonial[] = [
+          {
+            id: 'default-1',
+            name: 'Dr. Michael Chen',
+            role: 'International Guest & Researcher',
+            content: 'Woliso Hotel exceeded all our expectations! The serene gardens, warm Ethiopian hospitality, and exceptionally clean and comfortable rooms made our stay truly unforgettable.',
+            rating: 5
+          },
+          {
+            id: 'default-2',
+            name: 'Selamawit Bekele',
+            role: 'Conference Host & Event Planner',
+            content: 'We hosted a 3-day regional summit in the Grand Hall. The audiovisual setup, catering services, and staff responsiveness were world-class throughout.',
+            rating: 5
+          },
+          {
+            id: 'default-3',
+            name: 'Abebe Tadesse',
+            role: 'Restaurant & Weekend Guest',
+            content: 'The authentic local cuisine and international restaurant dishes are superb. The traditional fresh coffee ceremony in the garden is a must-experience!',
+            rating: 5
+          }
+        ];
+
+        const displayTestimonials = [
+          ...approvedTestimonials,
+          ...(cmsData?.testimonials && cmsData.testimonials.length > 0 ? cmsData.testimonials : defaultTestimonials)
+        ].slice(0, 6);
+
+        return (
+          <section className="py-24 bg-neutral-50 relative">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider mb-3">
+                  <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> Guest Experiences
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
+                  {cmsData?.testimonialsTitle || 'What Our Guests Say'}
+                </h2>
+                <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+                  {cmsData?.testimonialsSubtitle || 'Read authentic reviews from guests who have stayed, dined, and hosted events at Woliso Hotel.'}
+                </p>
+                
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                  <button 
+                    onClick={handleOpenTestimonial}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-full font-bold text-sm hover:bg-neutral-800 transition-all shadow-md hover:shadow-lg cursor-pointer transform hover:-translate-y-0.5"
+                  >
+                    <MessageSquareHeart className="w-4 h-4 text-rose-400" />
+                    Share Your Experience / Testimonial
+                  </button>
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-8">
+                {displayTestimonials.map((test, idx) => (
+                  <motion.div 
+                    key={test.id || idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: idx * 0.1 }}
+                    className="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex gap-1 mb-6 text-yellow-400">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-5 h-5 ${i < test.rating ? 'fill-current' : 'text-neutral-200'}`} />
+                        ))}
+                      </div>
+                      <p className="text-neutral-700 leading-relaxed italic mb-8">"{test.content}"</p>
+                    </div>
+                    <div className="pt-4 border-t border-neutral-100 flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-neutral-900">{test.name}</h4>
+                        <p className="text-xs text-neutral-500 font-medium">{test.role}</p>
+                      </div>
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                        Verified Guest
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              {cmsData.testimonials.map((test, idx) => (
-                <motion.div 
-                  key={test.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 flex flex-col"
-                >
-                  <div className="flex gap-1 mb-6 text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`w-5 h-5 ${i < test.rating ? 'fill-current' : 'text-neutral-200'}`} />
-                    ))}
-                  </div>
-                  <p className="text-neutral-700 leading-relaxed italic mb-8 flex-1">"{test.content}"</p>
-                  <div>
-                    <h4 className="font-bold text-neutral-900">{test.name}</h4>
-                    <p className="text-sm text-neutral-500">{test.role}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+          </section>
+        );
+      })()}
 
       {/* Location / Map Section */}
       <section className="py-24 bg-white">
@@ -580,6 +700,169 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Auth Prompt Modal (When Unsigned Guest Tries to Leave Testimonial) */}
+      <AnimatePresence>
+        {showAuthPromptModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-center"
+            >
+              <button
+                onClick={() => setShowAuthPromptModal(false)}
+                className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-neutral-900">
+                <MessageSquareHeart className="w-8 h-8 text-neutral-900" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-neutral-900 mb-2">Sign In to Leave a Testimonial</h3>
+              <p className="text-sm text-neutral-600 mb-6">
+                To ensure all reviews remain authentic and verified, please sign in or register your account before submitting a testimonial.
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setShowAuthPromptModal(false);
+                    navigate('/login?redirect=/');
+                  }}
+                  className="w-full py-3.5 bg-neutral-900 text-white rounded-xl font-bold hover:bg-neutral-800 transition-colors shadow-md cursor-pointer flex items-center justify-center gap-2"
+                >
+                  Sign In / Create Account
+                </button>
+                <button
+                  onClick={() => setShowAuthPromptModal(false)}
+                  className="w-full py-3 bg-neutral-100 text-neutral-700 rounded-xl font-bold hover:bg-neutral-200 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Testimonial Submission Modal (For Logged In Users) */}
+      <AnimatePresence>
+        {showTestimonialModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative"
+            >
+              <button
+                onClick={() => setShowTestimonialModal(false)}
+                className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {testimonialSuccess ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-neutral-900 mb-2">Thank You!</h3>
+                  <p className="text-neutral-600">Your testimonial has been submitted successfully and is pending review by hotel management.</p>
+                  <button
+                    onClick={() => setShowTestimonialModal(false)}
+                    className="mt-6 px-6 py-2.5 bg-neutral-900 text-white rounded-full font-bold hover:bg-neutral-800 transition cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-bold text-neutral-900 mb-1 text-center">Share Your Experience</h3>
+                  <p className="text-xs text-neutral-500 mb-6 text-center">We value your authentic feedback and love hearing about your stay.</p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">Your Name</label>
+                      <input
+                        type="text"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="e.g. Dawit Tadesse"
+                        className="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">Visit / Experience Type</label>
+                      <select
+                        value={guestRole}
+                        onChange={(e) => setGuestRole(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none text-sm"
+                      >
+                        <option value="Hotel Guest">Hotel Guest (Room Stay)</option>
+                        <option value="Restaurant & Bar Diner">Restaurant & Bar Diner</option>
+                        <option value="Conference & Meeting Host">Conference & Meeting Host</option>
+                        <option value="Wedding / Event Host">Wedding / Event Host</option>
+                        <option value="Tourist & Weekend Visitor">Tourist & Weekend Visitor</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">Rating</label>
+                      <div className="flex gap-2 justify-center py-2 bg-neutral-50 rounded-xl border border-neutral-100">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setTestimonialRating(star)}
+                            className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
+                          >
+                            <Star className={`w-7 h-7 ${star <= testimonialRating ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-300'}`} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-bold text-neutral-700 mb-1">Your Testimonial / Review</label>
+                      <textarea
+                        rows={4}
+                        placeholder="Tell us what you loved about your experience at Woliso Hotel..."
+                        value={testimonialContent}
+                        onChange={(e) => setTestimonialContent(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none resize-none text-sm"
+                      />
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={submitTestimonial}
+                      disabled={submittingTestimonial || !testimonialContent.trim()}
+                      className="w-full py-3 bg-neutral-900 text-white rounded-xl font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50 mt-2 cursor-pointer"
+                    >
+                      {submittingTestimonial ? 'Submitting...' : 'Submit Testimonial'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

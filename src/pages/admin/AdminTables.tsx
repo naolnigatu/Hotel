@@ -4,6 +4,7 @@ import { collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy } from '
 import { Table } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   Utensils, 
@@ -43,6 +44,8 @@ export default function AdminTables() {
   const qrRef = useRef<HTMLDivElement>(null);
 
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deletingTable, setDeletingTable] = useState<Table | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, 'restaurant_tables'), orderBy('tableNumber', 'asc'));
@@ -121,21 +124,29 @@ export default function AdminTables() {
     }
   };
 
-  const handleDeleteTable = async (table: Table) => {
-    if (!window.confirm(`Are you sure you want to delete Table ${table.tableNumber}?`)) return;
+  const handleDeleteTable = (table: Table) => {
+    setDeletingTable(table);
+  };
+
+  const handleConfirmDeleteTable = async () => {
+    if (!deletingTable) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'restaurant_tables', table.id));
-      setNotice({ type: 'success', text: `Table ${table.tableNumber} deleted.` });
+      await deleteDoc(doc(db, 'restaurant_tables', deletingTable.id));
+      setNotice({ type: 'success', text: `Table ${deletingTable.tableNumber} deleted.` });
       await logAuditAction(
         userData?.uid || 'admin',
         userData?.name || 'Manager',
         userData?.role || 'admin',
-        `Deleted Table ${table.tableNumber}`,
+        `Deleted Table ${deletingTable.tableNumber}`,
         'Tables'
       );
+      setDeletingTable(null);
     } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `restaurant_tables/${table.id}`);
+      handleFirestoreError(err, OperationType.DELETE, `restaurant_tables/${deletingTable.id}`);
       setNotice({ type: 'error', text: 'Failed to delete table.' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -435,6 +446,16 @@ export default function AdminTables() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deletingTable}
+        title="Delete Table"
+        message={`Are you sure you want to delete Table ${deletingTable?.tableNumber}? Any active orders bound to this table should be cleared first.`}
+        confirmText="Delete Table"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDeleteTable}
+        onClose={() => setDeletingTable(null)}
+      />
     </div>
   );
 }

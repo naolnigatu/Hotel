@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { MenuItem } from '../../types';
-import { X, Clock, Flame, Leaf, AlertTriangle, Plus, Minus, ShoppingBag, Check } from 'lucide-react';
+import { X, Clock, Flame, Leaf, AlertTriangle, Plus, Minus, ShoppingBag, Check, Zap } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 
 interface ItemDetailModalProps {
   item: MenuItem | null;
   onClose: () => void;
+  onOrderNow?: () => void;
 }
 
-export default function ItemDetailModal({ item, onClose }: ItemDetailModalProps) {
+export default function ItemDetailModal({ item, onClose, onOrderNow }: ItemDetailModalProps) {
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
@@ -16,13 +17,24 @@ export default function ItemDetailModal({ item, onClose }: ItemDetailModalProps)
 
   if (!item) return null;
 
-  const handleAddToCart = () => {
-    addToCart(item, quantity, notes);
+  const handleAddToCart = (openDrawer: boolean = false) => {
+    addToCart(item, quantity, notes, openDrawer);
     setAdded(true);
     setTimeout(() => {
       setAdded(false);
       onClose();
-    }, 600);
+      if (openDrawer) {
+        // Drawer opens via addToCart
+      }
+    }, 500);
+  };
+
+  const handleOrderNow = () => {
+    addToCart(item, quantity, notes, false);
+    onClose();
+    if (onOrderNow) {
+      onOrderNow();
+    }
   };
 
   return (
@@ -139,44 +151,58 @@ export default function ItemDetailModal({ item, onClose }: ItemDetailModalProps)
             />
           </div>
 
-          {/* Quantity Selector & Add Button */}
+          {/* Quantity Selector & Action Buttons */}
           {item.isAvailable && (
-            <div className="flex items-center gap-4 pt-2">
-              <div className="flex items-center border border-neutral-300 rounded-lg overflow-hidden bg-neutral-50">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-2.5 text-neutral-600 hover:bg-neutral-200 transition"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="px-4 font-bold text-neutral-900 text-sm">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="p-2.5 text-neutral-600 hover:bg-neutral-200 transition"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-neutral-600 uppercase tracking-wider">Select Quantity:</span>
+                <div className="flex items-center border border-neutral-300 rounded-lg overflow-hidden bg-neutral-50 shadow-xs">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="p-2 text-neutral-600 hover:bg-neutral-200 transition cursor-pointer"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="px-4 font-bold text-neutral-900 text-sm">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="p-2 text-neutral-600 hover:bg-neutral-200 transition cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              <button
-                onClick={handleAddToCart}
-                disabled={added}
-                className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 shadow-sm ${
-                  added 
-                    ? 'bg-emerald-700 text-white' 
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                }`}
-              >
-                {added ? (
-                  <>
-                    <Check className="w-4 h-4" /> Added to Cart!
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag className="w-4 h-4" /> Add ({item.price * quantity} ETB)
-                  </>
-                )}
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleAddToCart(false)}
+                  disabled={added}
+                  className={`py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 border border-emerald-600 cursor-pointer ${
+                    added 
+                      ? 'bg-emerald-50 text-emerald-800' 
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  {added ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600" /> Added to Cart!
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-4 h-4 text-emerald-600" /> Add to Cart ({item.price * quantity} ETB)
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleOrderNow}
+                  className="py-3 px-4 rounded-xl font-bold text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 text-amber-300 fill-amber-300" /> Order Now Directly
+                </button>
+              </div>
             </div>
           )}
         </div>

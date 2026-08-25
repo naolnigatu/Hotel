@@ -3,6 +3,7 @@ import { collection, query, getDocs, doc, setDoc, deleteDoc } from 'firebase/fir
 import { db } from '../../firebase';
 import { CmsOffer } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import { Loader2, Plus, Pencil, Trash2, X, Save } from 'lucide-react';
 
 export default function AdminCmsOffers() {
@@ -10,6 +11,8 @@ export default function AdminCmsOffers() {
   const [loading, setLoading] = useState(true);
   const [editingOffer, setEditingOffer] = useState<CmsOffer | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchOffers = async () => {
     try {
@@ -48,13 +51,21 @@ export default function AdminCmsOffers() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this offer?')) return;
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'offers', id));
-      setOffers(offers.filter(o => o.id !== id));
+      await deleteDoc(doc(db, 'offers', deletingId));
+      setOffers(offers.filter(o => o.id !== deletingId));
+      setDeletingId(null);
     } catch (error) {
       console.error("Error deleting offer:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -185,8 +196,8 @@ export default function AdminCmsOffers() {
                   <Pencil className="w-5 h-5" />
                 </button>
                 <button 
-                  onClick={() => handleDelete(offer.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  onClick={() => handleDeleteClick(offer.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
@@ -200,6 +211,16 @@ export default function AdminCmsOffers() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!deletingId}
+        title="Delete Special Offer"
+        message="Are you sure you want to delete this special offer? It will be removed from the offers section immediately."
+        confirmText="Delete Offer"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeletingId(null)}
+      />
     </div>
   );
 }

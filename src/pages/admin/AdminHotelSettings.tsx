@@ -369,6 +369,28 @@ export default function AdminHotelSettings() {
               className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium"
             />
           </div>
+          
+          <div>
+            <label className="block font-bold text-neutral-700 uppercase mb-1">CBE Birr Merchant / Phone No</label>
+            <input 
+              type="text" 
+              value={settings.cbeBirrNo || ''}
+              onChange={(e) => setSettings(prev => ({ ...prev, cbeBirrNo: e.target.value }))}
+              placeholder="e.g. 0911000111"
+              className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-neutral-700 uppercase mb-1">CBE Birr Account Name</label>
+            <input 
+              type="text" 
+              value={settings.cbeBirrAccountName || ''}
+              onChange={(e) => setSettings(prev => ({ ...prev, cbeBirrAccountName: e.target.value }))}
+              placeholder="e.g. Woliso Hotel PLC"
+              className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium"
+            />
+          </div>
         </div>
 
         <div className="pt-4 border-t border-neutral-100 space-y-4">

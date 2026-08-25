@@ -16,7 +16,8 @@ import Offers from './pages/Offers';
 import Announcements from './pages/Announcements';
 import Halls from './pages/Halls';
 import Rooms from './pages/Rooms';
-import Book from './pages/Book';
+import BookHub from './pages/BookHub';
+import BookRoom from './pages/BookRoom';
 import Restaurant from './pages/Restaurant';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
@@ -34,6 +35,7 @@ import AdminCmsAmenities from './pages/admin/AdminCmsAmenities';
 import AdminCmsAttractions from './pages/admin/AdminCmsAttractions';
 import AdminCmsOffers from './pages/admin/AdminCmsOffers';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
+import AdminTestimonials from './pages/admin/AdminTestimonials';
 import AdminRooms from './pages/admin/AdminRooms';
 import AdminRoomInventory from './pages/admin/AdminRoomInventory';
 import AdminReservations from './pages/admin/AdminReservations';
@@ -74,7 +76,8 @@ export default function App() {
               <Route path="announcements/:id" element={<Announcements />} />
               <Route path="halls" element={<Halls />} />
               <Route path="rooms" element={<Rooms />} />
-              <Route path="book" element={<Book />} />
+              <Route path="book" element={<BookHub />} />
+              <Route path="book-room" element={<BookRoom />} />
               <Route path="restaurant" element={<Restaurant />} />
               <Route path="restaurant/track" element={<OrderTracker />} />
               <Route path="restaurant/track/:orderId" element={<OrderTracker />} />
@@ -98,6 +101,7 @@ export default function App() {
               <Route path="cms/attractions" element={<AdminCmsAttractions />} />
               <Route path="cms/offers" element={<AdminCmsOffers />} />
               <Route path="announcements" element={<AdminAnnouncements />} />
+              <Route path="testimonials" element={<AdminTestimonials />} />
               <Route path="cms/policies" element={<AdminCmsPolicies />} />
               <Route path="rooms" element={<AdminRooms />} />
               <Route path="room-inventory" element={<AdminRoomInventory />} />
