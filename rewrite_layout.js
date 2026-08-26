@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+const fs = require('fs');
+
+const content = `import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Menu, X, Globe, User, LogOut, ArrowLeft, ChevronRight } from 'lucide-react';
@@ -34,8 +36,8 @@ function getRouteLabel(pathname: string): string {
   if (ROUTE_LABELS[pathname]) return ROUTE_LABELS[pathname];
   if (pathname.startsWith('/restaurant/track')) return 'Track Order';
   // Fallback: capitalize
-  const parts = pathname.replace(/^\//, '').split('/');
-  return parts[parts.length - 1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const parts = pathname.replace(/^\\//, '').split('/');
+  return parts[parts.length - 1].replace(/-/g, ' ').replace(/\\b\\w/g, c => c.toUpperCase());
 }
 
 export default function Layout() {
@@ -144,19 +146,19 @@ export default function Layout() {
           </div>
           
           <nav className="hidden lg:flex items-center gap-6 shrink-0">
-            <Link to="/" className={`text-sm font-medium transition-colors ${location.pathname === '/' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+            <Link to="/" className={\`text-sm font-medium transition-colors \${location.pathname === '/' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}\`}>
               {t('home')}
             </Link>
-            <Link to="/rooms" className={`text-sm font-medium transition-colors ${location.pathname === '/rooms' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+            <Link to="/rooms" className={\`text-sm font-medium transition-colors \${location.pathname === '/rooms' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}\`}>
               {t('rooms')}
             </Link>
-            <Link to="/restaurant" className={`text-sm font-medium transition-colors ${location.pathname.startsWith('/restaurant') ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+            <Link to="/restaurant" className={\`text-sm font-medium transition-colors \${location.pathname.startsWith('/restaurant') ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}\`}>
               Dining
             </Link>
-            <Link to="/halls" className={`text-sm font-medium transition-colors ${location.pathname === '/halls' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+            <Link to="/halls" className={\`text-sm font-medium transition-colors \${location.pathname === '/halls' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}\`}>
               Events
             </Link>
-            <Link to="/gallery" className={`text-sm font-medium transition-colors ${location.pathname === '/gallery' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}>
+            <Link to="/gallery" className={\`text-sm font-medium transition-colors \${location.pathname === '/gallery' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}\`}>
               Gallery
             </Link>
             
@@ -169,12 +171,12 @@ export default function Layout() {
             >
               <button 
                 onClick={(e) => toggleDropdown(e, 'more')}
-                className={`text-sm font-medium transition-colors flex items-center gap-1 ${['/about', '/announcements', '/track-reservation', '/contact', '/amenities', '/attractions', '/offers'].includes(location.pathname) || activeDropdown === 'more' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}`}
+                className={\`text-sm font-medium transition-colors flex items-center gap-1 \${['/about', '/announcements', '/track-reservation', '/contact', '/amenities', '/attractions', '/offers'].includes(location.pathname) || activeDropdown === 'more' ? 'text-neutral-950 font-semibold' : 'text-neutral-600 hover:text-neutral-900'}\`}
               >
                 More
               </button>
               
-              <div className={`absolute left-0 top-full pt-2 w-48 z-50 transition-all duration-200 ${activeDropdown === 'more' ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
+              <div className={\`absolute left-0 top-full pt-2 w-48 z-50 transition-all duration-200 \${activeDropdown === 'more' ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}\`}>
                 <div className="bg-white rounded-xl shadow-lg border border-neutral-100 py-2">
                   <Link onClick={() => setActiveDropdown(null)} to="/about" className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900">About Us</Link>
                   <Link onClick={() => setActiveDropdown(null)} to="/announcements" className="block px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900">Announcements</Link>
@@ -198,13 +200,13 @@ export default function Layout() {
             >
               <button 
                 onClick={(e) => toggleDropdown(e, 'language')}
-                className={`flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium px-1.5 sm:px-2 py-1 rounded-md transition-colors ${activeDropdown === 'language' ? 'bg-neutral-200 text-neutral-950' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'}`}
+                className={\`flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium px-1.5 sm:px-2 py-1 rounded-md transition-colors \${activeDropdown === 'language' ? 'bg-neutral-200 text-neutral-950' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'}\`}
               >
                 <Globe className="w-4 h-4 sm:w-4 sm:h-4" />
                 <span className="uppercase font-semibold hidden xs:inline">{i18n.language}</span>
               </button>
               
-              <div className={`absolute right-0 top-full pt-2 w-36 max-w-[calc(100vw-16px)] z-50 transition-all duration-200 ${activeDropdown === 'language' ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
+              <div className={\`absolute right-0 top-full pt-2 w-36 max-w-[calc(100vw-16px)] z-50 transition-all duration-200 \${activeDropdown === 'language' ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}\`}>
                 <div className="bg-white rounded-xl shadow-lg border border-neutral-100 py-1.5">
                   <button onClick={() => changeLanguage('en')} className="block w-full text-left px-4 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50">English (EN)</button>
                   <button onClick={() => changeLanguage('am')} className="block w-full text-left px-4 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50">አማርኛ (AM)</button>
@@ -223,13 +225,13 @@ export default function Layout() {
               >
                 <button 
                   onClick={(e) => toggleDropdown(e, 'profile')}
-                  className={`flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition-colors cursor-pointer ${activeDropdown === 'profile' ? 'bg-neutral-200 text-neutral-950' : 'text-neutral-700 hover:text-neutral-950 bg-neutral-100 hover:bg-neutral-200'}`}
+                  className={\`flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg transition-colors cursor-pointer \${activeDropdown === 'profile' ? 'bg-neutral-200 text-neutral-950' : 'text-neutral-700 hover:text-neutral-950 bg-neutral-100 hover:bg-neutral-200'}\`}
                 >
                   <User className="w-4 h-4 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{userData?.name?.split(' ')[0] || 'Profile'}</span>
                 </button>
                 
-                <div className={`absolute right-0 top-full pt-2 w-56 max-w-[calc(100vw-16px)] z-50 transition-all duration-200 ${activeDropdown === 'profile' ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
+                <div className={\`absolute right-0 top-full pt-2 w-56 max-w-[calc(100vw-16px)] z-50 transition-all duration-200 \${activeDropdown === 'profile' ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}\`}>
                   <div className="bg-white rounded-xl shadow-lg border border-neutral-100 overflow-hidden">
                     <div className="px-4 py-3 border-b border-neutral-100 bg-neutral-50/50">
                       <p className="text-sm font-bold text-neutral-900 truncate">{userData?.name || 'Guest'}</p>
@@ -340,9 +342,9 @@ export default function Layout() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Language</span>
                   <div className="flex gap-2">
-                    <button onClick={() => changeLanguage('en')} className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${i18n.language === 'en' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}`}>EN</button>
-                    <button onClick={() => changeLanguage('am')} className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${i18n.language === 'am' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}`}>አማ</button>
-                    <button onClick={() => changeLanguage('om')} className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${i18n.language === 'om' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}`}>OM</button>
+                    <button onClick={() => changeLanguage('en')} className={\`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors \${i18n.language === 'en' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}\`}>EN</button>
+                    <button onClick={() => changeLanguage('am')} className={\`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors \${i18n.language === 'am' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}\`}>አማ</button>
+                    <button onClick={() => changeLanguage('om')} className={\`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors \${i18n.language === 'om' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}\`}>OM</button>
                   </div>
                 </div>
                 
@@ -389,3 +391,7 @@ export default function Layout() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/components/Layout.tsx', content);
+console.log('Successfully wrote Layout.tsx');

@@ -553,33 +553,9 @@ export default function Home() {
 
       {/* Testimonials */}
       {(() => {
-        const defaultTestimonials: Testimonial[] = [
-          {
-            id: 'default-1',
-            name: 'Dr. Michael Chen',
-            role: 'International Guest & Researcher',
-            content: 'Woliso Hotel exceeded all our expectations! The serene gardens, warm Ethiopian hospitality, and exceptionally clean and comfortable rooms made our stay truly unforgettable.',
-            rating: 5
-          },
-          {
-            id: 'default-2',
-            name: 'Selamawit Bekele',
-            role: 'Conference Host & Event Planner',
-            content: 'We hosted a 3-day regional summit in the Grand Hall. The audiovisual setup, catering services, and staff responsiveness were world-class throughout.',
-            rating: 5
-          },
-          {
-            id: 'default-3',
-            name: 'Abebe Tadesse',
-            role: 'Restaurant & Weekend Guest',
-            content: 'The authentic local cuisine and international restaurant dishes are superb. The traditional fresh coffee ceremony in the garden is a must-experience!',
-            rating: 5
-          }
-        ];
-
         const displayTestimonials = [
           ...approvedTestimonials,
-          ...(cmsData?.testimonials && cmsData.testimonials.length > 0 ? cmsData.testimonials : defaultTestimonials)
+          ...(cmsData?.testimonials || [])
         ].slice(0, 6);
 
         return (

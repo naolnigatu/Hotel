@@ -235,6 +235,16 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     setVerifiedBooking(null);
 
     try {
+      // Find the room document by room number
+      const roomsRef = collection(db, 'rooms');
+      const roomQ = query(roomsRef, where('roomNumber', '==', roomNumber));
+      const roomSnap = await getDocs(roomQ);
+      
+      let matchedRoomId = null;
+      if (!roomSnap.empty) {
+        matchedRoomId = roomSnap.docs[0].id;
+      }
+
       // Find active Checked In bookings
       const bookingsRef = collection(db, 'bookings');
       const q = query(
@@ -247,6 +257,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       // Filter by room number
       const roomMatch = activeBookings.find(b => 
         b.roomId === roomNumber ||
+        (matchedRoomId && b.roomId === matchedRoomId) ||
         (b as any).roomNumber === roomNumber
       );
 
