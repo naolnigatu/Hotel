@@ -191,7 +191,7 @@ export default function NotificationCenter() {
 
       {/* Notification Dropdown Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-neutral-200 z-50 overflow-hidden text-neutral-800 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-neutral-200 z-50 overflow-hidden text-neutral-800 animate-in fade-in slide-in-from-top-2 duration-150 overscroll-contain">
           {/* Panel Header */}
           <div className="p-3.5 bg-neutral-900 text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ export default function NotificationCenter() {
           </div>
 
           {/* Notification List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-neutral-100">
+          <div className="max-h-80 overflow-y-auto overscroll-contain divide-y divide-neutral-100">
             {filteredNotifs.length === 0 ? (
               <div className="p-8 text-center text-neutral-400 space-y-2">
                 <Bell className="w-8 h-8 mx-auto opacity-30" />

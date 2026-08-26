@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { cleanFirestoreData } from '../../lib/firestoreUtils';
 import { X, Loader2, Calendar, User, Phone, Mail, DollarSign, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { format, addDays } from 'date-fns';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface WalkInModalProps {
   categories: Record<string, RoomCategory>;
@@ -16,6 +17,7 @@ interface WalkInModalProps {
 }
 
 export default function WalkInModal({ categories, rooms, existingBookings, onClose, onSuccess }: WalkInModalProps) {
+  useBodyScrollLock(true);
   const { userData } = useAuth();
   
   const [bookingSource, setBookingSource] = useState<'Walk-in' | 'Phone' | 'Government/VIP'>('Walk-in');
@@ -253,8 +255,8 @@ export default function WalkInModal({ categories, rooms, existingBookings, onClo
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-2xl my-8 overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
+      <div className="bg-white rounded-2xl w-full max-w-2xl my-8 overflow-hidden shadow-2xl overscroll-contain">
         {/* Header */}
         <div className="bg-neutral-900 text-white p-6 flex justify-between items-center">
           <div>

@@ -1,14 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../firebase';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
-import { Booking, Order, OrderTimelineEvent } from '../../types';
+import { db, storage } from '../../firebase';
+import { collection, addDoc, getDocs, getDoc, doc, query, where } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { Booking, Order, OrderTimelineEvent, HotelSettings, BankDetail } from '../../types';
 import { sendNotification } from '../../lib/notificationService';
 import { cleanFirestoreData } from '../../lib/firestoreUtils';
 import { saveRecentOrder } from '../../lib/trackingStorage';
-import { X, CheckCircle, ShieldCheck, Hotel, UtensilsCrossed, CreditCard, DollarSign, Building2, AlertCircle, Loader2, FileText, ArrowLeft } from 'lucide-react';
+import { 
+  X, CheckCircle, ShieldCheck, Hotel, UtensilsCrossed, CreditCard, DollarSign, 
+  Building2, AlertCircle, Loader2, FileText, ArrowLeft, UploadCloud, Eye, Trash2, 
+  Smartphone, Hash, Info, Check
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import CopyButton from '../common/CopyButton';
+import ReceiptLightboxModal from '../common/ReceiptLightboxModal';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -16,6 +24,7 @@ interface CheckoutModalProps {
 }
 
 export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
+  useBodyScrollLock(isOpen);
   const { 
     cartItems, 
     selectedCartItems,
@@ -45,9 +54,100 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [customerPhone, setCustomerPhone] = useState(locationDetails.guestPhone || userData?.phone || '');
   const [customerEmail, setCustomerEmail] = useState(locationDetails.guestEmail || currentUser?.email || '');
   const [orderNotes, setOrderNotes] = useState(locationDetails.orderNotes || '');
-  const [paymentMethod, setPaymentMethod] = useState<string>(
-    orderType === 'Room Service' ? 'Room Charge' : 'Pay at Counter'
-  );
+  const [paymentMethod, setPaymentMethod] = useState<string>('Pay at Counter');
+
+  // Payment Proof & Bank Info States
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [paymentPreviewUrl, setPaymentPreviewUrl] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState('');
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [fullscreenReceiptUrl, setFullscreenReceiptUrl] = useState<string | null>(null);
+  const [hotelSettings, setHotelSettings] = useState<HotelSettings | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Compute strictly active payment methods based on restaurant & hotel settings
+  const availablePaymentMethods = useMemo(() => {
+    const configured = (restaurantSettings.acceptedPaymentMethods && restaurantSettings.acceptedPaymentMethods.length > 0)
+      ? restaurantSettings.acceptedPaymentMethods
+      : (hotelSettings?.acceptedPaymentMethods && hotelSettings.acceptedPaymentMethods.length > 0)
+        ? hotelSettings.acceptedPaymentMethods
+        : ['Cash', 'POS', 'Bank Transfer', 'Telebirr'];
+
+    const normalized: { id: string; label: string; icon: any }[] = [];
+
+    configured.forEach(methodKey => {
+      const keyLower = methodKey.toLowerCase().trim();
+      if (keyLower.includes('cash') || keyLower.includes('counter')) {
+        if (!normalized.some(m => m.id === 'Pay at Counter')) {
+          normalized.push({ id: 'Pay at Counter', label: 'Cash / Counter', icon: DollarSign });
+        }
+      } else if (keyLower.includes('room') || keyLower.includes('charge')) {
+        // Room charge is only applicable for Room Service orders
+        if (orderType === 'Room Service') {
+          if (!normalized.some(m => m.id === 'Room Charge')) {
+            normalized.push({ id: 'Room Charge', label: 'Charge to Room', icon: Hotel });
+          }
+        }
+      } else if (keyLower.includes('bank') || keyLower.includes('transfer') || keyLower.includes('deposit')) {
+        if (!normalized.some(m => m.id === 'Bank Transfer')) {
+          normalized.push({ id: 'Bank Transfer', label: 'Bank Transfer', icon: Building2 });
+        }
+      } else if (keyLower.includes('telebirr')) {
+        if (!normalized.some(m => m.id === 'Telebirr')) {
+          normalized.push({ id: 'Telebirr', label: 'Telebirr', icon: Smartphone });
+        }
+      } else if (keyLower.includes('cbe birr') || keyLower.includes('cbebirr')) {
+        if (!normalized.some(m => m.id === 'CBE Birr')) {
+          normalized.push({ id: 'CBE Birr', label: 'CBE Birr', icon: Building2 });
+        }
+      } else if (keyLower.includes('mobile')) {
+        if (!normalized.some(m => m.id === 'Mobile Banking')) {
+          normalized.push({ id: 'Mobile Banking', label: 'Mobile Banking', icon: Smartphone });
+        }
+      } else if (keyLower.includes('pos') || keyLower.includes('card')) {
+        if (!normalized.some(m => m.id === 'POS')) {
+          normalized.push({ id: 'POS', label: 'POS / Card', icon: CreditCard });
+        }
+      } else {
+        if (!normalized.some(m => m.id === methodKey)) {
+          normalized.push({ id: methodKey, label: methodKey, icon: DollarSign });
+        }
+      }
+    });
+
+    if (normalized.length === 0) {
+      normalized.push({ id: 'Pay at Counter', label: 'Pay at Counter', icon: DollarSign });
+    }
+
+    return normalized;
+  }, [restaurantSettings.acceptedPaymentMethods, hotelSettings?.acceptedPaymentMethods, orderType]);
+
+  // Keep paymentMethod strictly synchronized with active allowed list
+  useEffect(() => {
+    if (availablePaymentMethods.length > 0) {
+      const isValid = availablePaymentMethods.some(m => m.id === paymentMethod);
+      if (!isValid) {
+        setPaymentMethod(availablePaymentMethods[0].id);
+      }
+    }
+  }, [availablePaymentMethods, paymentMethod]);
+
+  // Dynamic Bank Accounts & Merchant Credentials
+  const activeBankDetails: BankDetail[] = useMemo(() => {
+    if (restaurantSettings.bankDetails && restaurantSettings.bankDetails.length > 0) {
+      return restaurantSettings.bankDetails;
+    }
+    if (hotelSettings?.bankDetails && hotelSettings.bankDetails.length > 0) {
+      return hotelSettings.bankDetails;
+    }
+    return [];
+  }, [restaurantSettings.bankDetails, hotelSettings?.bankDetails]);
+
+  const telebirrNumber = restaurantSettings.telebirrNo || hotelSettings?.telebirrNo;
+  const telebirrName = restaurantSettings.telebirrAccountName || hotelSettings?.telebirrAccountName || 'Woliso Hotel';
+
+  const cbeBirrNumber = restaurantSettings.cbeBirrNo || hotelSettings?.cbeBirrNo;
+  const cbeBirrName = restaurantSettings.cbeBirrAccountName || hotelSettings?.cbeBirrAccountName || 'Woliso Hotel';
 
   // Verification & Submission States
   const [verifyingRoom, setVerifyingRoom] = useState(false);
@@ -61,7 +161,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Synchronize defaults on modal open
+  // Synchronize defaults on modal open and fetch hotel payment settings
   useEffect(() => {
     if (isOpen) {
       if (locationDetails.tableNumber) setTableNumber(locationDetails.tableNumber);
@@ -70,8 +170,58 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       if (userData?.displayName && !customerName) setCustomerName(userData.displayName);
       if (userData?.phone && !customerPhone) setCustomerPhone(userData.phone);
       if (currentUser?.email && !customerEmail) setCustomerEmail(currentUser.email);
+
+      // Fetch hotel general payment settings for rich bank details
+      getDoc(doc(db, 'app_settings', 'hotel'))
+        .then(snap => {
+          if (snap.exists()) {
+            setHotelSettings(snap.data() as HotelSettings);
+          }
+        })
+        .catch(err => console.warn('Could not load hotel settings:', err));
     }
   }, [isOpen]);
+
+  // Handle Payment File Selection
+  const handleFileChange = (file: File | null) => {
+    if (!file) {
+      setPaymentFile(null);
+      setPaymentPreviewUrl(null);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setSubmitError('Payment proof file exceeds 5MB limit. Please upload a smaller image or PDF.');
+      return;
+    }
+
+    setPaymentFile(file);
+    setSubmitError('');
+
+    if (file.type.startsWith('image/')) {
+      const previewUrl = URL.createObjectURL(file);
+      setPaymentPreviewUrl(previewUrl);
+    } else {
+      setPaymentPreviewUrl('pdf');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDraggingFile(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingFile(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileChange(e.dataTransfer.files[0]);
+    }
+  };
 
   // Handle Room Verification
   const verifyRoomOccupancy = async () => {
@@ -219,16 +369,47 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       return;
     }
 
+    const isTransferPayment = ['Bank Transfer', 'Mobile Banking', 'Telebirr', 'CBE Birr'].includes(paymentMethod);
+    if (isTransferPayment && !paymentFile && !transactionId.trim()) {
+      setSubmitError('Please upload your payment receipt / transfer screenshot or enter your transaction reference number.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const orderNumber = `WOL-${Math.floor(100000 + Math.random() * 900000)}`;
 
+      // Upload payment proof if provided
+      let proofUrl = '';
+      if (paymentFile) {
+        try {
+          const safeFileName = paymentFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+          const storageRef = ref(storage, `order_receipts/${orderNumber}_${Date.now()}_${safeFileName}`);
+          const uploadTask = await Promise.race([
+            uploadBytes(storageRef, paymentFile),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Storage timeout')), 4000))
+          ]) as any;
+          proofUrl = await getDownloadURL(uploadTask.ref);
+        } catch (storageErr) {
+          console.warn('Storage upload fallback to Data URL:', storageErr);
+          // Fallback to data URL
+          proofUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string || '');
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(paymentFile);
+          });
+        }
+      }
+
       const initialTimeline: OrderTimelineEvent[] = [
         {
           status: 'Order Submitted',
           timestamp: Date.now(),
-          note: `Order placed via ${orderType}`,
+          note: proofUrl 
+            ? `Order placed via ${orderType} with payment receipt attached (${paymentMethod})`
+            : `Order placed via ${orderType} (${paymentMethod})`,
           updatedBy: customerName
         }
       ];
@@ -277,7 +458,11 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         roomServiceFee: applicableRoomServiceFee,
         totalAmount: grandTotal,
         paymentMethod,
-        paymentStatus: paymentMethod === 'Room Charge' ? 'Charged to Room' : 'Pending',
+        paymentStatus: isTransferPayment 
+          ? (proofUrl ? 'Pending Verification' : 'Pending') 
+          : (paymentMethod === 'Room Charge' ? 'Charged to Room' : 'Pending'),
+        paymentProofUrl: proofUrl || '',
+        transactionId: transactionId.trim() || '',
         status: 'Order Submitted',
         orderNotes: orderNotes.trim(),
         timeline: initialTimeline,
@@ -347,9 +532,9 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overscroll-contain">
       <div 
-        className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-100 flex flex-col"
+        className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto overscroll-contain shadow-2xl border border-neutral-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -516,47 +701,239 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           </div>
 
           {/* Payment Method Selection */}
-          <div className="space-y-2 pt-2 border-t border-neutral-100">
-            <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
-              Payment Option <span className="text-rose-500">*</span>
-            </label>
+          <div className="space-y-3 pt-3 border-t border-neutral-200">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
+                Payment Option <span className="text-rose-500">*</span>
+              </label>
+              <span className="text-[10px] text-neutral-400">
+                {availablePaymentMethods.length} option{availablePaymentMethods.length !== 1 ? 's' : ''} available
+              </span>
+            </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {restaurantSettings.acceptedPaymentMethods.map((method) => {
-                if (method === 'Room Charge' && orderType !== 'Room Service') return null;
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              {availablePaymentMethods.map((item) => {
+                const Icon = item.icon || DollarSign;
+                const isSelected = paymentMethod === item.id;
 
-                let Icon = DollarSign;
-                if (method === 'Room Charge') Icon = Hotel;
-                else if (method === 'Bank Transfer') Icon = Building2;
-                else if (method === 'POS') Icon = CreditCard;
-                
                 return (
                   <button
-                    key={method}
+                    key={item.id}
                     type="button"
-                    onClick={() => setPaymentMethod(method)}
-                    className={`p-3 rounded-xl border font-bold flex items-center gap-2 transition ${
-                      paymentMethod === method
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-900 shadow-xs'
-                        : 'border-neutral-200 text-neutral-700 hover:bg-neutral-50'
+                    onClick={() => {
+                      setPaymentMethod(item.id);
+                      setSubmitError('');
+                    }}
+                    className={`p-3 rounded-xl border text-left font-bold flex items-center gap-2 transition ${
+                      isSelected
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-900 shadow-xs ring-1 ring-emerald-500'
+                        : 'border-neutral-200 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300'
                     }`}
                   >
-                    <Icon className="w-4 h-4 text-emerald-600" /> {method}
+                    <Icon className={`w-4 h-4 shrink-0 ${isSelected ? 'text-emerald-600' : 'text-neutral-500'}`} />
+                    <span className="truncate">{item.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            {paymentMethod === 'Bank Transfer' && restaurantSettings.bankDetails && restaurantSettings.bankDetails.length > 0 && (
-              <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-[11px] text-neutral-600 space-y-2">
-                {restaurantSettings.bankDetails.map(bank => (
-                  <div key={bank.id}>
-                    <p className="font-bold text-neutral-900">{bank.bankName}</p>
-                    {bank.accountName && <p>Account Name: {bank.accountName}</p>}
-                    {bank.accountNumber && <p>Account Number: {bank.accountNumber}</p>}
-                    {bank.shortCode && <p className="text-emerald-700 font-semibold">Short Code / Merchant: {bank.shortCode}</p>}
+            {/* Bank Transfer / Mobile Banking / Telebirr / CBE Birr Instructions & Proof Upload */}
+            {['Bank Transfer', 'Mobile Banking', 'Telebirr', 'CBE Birr'].includes(paymentMethod) && (
+              <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 space-y-4 animate-fade-in">
+                <div className="flex items-start gap-2.5">
+                  <Info className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                  <div className="text-xs text-neutral-600">
+                    <p className="font-bold text-neutral-900">
+                      Payment Details for {paymentMethod}
+                    </p>
+                    <p className="mt-0.5">
+                      Please transfer <span className="font-bold text-emerald-700">{grandTotal.toLocaleString()} ETB</span> using the official account information below, then upload your transaction receipt.
+                    </p>
                   </div>
-                ))}
+                </div>
+
+                {/* Dynamic Account Details Box */}
+                <div className="bg-white p-3.5 rounded-xl border border-neutral-200 divide-y divide-neutral-100 text-xs space-y-2">
+                  {/* Telebirr Dedicated Account Display */}
+                  {paymentMethod === 'Telebirr' && (
+                    <div className="pt-2 first:pt-0">
+                      {telebirrNumber ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-neutral-900 flex items-center gap-1.5">
+                              <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+                              Telebirr Merchant / Phone
+                            </p>
+                            <p className="text-[11px] text-neutral-500">
+                              {telebirrName} • <span className="font-mono font-bold text-neutral-900">{telebirrNumber}</span>
+                            </p>
+                          </div>
+                          <CopyButton text={telebirrNumber} label="Copy" size="xs" variant="neutral" />
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-lg">
+                          Telebirr number has not been configured in admin settings yet. Please ask the waiter or reception for details.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* CBE Birr Dedicated Account Display */}
+                  {paymentMethod === 'CBE Birr' && (
+                    <div className="pt-2 first:pt-0">
+                      {cbeBirrNumber ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-neutral-900 flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                              CBE Birr Merchant Code / Phone
+                            </p>
+                            <p className="text-[11px] text-neutral-500">
+                              {cbeBirrName} • <span className="font-mono font-bold text-neutral-900">{cbeBirrNumber}</span>
+                            </p>
+                          </div>
+                          <CopyButton text={cbeBirrNumber} label="Copy" size="xs" variant="neutral" />
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-lg">
+                          CBE Birr merchant code has not been configured in admin settings yet. Please ask the waiter or reception for details.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bank Accounts (For Bank Transfer and Mobile Banking) */}
+                  {(paymentMethod === 'Bank Transfer' || paymentMethod === 'Mobile Banking') && (
+                    <>
+                      {activeBankDetails.length > 0 ? (
+                        activeBankDetails.map((bank) => (
+                          <div key={bank.id} className="py-2 first:pt-0 last:pb-0 flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-neutral-900 flex items-center gap-1.5 truncate">
+                                <Building2 className="w-3.5 h-3.5 text-neutral-700 shrink-0" />
+                                {bank.bankName || 'Commercial Bank Account'}
+                              </p>
+                              <p className="text-[11px] text-neutral-500 truncate">
+                                {bank.accountName ? `${bank.accountName} • ` : ''}
+                                <span className="font-mono font-bold text-neutral-900">{bank.accountNumber}</span>
+                                {bank.shortCode ? ` (${bank.shortCode})` : ''}
+                              </p>
+                            </div>
+                            <CopyButton text={bank.accountNumber} label="Copy" size="xs" variant="neutral" />
+                          </div>
+                        ))
+                      ) : (
+                        <div className="py-2 text-center text-neutral-500">
+                          <p className="text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-lg">
+                            No bank accounts configured in restaurant settings yet. Please contact management or choose Pay at Counter.
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* File Upload Dropzone */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-neutral-700 flex items-center gap-1">
+                      <UploadCloud className="w-3.5 h-3.5 text-emerald-600" />
+                      Upload Payment Proof / Transfer Receipt <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] text-neutral-400">PNG, JPG, PDF (Max 5MB)</span>
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg, image/webp, application/pdf"
+                    className="hidden"
+                    onChange={(e) => handleFileChange(e.target.files ? e.target.files[0] : null)}
+                  />
+
+                  {!paymentFile ? (
+                    <div
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`p-4 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition ${
+                        isDraggingFile
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-900'
+                          : 'border-neutral-300 hover:border-emerald-500 hover:bg-white bg-neutral-100/60'
+                      }`}
+                    >
+                      <UploadCloud className="w-7 h-7 text-neutral-400 mb-1" />
+                      <p className="text-xs font-bold text-neutral-700">
+                        Click to upload or drag & drop transfer receipt
+                      </p>
+                      <p className="text-[10px] text-neutral-500 mt-0.5">
+                        Screenshot of mobile banking confirmation or photo of bank deposit slip
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-white border border-emerald-300 rounded-xl flex items-center justify-between gap-3 shadow-xs">
+                      <div className="flex items-center gap-2.5 overflow-hidden">
+                        {paymentPreviewUrl && paymentPreviewUrl !== 'pdf' ? (
+                          <img
+                            src={paymentPreviewUrl}
+                            alt="Receipt Preview"
+                            className="w-12 h-12 rounded-lg object-cover border border-neutral-200 shrink-0 cursor-pointer hover:opacity-80"
+                            onClick={() => setFullscreenReceiptUrl(paymentPreviewUrl)}
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200 shrink-0">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        )}
+                        <div className="truncate">
+                          <p className="text-xs font-bold text-neutral-900 truncate">{paymentFile.name}</p>
+                          <p className="text-[10px] text-neutral-500">{(paymentFile.size / 1024).toFixed(1)} KB • Ready to submit</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {paymentPreviewUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setFullscreenReceiptUrl(paymentPreviewUrl)}
+                            className="p-1.5 text-neutral-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                            title="View Fullscreen"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span className="hidden sm:inline">Preview</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPaymentFile(null);
+                            setPaymentPreviewUrl(null);
+                          }}
+                          className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                          title="Remove File"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Optional Transaction ID Input */}
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1 flex items-center gap-1">
+                    <Hash className="w-3.5 h-3.5 text-neutral-400" />
+                    Transaction / Reference ID <span className="text-neutral-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. FT24098273948 or CBE-981240"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                    className="w-full p-2 text-xs border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-mono"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -588,7 +965,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             <button
               type="submit"
               disabled={submitting}
-              className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition flex items-center gap-2 shadow-md"
+              className="py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition flex items-center gap-2 shadow-md disabled:opacity-50 cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -596,13 +973,20 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 </>
               ) : (
                 <>
-                  Place Order ({grandTotal} ETB)
+                  Place Order ({grandTotal.toLocaleString()} ETB)
                 </>
               )}
             </button>
           </div>
         </form>
       </div>
+
+      {/* In-Page Fullscreen Receipt Lightbox */}
+      <ReceiptLightboxModal
+        imageUrl={fullscreenReceiptUrl}
+        title="Payment Receipt Preview"
+        onClose={() => setFullscreenReceiptUrl(null)}
+      />
     </div>
   );
 }

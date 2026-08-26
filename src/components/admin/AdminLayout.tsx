@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { auth, db } from '../../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { 
   LayoutDashboard, 
   Settings, 
@@ -36,6 +37,9 @@ export default function AdminLayout() {
   const location = useLocation();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [hotelName, setHotelName] = useState('');
+
+  // Prevent background scrolling when mobile drawer menu is open
+  useBodyScrollLock(mobileDrawerOpen);
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'app_settings', 'hotel'), (docSnap) => {
@@ -137,17 +141,17 @@ export default function AdminLayout() {
   const secondaryItem = getSecondaryActionItem();
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col md:flex-row">
+    <div className="min-h-screen md:h-screen bg-neutral-50 flex flex-col md:flex-row md:overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col hidden md:flex shrink-0">
-        <div className="h-16 flex items-center justify-between px-6 border-b border-neutral-200">
+      <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col hidden md:flex shrink-0 h-screen sticky top-0">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-neutral-200 shrink-0">
           <Link to="/" className="flex items-center gap-2 text-neutral-900 font-bold text-lg hover:text-neutral-700 transition">
             <Building2 className="w-6 h-6 text-neutral-900 shrink-0" />
             <span className="truncate">{hotelName ? `${hotelName} Admin` : 'Hotel Admin'}</span>
           </Link>
         </div>
         
-        <nav className="flex-1 overflow-y-auto py-4">
+        <nav className="flex-1 overflow-y-auto overscroll-contain py-4">
           <ul className="space-y-1 px-3">
             {navItems.map((item) => (
               <li key={item.path}>
@@ -172,7 +176,7 @@ export default function AdminLayout() {
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-neutral-200 space-y-2">
+        <div className="p-4 border-t border-neutral-200 space-y-2 shrink-0 bg-white">
           <Link 
             to="/" 
             className="flex items-center w-full px-3 py-2 text-xs font-semibold text-neutral-600 rounded-lg hover:bg-neutral-100 transition-colors"
@@ -192,7 +196,7 @@ export default function AdminLayout() {
 
       {/* Mobile Slide-Out Drawer Navigation */}
       {mobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
+        <div className="fixed inset-0 z-50 md:hidden flex touch-none overscroll-contain">
           {/* Backdrop */}
           <div 
             className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs transition-opacity"
@@ -200,8 +204,8 @@ export default function AdminLayout() {
           />
 
           {/* Drawer Content */}
-          <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
-            <div className="h-16 flex items-center justify-between px-5 border-b border-neutral-200">
+          <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200 overscroll-contain">
+            <div className="h-16 flex items-center justify-between px-5 border-b border-neutral-200 shrink-0">
               <div className="flex items-center gap-2 min-w-0">
                 <Building2 className="w-6 h-6 text-neutral-900 shrink-0" />
                 <span className="font-bold text-base text-neutral-900 truncate">{hotelName ? `${hotelName} Portal` : 'Staff Portal'}</span>
@@ -216,7 +220,7 @@ export default function AdminLayout() {
             </div>
 
             {/* User Profile in Drawer */}
-            <div className="p-4 bg-neutral-50 border-b border-neutral-200 flex items-center gap-3">
+            <div className="p-4 bg-neutral-50 border-b border-neutral-200 flex items-center gap-3 shrink-0">
               <div className="w-10 h-10 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shrink-0">
                 {userData.name.charAt(0).toUpperCase()}
               </div>
@@ -229,7 +233,7 @@ export default function AdminLayout() {
             </div>
 
             {/* Nav list */}
-            <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+            <nav className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-1">
               {navItems.map((item) => (
                 <NavLink
                   key={item.path}
@@ -254,7 +258,7 @@ export default function AdminLayout() {
             </nav>
 
             {/* Drawer Footer */}
-            <div className="p-4 border-t border-neutral-200 space-y-2 bg-white">
+            <div className="p-4 border-t border-neutral-200 space-y-2 bg-white shrink-0">
               <Link
                 to="/"
                 onClick={() => setMobileDrawerOpen(false)}
@@ -276,7 +280,7 @@ export default function AdminLayout() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-screen overflow-hidden pb-16 md:pb-0">
+      <main className="flex-1 flex flex-col min-h-screen md:min-h-0 md:h-screen overflow-hidden pb-16 md:pb-0">
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-4 sm:px-6 md:px-8 shrink-0 sticky top-0 z-30 shadow-2xs">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -337,7 +341,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-neutral-50 p-4 sm:p-6 md:p-8">
+        <div className="flex-1 overflow-y-auto overscroll-contain bg-neutral-50 p-4 sm:p-6 md:p-8">
           <Outlet />
         </div>
 

@@ -31,8 +31,14 @@ import {
   Search, 
   RefreshCw,
   MapPin,
-  DollarSign
+  DollarSign,
+  Eye,
+  FileText,
+  ShieldCheck,
+  Hash
 } from 'lucide-react';
+import ReceiptLightboxModal from '../../components/common/ReceiptLightboxModal';
+import CopyButton from '../../components/common/CopyButton';
 
 export default function WaiterDashboard() {
   const { userData } = useAuth();
@@ -47,6 +53,8 @@ export default function WaiterDashboard() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [claimingOrderId, setClaimingOrderId] = useState<string | null>(null);
+  const [fullscreenReceiptUrl, setFullscreenReceiptUrl] = useState<string | null>(null);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
 
   const waiterId = auth.currentUser?.uid || userData?.uid || 'anonymous-waiter';
   const waiterName = userData?.name || 'Waiter';
@@ -235,6 +243,43 @@ export default function WaiterDashboard() {
       setActionSuccess(`Service request marked as ${newStatus}`);
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `service_requests/${requestId}`);
+    }
+  };
+
+  const handleVerifyPayment = async (orderId: string) => {
+    setVerifyingPayment(true);
+    try {
+      const orderRef = doc(db, 'restaurant_orders', orderId);
+      const targetOrder = orders.find(o => o.id === orderId);
+      const newTimeline = [
+        ...(targetOrder?.timeline || []),
+        {
+          status: 'Payment Verified',
+          timestamp: Date.now(),
+          note: `Payment slip verified by ${waiterName}`,
+          updatedBy: waiterName
+        }
+      ];
+
+      await updateDoc(orderRef, {
+        paymentStatus: 'Paid',
+        timeline: newTimeline,
+        updatedAt: Date.now()
+      });
+
+      if (selectedOrder?.id === orderId) {
+        setSelectedOrder({
+          ...selectedOrder,
+          paymentStatus: 'Paid',
+          timeline: newTimeline
+        });
+      }
+
+      setActionSuccess(`Payment verified and marked as Paid for Order #${targetOrder?.orderNumber || orderId.slice(-6)}`);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `restaurant_orders/${orderId}`);
+    } finally {
+      setVerifyingPayment(false);
     }
   };
 
@@ -682,12 +727,89 @@ export default function WaiterDashboard() {
                   <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200">
                     <span className="text-neutral-400 block mb-0.5">Payment Status</span>
                     <span className={`font-bold ${
-                      selectedOrder.paymentStatus === 'Paid' ? 'text-emerald-600' : 'text-amber-600'
+                      selectedOrder.paymentStatus === 'Paid' ? 'text-emerald-600' : 
+                      selectedOrder.paymentStatus === 'Pending Verification' ? 'text-amber-600 animate-pulse' : 'text-neutral-700'
                     }`}>
                       {selectedOrder.paymentStatus} ({selectedOrder.paymentMethod})
                     </span>
                   </div>
                 </div>
+
+                {/* Payment Proof Review Box */}
+                {(selectedOrder.paymentProofUrl || selectedOrder.transactionId || selectedOrder.paymentStatus === 'Pending Verification') && (
+                  <div className="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 text-xs space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-amber-900 flex items-center gap-1.5">
+                        <Receipt className="w-3.5 h-3.5 text-amber-700" />
+                        Payment Verification Slip
+                      </h4>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        selectedOrder.paymentStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                      }`}>
+                        {selectedOrder.paymentStatus}
+                      </span>
+                    </div>
+
+                    {selectedOrder.transactionId && (
+                      <div className="flex items-center justify-between text-[11px] text-neutral-700 pt-1 border-t border-amber-200/60">
+                        <span className="flex items-center gap-1">
+                          <Hash className="w-3 h-3 text-neutral-400" /> Transaction Ref:
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono font-bold text-neutral-900">{selectedOrder.transactionId}</span>
+                          <CopyButton text={selectedOrder.transactionId} size="xs" variant="neutral" />
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedOrder.paymentProofUrl && (
+                      <div className="pt-1 flex items-center justify-between gap-2">
+                        <div 
+                          onClick={() => setFullscreenReceiptUrl(selectedOrder.paymentProofUrl || null)}
+                          className="flex items-center gap-2 cursor-pointer group"
+                        >
+                          {selectedOrder.paymentProofUrl !== 'pdf' ? (
+                            <img
+                              src={selectedOrder.paymentProofUrl}
+                              alt="Receipt"
+                              className="w-10 h-10 rounded-lg object-cover border border-amber-200 group-hover:opacity-80 transition"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div>
+                            <span className="font-bold text-neutral-900 block group-hover:text-amber-800">Receipt Attached</span>
+                            <span className="text-[10px] text-neutral-500 flex items-center gap-1">
+                              <Eye className="w-3 h-3 text-amber-600" /> Tap to view full screen
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setFullscreenReceiptUrl(selectedOrder.paymentProofUrl || null)}
+                          className="px-2.5 py-1.5 bg-white hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Fullscreen
+                        </button>
+                      </div>
+                    )}
+
+                    {selectedOrder.paymentStatus !== 'Paid' && (
+                      <button
+                        type="button"
+                        disabled={verifyingPayment}
+                        onClick={() => handleVerifyPayment(selectedOrder.id)}
+                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs disabled:opacity-50"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        {verifyingPayment ? 'Verifying...' : 'Verify Receipt & Mark Paid'}
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Item List */}
                 <div>
@@ -786,6 +908,13 @@ export default function WaiterDashboard() {
           </div>
         </div>
       )}
+
+      {/* In-Page Fullscreen Receipt Lightbox */}
+      <ReceiptLightboxModal
+        imageUrl={fullscreenReceiptUrl}
+        title={`Payment Receipt: Order #${selectedOrder?.orderNumber || ''}`}
+        onClose={() => setFullscreenReceiptUrl(null)}
+      />
     </div>
   );
 }

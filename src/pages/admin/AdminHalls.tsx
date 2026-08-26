@@ -18,6 +18,7 @@ import { sendNotification } from '../../lib/notificationService';
 import CopyButton from '../../components/common/CopyButton';
 import MediaManager from '../../components/admin/MediaManager';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { 
   Loader2, 
   Plus, 
@@ -78,6 +79,9 @@ export default function AdminHalls() {
   const [deletingHall, setDeletingHall] = useState<Hall | null>(null);
   const [deletingRequest, setDeletingRequest] = useState<HallBookingRequest | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Lock body scroll when any modal is open
+  useBodyScrollLock(!!selectedRequest || actionModal.isOpen);
 
   // Subscribe to Halls & Hall Booking Requests
   useEffect(() => {
@@ -834,8 +838,8 @@ export default function AdminHalls() {
       {/* ACTION CONFIRMATION MODAL (Approve / Reject) */}
       {/* ========================================================================= */}
       {actionModal.isOpen && actionModal.request && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150 overscroll-contain">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className={`p-3 rounded-xl ${
@@ -928,8 +932,8 @@ export default function AdminHalls() {
       {/* REQUEST DETAILS MODAL */}
       {/* ========================================================================= */}
       {selectedRequest && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-xl w-full my-8 shadow-2xl border border-neutral-200 overflow-hidden space-y-0 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-3xl max-w-xl w-full my-8 shadow-2xl border border-neutral-200 overflow-hidden space-y-0 animate-in zoom-in-95 duration-150 overscroll-contain">
             {/* Header */}
             <div className="bg-neutral-900 text-white p-6 flex items-center justify-between">
               <div>

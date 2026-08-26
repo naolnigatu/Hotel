@@ -40,11 +40,11 @@ export default function AdminHotelSettings() {
     cancellationPolicy: 'Free cancellation up to 48 hours before check-in. Cancellations within 48 hours incur a 1-night penalty.',
     bookingPolicy: 'Full payment or deposit required upon booking confirmation.',
     acceptedPaymentMethods: ['Pay at Hotel', 'Bank Transfer', 'Telebirr', 'CBE Birr', 'POS', 'Cash'],
-    telebirrNo: '0911000111',
-    telebirrAccountName: 'Woliso Hotel PLC',
-    bankDetails: [
-      { id: '1', bankName: 'Commercial Bank of Ethiopia (CBE)', accountName: 'Woliso Hotel PLC', accountNumber: '1000123456789' }
-    ]
+    telebirrNo: '',
+    telebirrAccountName: '',
+    cbeBirrNo: '',
+    cbeBirrAccountName: '',
+    bankDetails: []
   });
 
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,13 @@ export default function AdminHotelSettings() {
         const settingsRef = doc(db, 'app_settings', 'hotel');
         const snap = await getDoc(settingsRef);
         if (snap.exists()) {
-          setSettings(snap.data() as HotelSettings);
+          const data = snap.data() as HotelSettings;
+          setSettings(prev => ({
+            ...prev,
+            ...data,
+            acceptedPaymentMethods: Array.isArray(data.acceptedPaymentMethods) ? data.acceptedPaymentMethods : prev.acceptedPaymentMethods,
+            bankDetails: Array.isArray(data.bankDetails) ? data.bankDetails : []
+          }));
         }
       } catch (err) {
         handleFirestoreError(err, OperationType.GET, 'app_settings/hotel');

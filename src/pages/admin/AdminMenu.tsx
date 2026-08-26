@@ -6,6 +6,7 @@ import MediaManager from '../../components/admin/MediaManager';
 import { useAuth } from '../../context/AuthContext';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { 
   Plus, 
   Pencil, 
@@ -45,6 +46,9 @@ export default function AdminMenu() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [quickCategoryName, setQuickCategoryName] = useState('');
   const [showQuickCategoryModal, setShowQuickCategoryModal] = useState(false);
+
+  // Prevent background scroll when any modal is open
+  useBodyScrollLock(!!editingItem || isCategoryModalOpen || showQuickCategoryModal);
 
   // Filter & Search States
   const [searchQuery, setSearchQuery] = useState('');
@@ -903,8 +907,8 @@ export default function AdminMenu() {
       {/* MODAL 1: ADD / EDIT MENU ITEM                                             */}
       {/* ========================================================================= */}
       {editingItem && (
-        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-2xl w-full p-6 space-y-6 shadow-2xl my-8">
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-2xl w-full p-6 space-y-6 shadow-2xl my-8 overscroll-contain">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
                 <UtensilsCrossed className="w-5 h-5 text-neutral-900" />
@@ -1174,8 +1178,8 @@ export default function AdminMenu() {
       {/* MODAL 2: ADD / EDIT MENU CATEGORY                                         */}
       {/* ========================================================================= */}
       {isCategoryModalOpen && (
-        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-5 shadow-2xl">
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-5 shadow-2xl overscroll-contain">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
                 <FolderPlus className="w-5 h-5 text-neutral-900" />
@@ -1278,8 +1282,8 @@ export default function AdminMenu() {
       {/* MODAL 3: QUICK CREATE CATEGORY (From Item Form)                           */}
       {/* ========================================================================= */}
       {showQuickCategoryModal && (
-        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-60">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-sm w-full p-5 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-60 overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-sm w-full p-5 space-y-4 shadow-2xl overscroll-contain">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-2.5">
               <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-1.5">
                 <FolderPlus className="w-4 h-4 text-emerald-600" />

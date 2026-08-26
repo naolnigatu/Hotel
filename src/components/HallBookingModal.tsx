@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { sendNotification } from '../lib/notificationService';
 import { saveRecentReservation } from '../lib/trackingStorage';
 import CopyButton from './common/CopyButton';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { 
   X, 
   Calendar, 
@@ -56,6 +57,7 @@ export default function HallBookingModal({
   selectedHall,
   allHalls
 }: HallBookingModalProps) {
+  useBodyScrollLock(isOpen);
   const { currentUser, userData } = useAuth();
   const navigate = useNavigate();
 
@@ -250,8 +252,8 @@ export default function HallBookingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-neutral-200 my-8">
+    <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-neutral-200 my-8 overscroll-contain">
         
         {/* Modal Header */}
         <div className="bg-neutral-900 text-white p-6 sm:p-7 flex items-center justify-between">

@@ -36,6 +36,7 @@ import ReservationCalendar from './ReservationCalendar';
 import WalkInModal from '../../components/admin/WalkInModal';
 import GuestProfileModal from '../../components/admin/GuestProfileModal';
 import CopyButton from '../../components/common/CopyButton';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 import { sendNotification } from '../../lib/notificationService';
 
@@ -63,6 +64,9 @@ export default function AdminReservations() {
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [selectedGuestProfile, setSelectedGuestProfile] = useState<{ phone: string; email: string; name: string } | null>(null);
   const [previewPaymentImage, setPreviewPaymentImage] = useState<string | null>(null);
+
+  // Lock body scroll if any reservation modal or lightboxes are open
+  useBodyScrollLock(!!selectedBooking || showWalkInModal || !!selectedGuestProfile || !!previewPaymentImage);
 
   // Action states
   const [actionLoading, setActionLoading] = useState(false);
@@ -888,8 +892,8 @@ export default function AdminReservations() {
 
       {/* RESERVATION DETAILS & ACTIONS MODAL */}
       {selectedBooking && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl w-full max-w-4xl my-8 overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-2xl w-full max-w-4xl my-8 overflow-hidden shadow-2xl overscroll-contain">
             {/* Modal Header */}
             <div className="p-6 bg-neutral-900 text-white flex justify-between items-center sticky top-0 z-10">
               <div>

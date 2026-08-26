@@ -293,8 +293,9 @@ export interface Order {
   roomServiceFee?: number;
   totalAmount: number;
   paymentMethod: string;
-  paymentStatus: 'Pending' | 'Paid' | 'Charged to Room' | 'Failed';
+  paymentStatus: 'Pending' | 'Paid' | 'Charged to Room' | 'Pending Verification' | 'Failed';
   paymentProofUrl?: string;
+  transactionId?: string;
   status: OrderStatus;
   orderNotes?: string;
   kitchenNotes?: string;
@@ -340,6 +341,10 @@ export interface RestaurantSettings {
   operatingHours: string;
   acceptedPaymentMethods: string[];
   bankDetails?: BankDetail[];
+  telebirrNo?: string;
+  telebirrAccountName?: string;
+  cbeBirrNo?: string;
+  cbeBirrAccountName?: string;
   kitchenStations?: string[];
 }
 

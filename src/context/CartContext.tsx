@@ -78,22 +78,8 @@ const DEFAULT_SETTINGS: RestaurantSettings = {
   minimumOrderAmount: 0,
   isRestaurantOpen: true,
   operatingHours: '6:00 AM - 11:00 PM',
-  acceptedPaymentMethods: ['Cash', 'Pay at Counter', 'POS', 'Bank Transfer', 'Room Charge'],
-  bankDetails: [
-    {
-      id: 'cbe',
-      bankName: 'Commercial Bank of Ethiopia (CBE)',
-      accountName: 'Woliso Hotel Plc',
-      accountNumber: '1000 1234 5678 9'
-    },
-    {
-      id: 'telebirr',
-      bankName: 'Telebirr',
-      accountName: 'Woliso Hotel Plc',
-      accountNumber: '789012',
-      shortCode: '789012'
-    }
-  ]
+  acceptedPaymentMethods: ['Cash', 'POS', 'Bank Transfer', 'Telebirr', 'Charge to Room'],
+  bankDetails: []
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -102,11 +88,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'app_settings', 'restaurant'), (docSnap) => {
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        setRestaurantSettings(prev => ({
-          ...prev,
-          ...data
-        }));
+        const data = docSnap.data() as RestaurantSettings;
+        setRestaurantSettings({
+          ...DEFAULT_SETTINGS,
+          ...data,
+          acceptedPaymentMethods: Array.isArray(data.acceptedPaymentMethods) ? data.acceptedPaymentMethods : DEFAULT_SETTINGS.acceptedPaymentMethods,
+          bankDetails: Array.isArray(data.bankDetails) ? data.bankDetails : []
+        });
       }
     }, (error) => {
       console.error("Error fetching restaurant settings:", error);

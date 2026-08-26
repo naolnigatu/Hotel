@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { collection, query, getDocs, addDoc, serverTimestamp, where, doc, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
+import { useAuth } from '../context/AuthContext';
 import { RoomCategory, Booking, Room, HotelSettings } from '../types';
 import { format, addDays, startOfDay } from 'date-fns';
 import { Loader2, Calendar, Users, ArrowRight, CheckCircle2, Upload, ArrowLeft, X, FileText, Maximize2, Eye, Smartphone, Building2, CreditCard } from 'lucide-react';
@@ -18,6 +19,7 @@ export default function Book() {
   const [searchParams] = useSearchParams();
   const preSelectedCategoryId = searchParams.get('category');
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const [step, setStep] = useState(1);
   const [categories, setCategories] = useState<RoomCategory[]>([]);
@@ -63,7 +65,14 @@ export default function Book() {
 
         const settingsDoc = await getDoc(doc(db, 'app_settings', 'hotel'));
         if (settingsDoc.exists()) {
-          setHotelSettings(settingsDoc.data() as HotelSettings);
+          const settingsData = settingsDoc.data() as HotelSettings;
+          setHotelSettings(settingsData);
+          if (settingsData.acceptedPaymentMethods && settingsData.acceptedPaymentMethods.length > 0) {
+            setPaymentMethod(prev => {
+              if (settingsData.acceptedPaymentMethods.includes(prev)) return prev;
+              return settingsData.acceptedPaymentMethods[0];
+            });
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -236,7 +245,7 @@ export default function Book() {
       const newBooking: Omit<Booking, 'id'> = {
         reservationCode: code,
         type: 'room',
-        guestId: null,
+        guestId: currentUser?.uid || null,
         guestDetails,
         categoryId: selectedCategory!.id,
         numberOfGuests: guests,
@@ -555,69 +564,18 @@ export default function Book() {
                           CBE Birr account details are currently being updated by management.
                         </div>
                       )
-                    ) : paymentMethod === 'Mobile Banking' ? (
-                      /* Mobile Banking Specific View */
-                      hotelSettings?.bankDetails && hotelSettings.bankDetails.length > 0 ? (
-                        hotelSettings.bankDetails.map((bank, i) => (
-                          <div key={i} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-neutral-900 text-sm flex items-center gap-2">
-                                <Building2 className="w-4 h-4 text-neutral-700" />
-                                {bank.bankName} (Mobile Banking App / USSD *889#)
-                              </span>
-                              <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded">
-                                Mobile Transfer
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-xs text-neutral-600">
-                              <span>Account Name:</span>
-                              <span className="font-semibold text-neutral-900">{bank.accountName}</span>
-                            </div>
-                            <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
-                              <span className="text-xs text-neutral-600">Account Number:</span>
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-sm font-black text-neutral-900">{bank.accountNumber}</span>
-                                <CopyButton text={bank.accountNumber} size="sm" />
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-neutral-900 text-sm flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-neutral-700" />
-                              Commercial Bank of Ethiopia (CBE Mobile App)
-                            </span>
-                            <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded">
-                              USSD *889# / App
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-neutral-600">
-                            <span>Account Name:</span>
-                            <span className="font-semibold text-neutral-900">Woliso Hotel</span>
-                          </div>
-                          <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
-                            <span className="text-xs text-neutral-600">Account Number:</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-sm font-black text-neutral-900">1000123456789</span>
-                              <CopyButton text="1000123456789" size="sm" />
-                            </div>
-                          </div>
-                        </div>
-                      )
                     ) : (
-                      /* Direct Bank Transfer / Deposit */
+                      /* Mobile Banking & Bank Transfer / Deposit */
                       hotelSettings?.bankDetails && hotelSettings.bankDetails.length > 0 ? (
                         hotelSettings.bankDetails.map((bank, i) => (
-                          <div key={i} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
+                          <div key={bank.id || i} className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
                             <div className="flex items-center justify-between">
                               <span className="font-bold text-neutral-900 text-sm flex items-center gap-2">
                                 <Building2 className="w-4 h-4 text-neutral-700" />
                                 {bank.bankName}
                               </span>
                               <span className="text-[10px] bg-neutral-100 text-neutral-700 font-bold px-2 py-0.5 rounded">
-                                Bank Transfer
+                                {bank.shortCode ? bank.shortCode : 'Bank Account'}
                               </span>
                             </div>
                             <div className="flex items-center justify-between text-xs text-neutral-600">
@@ -634,16 +592,8 @@ export default function Book() {
                           </div>
                         ))
                       ) : (
-                        <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs space-y-2">
-                          <p className="font-bold text-neutral-900 text-sm">Commercial Bank of Ethiopia</p>
-                          <p className="text-xs text-neutral-600">Account Name: Woliso Hotel</p>
-                          <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
-                            <span className="text-xs text-neutral-600">Account Number:</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-sm font-black text-neutral-900">1000123456789</span>
-                              <CopyButton text="1000123456789" size="sm" />
-                            </div>
-                          </div>
+                        <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200 text-sm text-amber-900">
+                          Bank account numbers have not been configured in hotel settings yet. Please contact reception to obtain current transfer details.
                         </div>
                       )
                     )}

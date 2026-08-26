@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MenuItem } from '../../types';
 import { X, Clock, Flame, Leaf, AlertTriangle, Plus, Minus, ShoppingBag, Check, Zap } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ItemDetailModalProps {
   item: MenuItem | null;
@@ -10,6 +11,7 @@ interface ItemDetailModalProps {
 }
 
 export default function ItemDetailModal({ item, onClose, onOrderNow }: ItemDetailModalProps) {
+  useBodyScrollLock(!!item);
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
@@ -38,9 +40,9 @@ export default function ItemDetailModal({ item, onClose, onOrderNow }: ItemDetai
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overscroll-contain">
       <div 
-        className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-100 flex flex-col"
+        className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto overscroll-contain shadow-2xl border border-neutral-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header Image */}

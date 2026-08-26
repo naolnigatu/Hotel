@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCart } from '../../context/CartContext';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, UtensilsCrossed, Hotel, ShoppingCart, CheckSquare, Square, Check } from 'lucide-react';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface CartDrawerProps {
   onProceedToCheckout: () => void;
@@ -32,6 +33,8 @@ export default function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
     selectedItemCount
   } = useCart();
 
+  useBodyScrollLock(isCartOpen);
+
   if (!isCartOpen) return null;
 
   const isAllSelected = cartItems.length > 0 && selectedItemIds.length === cartItems.length;
@@ -47,9 +50,9 @@ export default function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-fade-in">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-fade-in overscroll-contain">
       <div 
-        className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between"
+        className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drawer Header */}

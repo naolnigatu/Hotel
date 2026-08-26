@@ -16,6 +16,7 @@ import { logAuditAction } from '../../lib/auditLogger';
 import MediaManager from '../../components/admin/MediaManager';
 import CopyButton from '../../components/common/CopyButton';
 import ConfirmModal from '../../components/common/ConfirmModal';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { 
   Megaphone, 
   Plus, 
@@ -102,6 +103,9 @@ export default function AdminAnnouncements() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showSeedModal, setShowSeedModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Lock body scroll when modals are open
+  useBodyScrollLock(!!editingItem || !!previewItem || showSeedModal);
 
   useEffect(() => {
     const q = query(collection(db, 'announcements'));
@@ -356,8 +360,8 @@ export default function AdminAnnouncements() {
 
       {/* Edit / Create Modal or Slide-in Drawer */}
       {editingItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200 overscroll-contain">
             {/* Modal Header */}
             <div className="px-6 sm:px-8 py-5 border-b border-neutral-100 flex items-center justify-between bg-neutral-900 text-white">
               <div className="flex items-center gap-2.5">
@@ -569,8 +573,8 @@ export default function AdminAnnouncements() {
 
       {/* Live Preview Modal */}
       {previewItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 overscroll-contain">
             <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-100">
               <span className="text-xs font-bold uppercase tracking-wider text-neutral-600 flex items-center gap-1.5">
                 <Eye className="w-4 h-4 text-neutral-900" /> Guest View Preview

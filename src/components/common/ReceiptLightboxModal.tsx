@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, ZoomIn, ZoomOut, RotateCcw, Download, FileText } from 'lucide-react';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ReceiptLightboxModalProps {
   imageUrl: string | null;
@@ -9,6 +10,7 @@ interface ReceiptLightboxModalProps {
 
 export default function ReceiptLightboxModal({ imageUrl, title = 'Payment Receipt', onClose }: ReceiptLightboxModalProps) {
   const [scale, setScale] = useState(1);
+  useBodyScrollLock(!!imageUrl);
 
   // Close on Escape key
   useEffect(() => {
@@ -19,11 +21,9 @@ export default function ReceiptLightboxModal({ imageUrl, title = 'Payment Receip
     };
     if (imageUrl) {
       window.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
     }
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'auto';
     };
   }, [imageUrl, onClose]);
 
@@ -48,7 +48,7 @@ export default function ReceiptLightboxModal({ imageUrl, title = 'Payment Receip
 
   return (
     <div 
-      className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 animate-fade-in select-none"
+      className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 animate-fade-in select-none overscroll-contain"
       onClick={onClose}
     >
       {/* Top Header Bar */}

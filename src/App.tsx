@@ -23,6 +23,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import MyActivity from './pages/MyActivity';
 import NotFound from './pages/NotFound';
 import AdminDashboardIndex from './pages/admin/AdminDashboardIndex';
 import AdminCmsHome from './pages/admin/AdminCmsHome';
@@ -86,6 +87,7 @@ export default function App() {
               <Route path="terms" element={<TermsConditions />} />
               <Route path="login" element={<Login />} />
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="my-activity" element={<MyActivity />} />
               <Route path="*" element={<NotFound />} />
             </Route>
 

@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { db } from '../firebase';
-import { doc, onSnapshot, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { db, storage } from '../firebase';
+import { doc, onSnapshot, collection, query, where, getDocs, addDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Order, OrderStatus } from '../types';
 import { useAuth } from '../context/AuthContext';
 import TrackingTabsHeader from '../components/TrackingTabsHeader';
+import ReceiptLightboxModal from '../components/common/ReceiptLightboxModal';
 import { 
   getRecentOrders, 
   saveRecentOrder, 
@@ -31,7 +33,14 @@ import {
   HandPlatter,
   CreditCard,
   Sparkles,
-  X
+  X,
+  Building2,
+  FileText,
+  Eye,
+  UploadCloud,
+  Hash,
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
 import { sendNotification } from '../lib/notificationService';
 import CopyButton from '../components/common/CopyButton';
@@ -60,6 +69,10 @@ export default function OrderTracker() {
   const [requestingService, setRequestingService] = useState(false);
   const [recentList, setRecentList] = useState<RecentOrder[]>([]);
   const [activeOrderId, setActiveOrderId] = useState<string>('');
+  const [fullscreenReceiptUrl, setFullscreenReceiptUrl] = useState<string | null>(null);
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [proofUploadError, setProofUploadError] = useState('');
+  const postOrderFileRef = useRef<HTMLInputElement>(null);
 
   const refreshRecent = () => {
     setRecentList(getRecentOrders());
@@ -264,6 +277,76 @@ export default function OrderTracker() {
        alert("Failed to request service. Please check connection.");
     } finally {
        setRequestingService(false);
+    }
+  };
+
+  const handleUploadPostOrderProof = async (file: File) => {
+    if (!order) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setProofUploadError('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setUploadingProof(true);
+    setProofUploadError('');
+
+    try {
+      let downloadUrl = '';
+      try {
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const storageRef = ref(storage, `order_receipts/${order.orderNumber || order.id}_${Date.now()}_${safeName}`);
+        const uploadTask = await Promise.race([
+          uploadBytes(storageRef, file),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Storage timeout')), 4000))
+        ]) as any;
+        downloadUrl = await getDownloadURL(uploadTask.ref);
+      } catch (e) {
+        console.warn('Storage fallback to Data URL for tracker:', e);
+        downloadUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve(ev.target?.result as string || '');
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (!downloadUrl) throw new Error('Could not process receipt file.');
+
+      const newTimelineEvent = {
+        status: 'Payment Proof Uploaded',
+        timestamp: Date.now(),
+        note: `Payment receipt uploaded via order tracker (${file.name})`,
+        updatedBy: order.customerName || 'Customer'
+      };
+
+      const updatedTimeline = [...(order.timeline || []), newTimelineEvent];
+
+      await updateDoc(doc(db, 'restaurant_orders', order.id), {
+        paymentProofUrl: downloadUrl,
+        paymentStatus: 'Pending Verification',
+        timeline: updatedTimeline,
+        updatedAt: Date.now()
+      });
+
+      // Notify Waiter / Kitchen
+      await sendNotification({
+        recipientRole: 'waiter',
+        title: `Payment Receipt Uploaded: Order #${order.orderNumber || order.id.slice(-6)}`,
+        message: `${order.customerName || 'Customer'} uploaded a payment slip for ${order.locationRef}.`,
+        type: 'order',
+        relatedEntityId: order.id,
+        relatedEntityType: 'order',
+        targetRoute: '/admin/waiter',
+        priority: 'Important',
+        eventId: `ord_receipt_${order.id}_${Date.now()}`
+      });
+
+      alert('Payment receipt uploaded successfully! Staff will verify it shortly.');
+    } catch (err: any) {
+      console.error('Error uploading payment proof:', err);
+      setProofUploadError(err.message || 'Failed to upload receipt. Please try again.');
+    } finally {
+      setUploadingProof(false);
     }
   };
 
@@ -564,6 +647,114 @@ export default function OrderTracker() {
                     <span className="text-emerald-700 font-extrabold text-base">{order.totalAmount?.toLocaleString()} ETB</span>
                   </div>
                 </div>
+
+                {/* Payment Proof & Verification Section */}
+                <div className="pt-4 border-t border-neutral-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-xs text-neutral-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+                      Payment & Receipt Verification
+                    </h4>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      order.paymentStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' :
+                      order.paymentStatus === 'Pending Verification' ? 'bg-amber-100 text-amber-800 animate-pulse' :
+                      order.paymentStatus === 'Charged to Room' ? 'bg-purple-100 text-purple-800' :
+                      'bg-neutral-100 text-neutral-700'
+                    }`}>
+                      {order.paymentStatus}
+                    </span>
+                  </div>
+
+                  <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200 text-xs space-y-2">
+                    <div className="flex justify-between items-center text-[11px] text-neutral-600">
+                      <span>Payment Method:</span>
+                      <span className="font-bold text-neutral-900">{order.paymentMethod}</span>
+                    </div>
+
+                    {order.transactionId && (
+                      <div className="flex justify-between items-center text-[11px] text-neutral-600 pt-1 border-t border-neutral-200/60">
+                        <span className="flex items-center gap-1">
+                          <Hash className="w-3 h-3 text-neutral-400" /> Transaction Ref:
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono font-bold text-neutral-900">{order.transactionId}</span>
+                          <CopyButton text={order.transactionId} size="xs" variant="neutral" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Receipt Display or Upload Prompt */}
+                    {order.paymentProofUrl ? (
+                      <div className="pt-2 border-t border-neutral-200/60 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          {order.paymentProofUrl !== 'pdf' ? (
+                            <img
+                              src={order.paymentProofUrl}
+                              alt="Payment Proof"
+                              className="w-10 h-10 rounded-lg object-cover border border-neutral-200 shrink-0 cursor-pointer hover:opacity-80 transition"
+                              onClick={() => setFullscreenReceiptUrl(order.paymentProofUrl || null)}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-bold text-xs text-neutral-900">Payment Slip Attached</p>
+                            <p className="text-[10px] text-neutral-500">Tap preview to view fullscreen</p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setFullscreenReceiptUrl(order.paymentProofUrl || null)}
+                          className="px-2.5 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-neutral-200 hover:border-emerald-300 rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-2xs"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View Receipt
+                        </button>
+                      </div>
+                    ) : ['Bank Transfer', 'Mobile Banking', 'Telebirr', 'CBE Birr'].includes(order.paymentMethod) ? (
+                      <div className="pt-2 border-t border-neutral-200/60 space-y-2">
+                        <div className="flex items-center gap-1.5 text-[11px] text-amber-700">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>No receipt slip attached yet. Please upload your transfer confirmation for fast verification.</span>
+                        </div>
+
+                        <input
+                          ref={postOrderFileRef}
+                          type="file"
+                          accept="image/png, image/jpeg, image/jpg, image/webp, application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleUploadPostOrderProof(e.target.files[0]);
+                            }
+                          }}
+                        />
+
+                        <button
+                          type="button"
+                          disabled={uploadingProof}
+                          onClick={() => postOrderFileRef.current?.click()}
+                          className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                        >
+                          {uploadingProof ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading Receipt...
+                            </>
+                          ) : (
+                            <>
+                              <UploadCloud className="w-3.5 h-3.5" /> Upload Payment Receipt Slip
+                            </>
+                          )}
+                        </button>
+                        {proofUploadError && (
+                          <p className="text-[10px] text-rose-600 text-center">{proofUploadError}</p>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
 
               {/* Timeline Events Log */}
@@ -638,6 +829,13 @@ export default function OrderTracker() {
           </div>
         )}
       </div>
+
+      {/* In-Page Fullscreen Receipt Lightbox */}
+      <ReceiptLightboxModal
+        imageUrl={fullscreenReceiptUrl}
+        title={`Payment Receipt: ${order?.orderNumber || ''}`}
+        onClose={() => setFullscreenReceiptUrl(null)}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../../context/AuthContext';
 import { X, User, Phone, Mail, Award, History, Building2, Calendar, FileText, Send, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface GuestProfileModalProps {
   guestPhone: string;
@@ -27,6 +28,7 @@ export default function GuestProfileModal({
   onClose,
   onRefresh
 }: GuestProfileModalProps) {
+  useBodyScrollLock(true);
   const { userData } = useAuth();
 
   // Find all bookings matching phone or email
@@ -97,8 +99,8 @@ export default function GuestProfileModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-3xl my-8 overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
+      <div className="bg-white rounded-2xl w-full max-w-3xl my-8 overflow-hidden shadow-2xl overscroll-contain">
         {/* Header */}
         <div className="bg-neutral-900 text-white p-6 flex justify-between items-center">
           <div className="flex items-center gap-3">

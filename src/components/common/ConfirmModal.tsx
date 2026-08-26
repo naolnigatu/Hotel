@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -24,11 +25,13 @@ export default function ConfirmModal({
   onClose,
   isLoading = false,
 }: ConfirmModalProps) {
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto overscroll-contain animate-in fade-in duration-150">
+      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in zoom-in-95 duration-150 overscroll-contain">
         <div className="p-6 sm:p-7 space-y-4">
           <div className="flex items-start justify-between">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${

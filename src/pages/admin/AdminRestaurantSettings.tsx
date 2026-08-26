@@ -30,10 +30,11 @@ export default function AdminRestaurantSettings() {
     isRestaurantOpen: true,
     operatingHours: '06:30 AM - 10:30 PM',
     acceptedPaymentMethods: ['Cash', 'POS', 'Bank Transfer', 'Telebirr', 'Charge to Room'],
-    bankDetails: [
-      { id: '1', bankName: 'Commercial Bank of Ethiopia (CBE)', accountName: 'Woliso Hotel PLC', accountNumber: '1000123456789' },
-      { id: '2', bankName: 'Awash Bank', accountName: 'Woliso Hotel PLC', accountNumber: '01320987654321' }
-    ]
+    bankDetails: [],
+    telebirrNo: '',
+    telebirrAccountName: '',
+    cbeBirrNo: '',
+    cbeBirrAccountName: ''
   });
 
   const [loading, setLoading] = useState(true);
@@ -47,7 +48,13 @@ export default function AdminRestaurantSettings() {
         const settingsRef = doc(db, 'app_settings', 'restaurant');
         const snap = await getDoc(settingsRef);
         if (snap.exists()) {
-          setSettings(snap.data() as RestaurantSettings);
+          const data = snap.data() as RestaurantSettings;
+          setSettings(prev => ({
+            ...prev,
+            ...data,
+            acceptedPaymentMethods: data.acceptedPaymentMethods || [],
+            bankDetails: data.bankDetails || []
+          }));
         }
       } catch (err) {
         handleFirestoreError(err, OperationType.GET, 'app_settings/restaurant');
@@ -269,75 +276,160 @@ export default function AdminRestaurantSettings() {
 
       {/* Payment Gateways */}
       <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs space-y-6">
-        <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2 border-b border-neutral-100 pb-3">
-          <CreditCard className="w-5 h-5 text-neutral-700" />
-          Accepted Payment Methods
-        </h2>
+        <div className="border-b border-neutral-100 pb-3">
+          <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-neutral-700" />
+            Accepted Restaurant Payment Methods
+          </h2>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Click to enable or disable payment methods. Disabled methods will immediately disappear from the ordering and checkout page.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {['Cash', 'POS', 'Bank Transfer', 'Telebirr', 'Charge to Room'].map((method) => {
-            const isSelected = settings.acceptedPaymentMethods.includes(method);
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {[
+            { id: 'Cash', label: 'Cash / Pay at Counter' },
+            { id: 'POS', label: 'POS / Card Machine' },
+            { id: 'Bank Transfer', label: 'Bank Transfer / Deposit' },
+            { id: 'Telebirr', label: 'Telebirr' },
+            { id: 'CBE Birr', label: 'CBE Birr' },
+            { id: 'Mobile Banking', label: 'Mobile Banking App' },
+            { id: 'Charge to Room', label: 'Charge to Room (Guests)' }
+          ].map((item) => {
+            const isSelected = settings.acceptedPaymentMethods.includes(item.id);
             return (
               <button
                 type="button"
-                key={method}
-                onClick={() => togglePaymentMethod(method)}
-                className={`p-3.5 rounded-xl border text-xs font-bold transition-all text-center ${
+                key={item.id}
+                onClick={() => togglePaymentMethod(item.id)}
+                className={`p-3.5 rounded-xl border text-xs font-bold transition-all text-left flex flex-col justify-between gap-2 ${
                   isSelected 
                     ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs' 
                     : 'bg-neutral-50 text-neutral-600 border-neutral-200 hover:bg-neutral-100'
                 }`}
               >
-                {method}
+                <span>{item.label}</span>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md self-start ${
+                  isSelected ? 'bg-emerald-600 text-white' : 'bg-neutral-200 text-neutral-600'
+                }`}>
+                  {isSelected ? 'Enabled' : 'Disabled'}
+                </span>
               </button>
             );
           })}
+        </div>
+
+        {/* Mobile Banking & Merchant Account Specifics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-neutral-100 text-xs">
+          <div>
+            <label className="block font-bold text-neutral-700 uppercase mb-1">Telebirr Merchant / Phone Number</label>
+            <input 
+              type="text" 
+              value={settings.telebirrNo || ''}
+              onChange={(e) => setSettings(prev => ({ ...prev, telebirrNo: e.target.value }))}
+              placeholder="e.g. 0911000111 or Shortcode 789012"
+              className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-neutral-700 uppercase mb-1">Telebirr Account Name</label>
+            <input 
+              type="text" 
+              value={settings.telebirrAccountName || ''}
+              onChange={(e) => setSettings(prev => ({ ...prev, telebirrAccountName: e.target.value }))}
+              placeholder="e.g. Woliso Hotel Restaurant"
+              className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium"
+            />
+          </div>
+          
+          <div>
+            <label className="block font-bold text-neutral-700 uppercase mb-1">CBE Birr Merchant Code / Phone Number</label>
+            <input 
+              type="text" 
+              value={settings.cbeBirrNo || ''}
+              onChange={(e) => setSettings(prev => ({ ...prev, cbeBirrNo: e.target.value }))}
+              placeholder="e.g. 894210"
+              className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-neutral-700 uppercase mb-1">CBE Birr Account Name</label>
+            <input 
+              type="text" 
+              value={settings.cbeBirrAccountName || ''}
+              onChange={(e) => setSettings(prev => ({ ...prev, cbeBirrAccountName: e.target.value }))}
+              placeholder="e.g. Woliso Hotel Restaurant"
+              className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-medium"
+            />
+          </div>
         </div>
       </div>
 
       {/* Bank Account Details */}
       <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs space-y-6">
         <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
-          <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-neutral-700" />
-            Hotel & Restaurant Bank Details
-          </h2>
+          <div>
+            <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-neutral-700" />
+              Restaurant Bank Accounts
+            </h2>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              These exact accounts will be displayed to customers paying by Bank Transfer or Mobile Banking.
+            </p>
+          </div>
           <button
             type="button"
             onClick={handleAddBank}
-            className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold rounded-xl text-xs flex items-center gap-1 transition-colors"
+            className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-xl text-xs flex items-center gap-1 transition-colors"
           >
             <Plus className="w-4 h-4" /> Add Bank Account
           </button>
         </div>
 
-        <div className="space-y-4">
-          {(settings.bankDetails || []).map((bank) => (
-            <div key={bank.id} className="p-4 bg-neutral-50 border border-neutral-200 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-4 items-end relative">
-              <div>
-                <label className="block text-[11px] font-bold text-neutral-500 uppercase mb-1">Bank Name</label>
-                <input 
-                  type="text" 
-                  value={bank.bankName}
-                  onChange={(e) => handleBankChange(bank.id, 'bankName', e.target.value)}
-                  placeholder="e.g. Commercial Bank of Ethiopia"
-                  className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-800"
-                />
-              </div>
+        {(!settings.bankDetails || settings.bankDetails.length === 0) ? (
+          <div className="text-center py-6 border-2 border-dashed border-neutral-200 rounded-xl bg-neutral-50/50">
+            <Building2 className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+            <p className="text-xs font-bold text-neutral-700">No bank accounts entered yet</p>
+            <p className="text-[11px] text-neutral-400 mt-1 max-w-sm mx-auto">
+              Add your official CBE, Awash, Bank of Abyssinia, or other commercial bank account numbers for customer direct deposits.
+            </p>
+            <button
+              type="button"
+              onClick={handleAddBank}
+              className="mt-3 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg text-xs font-bold transition"
+            >
+              + Add First Bank Account
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {(settings.bankDetails || []).map((bank) => (
+              <div key={bank.id} className="p-4 bg-neutral-50 border border-neutral-200 rounded-xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end relative">
+                <div>
+                  <label className="block text-[11px] font-bold text-neutral-500 uppercase mb-1">Bank Name</label>
+                  <input 
+                    type="text" 
+                    value={bank.bankName}
+                    onChange={(e) => handleBankChange(bank.id, 'bankName', e.target.value)}
+                    placeholder="e.g. Commercial Bank of Ethiopia (CBE)"
+                    className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-800"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-neutral-500 uppercase mb-1">Account Name</label>
-                <input 
-                  type="text" 
-                  value={bank.accountName}
-                  onChange={(e) => handleBankChange(bank.id, 'accountName', e.target.value)}
-                  placeholder="e.g. Woliso Hotel PLC"
-                  className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-800"
-                />
-              </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-neutral-500 uppercase mb-1">Account Name</label>
+                  <input 
+                    type="text" 
+                    value={bank.accountName}
+                    onChange={(e) => handleBankChange(bank.id, 'accountName', e.target.value)}
+                    placeholder="e.g. Woliso Hotel PLC"
+                    className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-800"
+                  />
+                </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
+                <div>
                   <label className="block text-[11px] font-bold text-neutral-500 uppercase mb-1">Account Number</label>
                   <input 
                     type="text" 
@@ -347,18 +439,31 @@ export default function AdminRestaurantSettings() {
                     className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-800"
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveBank(bank.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-5"
-                  title="Remove bank account"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label className="block text-[11px] font-bold text-neutral-500 uppercase mb-1">Short Code / Branch (Opt)</label>
+                    <input 
+                      type="text" 
+                      value={bank.shortCode || ''}
+                      onChange={(e) => handleBankChange(bank.id, 'shortCode', e.target.value)}
+                      placeholder="e.g. Woliso Branch"
+                      className="w-full px-3 py-2 bg-white border border-neutral-200 rounded-lg text-xs font-medium text-neutral-800"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveBank(bank.id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-5"
+                    title="Remove bank account"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </form>
   );
