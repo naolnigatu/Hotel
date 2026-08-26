@@ -381,7 +381,7 @@ export default function Layout() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 w-full relative z-10 flex flex-col">
+      <main className="flex-1 w-full flex flex-col">
         <Outlet />
       </main>
 

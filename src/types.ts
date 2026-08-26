@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'reception' | 'kitchen' | 'waiter' | 'housekeeping' | 'guest';
+export type Role = 'admin' | 'reception' | 'kitchen' | 'waiter' | 'housekeeping' | 'cashier' | 'guest';
 
 export interface User {
   uid: string;
@@ -188,6 +188,7 @@ export interface Booking {
   paymentMethod: string; // 'Pay at Hotel', 'Bank Transfer', 'Cash', 'POS', 'Credit Card'
   paymentProofUrl?: string;
   transactionId?: string;
+  paymentRejectionReason?: string;
   timeline: ReservationTimelineEvent[];
   notes?: ReservationNote[];
   createdAt: number;
@@ -234,7 +235,7 @@ export interface MenuItem {
   kitchenStationName?: string;
 }
 
-export type OrderType = 'Dine-In' | 'QR Table' | 'Room Service' | 'Website Order' | 'Takeaway' | 'Delivery';
+export type OrderType = 'Dine-In' | 'QR Menu/Dine in' | 'Room Service' | 'Book Meal' | 'Takeaway' | 'Delivery';
 
 export type OrderStatus = 
   | 'Order Submitted' 
@@ -283,6 +284,7 @@ export interface Order {
   customerName?: string;
   customerPhone?: string;
   customerEmail?: string;
+  arrivalTime?: string;
   customerUid?: string;
   items: OrderItem[];
   subtotal: number;
@@ -293,9 +295,10 @@ export interface Order {
   roomServiceFee?: number;
   totalAmount: number;
   paymentMethod: string;
-  paymentStatus: 'Pending' | 'Paid' | 'Charged to Room' | 'Pending Verification' | 'Failed';
+  paymentStatus: 'Pending' | 'Paid' | 'Charged to Room' | 'Pending Verification' | 'Rejected' | 'Failed';
   paymentProofUrl?: string;
   transactionId?: string;
+  paymentRejectionReason?: string;
   status: OrderStatus;
   orderNotes?: string;
   kitchenNotes?: string;
@@ -531,7 +534,7 @@ export interface AuditLog {
   userName: string;
   userRole: Role;
   action: string;
-  module: 'Restaurant' | 'Tables' | 'Menu' | 'Rooms' | 'Reservations' | 'Staff' | 'Hotel Settings' | 'Stations' | 'Housekeeping' | 'CMS';
+  module: 'Restaurant' | 'Tables' | 'Menu' | 'Rooms' | 'Reservations' | 'Staff' | 'Hotel Settings' | 'Stations' | 'Housekeeping' | 'CMS' | 'Cashier' | 'Finance';
   details?: string;
   previousValue?: any;
   newValue?: any;

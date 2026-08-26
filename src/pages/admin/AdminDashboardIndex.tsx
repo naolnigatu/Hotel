@@ -25,7 +25,8 @@ import {
   ShieldCheck,
   TrendingUp,
   RefreshCw,
-  Megaphone
+  Megaphone,
+  Receipt
 } from 'lucide-react';
 import { Booking, Room, Order, HousekeepingTask } from '../../types';
 
@@ -203,6 +204,14 @@ export default function AdminDashboardIndex() {
       category: 'Management',
       roles: ['admin', 'reception', 'housekeeping'],
       badge: pendingTasksCount > 0 ? `${pendingTasksCount} Tasks` : undefined,
+    },
+    {
+      name: 'Cashier & Finance',
+      path: '/admin/cashier',
+      icon: Receipt,
+      description: 'Audit money flows, approve/reject payment slips, and manage POS cash.',
+      category: 'Management',
+      roles: ['admin', 'cashier'],
     },
     {
       name: 'Analytics & Reports',

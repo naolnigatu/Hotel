@@ -148,6 +148,7 @@ export default function AdminStaff() {
   const rolesList: { role: Role; label: string }[] = [
     { role: 'admin', label: 'Admin & Hotel Manager' },
     { role: 'reception', label: 'Reception & Front Desk' },
+    { role: 'cashier', label: 'Cashier & Financial Desk' },
     { role: 'kitchen', label: 'Kitchen & Chef' },
     { role: 'waiter', label: 'Waiter & Food Service' },
     { role: 'housekeeping', label: 'Housekeeping & Maintenance' }

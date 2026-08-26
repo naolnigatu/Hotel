@@ -45,6 +45,7 @@ import AdminHalls from './pages/admin/AdminHalls';
 import AdminMenu from './pages/admin/AdminMenu';
 import KitchenDashboard from './pages/admin/KitchenDashboard';
 import WaiterDashboard from './pages/admin/WaiterDashboard';
+import CashierDashboard from './pages/admin/CashierDashboard';
 import AdminRestaurantSettings from './pages/admin/AdminRestaurantSettings';
 import AdminTables from './pages/admin/AdminTables';
 import AdminKitchenStations from './pages/admin/AdminKitchenStations';
@@ -110,6 +111,7 @@ export default function App() {
               <Route path="reservations" element={<AdminReservations />} />
               <Route path="housekeeping" element={<HousekeepingDashboard />} />
               <Route path="waiter" element={<WaiterDashboard />} />
+              <Route path="cashier" element={<CashierDashboard />} />
               <Route path="halls" element={<AdminHalls />} />
               <Route path="kitchen" element={<KitchenDashboard />} />
               <Route path="menu" element={<AdminMenu />} />

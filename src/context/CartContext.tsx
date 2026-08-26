@@ -114,9 +114,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [orderType, setOrderTypeState] = useState<OrderType>(() => {
     try {
       const saved = localStorage.getItem(MODE_STORAGE_KEY);
-      return (saved as OrderType) || 'Website Order';
+      return (saved as OrderType) || 'Book Meal';
     } catch {
-      return 'Website Order';
+      return 'Book Meal';
     }
   });
 
@@ -195,26 +195,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [locationDetails]);
 
   // Calculations based on active selected items (or all if none deselected)
-  const subtotal = useMemo(() => {
+  const itemsSum = useMemo(() => {
     const targetItems = selectedCartItems.length > 0 ? selectedCartItems : cartItems;
     return targetItems.reduce((sum, item) => sum + item.item.price * item.quantity, 0);
   }, [selectedCartItems, cartItems]);
 
   const taxAmount = useMemo(() => {
-    return Math.round(subtotal * (vatRate / 100));
-  }, [subtotal, vatRate]);
+    // Exact user logic: tax is a straight percentage of the total items price, 
+    // and subtotal is the total minus this tax.
+    return Math.round(itemsSum * (vatRate / 100));
+  }, [itemsSum, vatRate]);
 
-  const serviceChargeAmount = useMemo(() => {
-    return Math.round(subtotal * (serviceChargeRate / 100));
-  }, [subtotal, serviceChargeRate]);
+  const subtotal = useMemo(() => {
+    return itemsSum - taxAmount;
+  }, [itemsSum, taxAmount]);
+
+  const serviceChargeAmount = 0; // No service charge needed
 
   const applicableRoomServiceFee = useMemo(() => {
     return orderType === 'Room Service' ? roomServiceFee : 0;
   }, [orderType, roomServiceFee]);
 
   const grandTotal = useMemo(() => {
-    return subtotal + taxAmount + serviceChargeAmount + applicableRoomServiceFee;
-  }, [subtotal, taxAmount, serviceChargeAmount, applicableRoomServiceFee]);
+    return itemsSum + applicableRoomServiceFee;
+  }, [itemsSum, applicableRoomServiceFee]);
 
   const totalItemCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);

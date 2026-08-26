@@ -35,10 +35,12 @@ import {
   Eye,
   FileText,
   ShieldCheck,
-  Hash
+  Hash,
+  Plus
 } from 'lucide-react';
 import ReceiptLightboxModal from '../../components/common/ReceiptLightboxModal';
 import CopyButton from '../../components/common/CopyButton';
+import CreateOrderModal from '../../components/admin/CreateOrderModal';
 
 export default function WaiterDashboard() {
   const { userData } = useAuth();
@@ -55,6 +57,7 @@ export default function WaiterDashboard() {
   const [claimingOrderId, setClaimingOrderId] = useState<string | null>(null);
   const [fullscreenReceiptUrl, setFullscreenReceiptUrl] = useState<string | null>(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
 
   const waiterId = auth.currentUser?.uid || userData?.uid || 'anonymous-waiter';
   const waiterName = userData?.name || 'Waiter';
@@ -318,6 +321,13 @@ export default function WaiterDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsCreateOrderOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Customer Order</span>
+          </button>
           <div className="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             Active Waiter: <span className="font-bold">{waiterName}</span>
@@ -451,7 +461,8 @@ export default function WaiterDashboard() {
             >
               <option value="all">All Service Types</option>
               <option value="Dine-In">Table Dine-In</option>
-              <option value="QR Table">QR Table Order</option>
+              <option value="QR Menu/Dine in">QR Menu/Dine in Order</option>
+              <option value="Book Meal">Book Meal</option>
               <option value="Room Service">Room Service</option>
               <option value="Takeaway">Takeaway</option>
             </select>
@@ -603,11 +614,22 @@ export default function WaiterDashboard() {
                               <span className="font-bold text-neutral-900">Order #{order.orderNumber}</span>
                               <span className="text-xs px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600 font-medium">{order.type}</span>
                             </div>
-                            <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
-                              {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <p className="text-xs text-neutral-500 mt-0.5 flex flex-wrap items-center gap-1.5">
+                              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               <span>•</span>
                               <span>{order.items.length} items</span>
+                              {order.customerName && (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-semibold text-neutral-700">Guest: {order.customerName.split(' ')[0]}</span>
+                                </>
+                              )}
+                              {order.arrivalTime && (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-semibold text-rose-600 bg-rose-50 px-1 rounded border border-rose-100">Arriving: {order.arrivalTime}</span>
+                                </>
+                              )}
                             </p>
                           </div>
                         </div>
@@ -914,6 +936,15 @@ export default function WaiterDashboard() {
         imageUrl={fullscreenReceiptUrl}
         title={`Payment Receipt: Order #${selectedOrder?.orderNumber || ''}`}
         onClose={() => setFullscreenReceiptUrl(null)}
+      />
+
+      {/* POS Order Creation Modal */}
+      <CreateOrderModal 
+        isOpen={isCreateOrderOpen}
+        onClose={() => setIsCreateOrderOpen(false)}
+        onOrderCreated={(newOrder) => {
+          setActionSuccess(`Order #${newOrder.orderNumber} for ${newOrder.locationRef} successfully created and sent to kitchen!`);
+        }}
       />
     </div>
   );

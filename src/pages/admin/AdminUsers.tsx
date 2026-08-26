@@ -12,6 +12,7 @@ import { Users, Shield, Plus, X, Search, CheckCircle, Mail, Key } from 'lucide-r
 const ROLES: { value: Role; label: string }[] = [
   { value: 'admin', label: 'Admin (Full Access)' },
   { value: 'reception', label: 'Reception (Front Desk)' },
+  { value: 'cashier', label: 'Cashier (Finance & Payments)' },
   { value: 'waiter', label: 'Waiter (Restaurant)' },
   { value: 'kitchen', label: 'Kitchen Staff' },
   { value: 'housekeeping', label: 'Housekeeping' },

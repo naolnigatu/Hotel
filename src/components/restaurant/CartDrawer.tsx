@@ -50,7 +50,7 @@ export default function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs animate-fade-in overscroll-contain">
+    <div className="fixed inset-0 z-[100] flex justify-end bg-black/50 backdrop-blur-xs animate-fade-in overscroll-contain" onClick={() => setIsCartOpen(false)}>
       <div 
         className="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between overscroll-contain"
         onClick={(e) => e.stopPropagation()}
@@ -76,7 +76,7 @@ export default function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
         {/* Mode Banner & Selection Bar */}
         <div className="bg-emerald-50 px-5 py-2.5 border-b border-emerald-100 flex items-center justify-between text-xs text-emerald-900">
           <span className="font-semibold flex items-center gap-1.5">
-            {orderType === 'QR Table' && <UtensilsCrossed className="w-3.5 h-3.5 text-emerald-600" />}
+            {orderType === 'QR Menu/Dine in' && <UtensilsCrossed className="w-3.5 h-3.5 text-emerald-600" />}
             {orderType === 'Room Service' && <Hotel className="w-3.5 h-3.5 text-emerald-600" />}
             Mode: <strong className="uppercase font-bold">{orderType}</strong>
           </span>
@@ -231,12 +231,8 @@ export default function CartDrawer({ onProceedToCheckout }: CartDrawerProps) {
                 <span className="font-semibold text-neutral-900">{subtotal} ETB</span>
               </div>
               <div className="flex justify-between">
-                <span>VAT Tax ({vatRate}%)</span>
+                <span>VAT Tax ({vatRate}% inc.)</span>
                 <span className="font-semibold text-neutral-900">{taxAmount} ETB</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Service Charge ({serviceChargeRate}%)</span>
-                <span className="font-semibold text-neutral-900">{serviceChargeAmount} ETB</span>
               </div>
               {applicableRoomServiceFee > 0 && (
                 <div className="flex justify-between text-emerald-700">

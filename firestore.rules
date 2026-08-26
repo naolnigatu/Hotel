@@ -28,7 +28,8 @@ service cloud.firestore {
         hasRole('reception') || 
         hasRole('kitchen') || 
         hasRole('waiter') || 
-        hasRole('housekeeping')
+        hasRole('housekeeping') ||
+        hasRole('cashier')
       );
     }
 
@@ -193,8 +194,8 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow create: if isStaff() || (
         request.resource.data.type in ['booking', 'order', 'service'] &&
-        request.resource.data.recipientRole in ['reception', 'kitchen', 'waiter'] &&
-        (!('targetRoute' in request.resource.data) || request.resource.data.targetRoute in ['/admin/reservations', '/admin/kitchen', '/admin/waiter'])
+        request.resource.data.recipientRole in ['reception', 'kitchen', 'waiter', 'cashier', 'admin'] &&
+        (!('targetRoute' in request.resource.data) || request.resource.data.targetRoute in ['/admin/reservations', '/admin/kitchen', '/admin/waiter', '/admin/cashier'])
       );
       allow read: if isStaff() || (resource.data.recipientUid == null || (isSignedIn() && resource.data.recipientUid == request.auth.uid));
       allow update: if isStaff() || (isSignedIn() && resource.data.recipientUid == request.auth.uid);

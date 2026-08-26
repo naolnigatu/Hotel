@@ -75,7 +75,7 @@ export default function Restaurant() {
   useEffect(() => {
     const tableParam = searchParams.get('table') || searchParams.get('tableId') || searchParams.get('qr');
     if (tableParam) {
-      setOrderType('QR Table');
+      setOrderType('QR Menu/Dine in');
       setLocationDetails({ tableNumber: tableParam });
     }
   }, [searchParams]);
@@ -147,7 +147,7 @@ export default function Restaurant() {
   const handleSaveTable = (e: React.FormEvent) => {
     e.preventDefault();
     if (!tableInput.trim()) return;
-    setOrderType('QR Table');
+    setOrderType('QR Menu/Dine in');
     setLocationDetails({ tableNumber: tableInput.trim() });
     setShowTableModal(false);
   };
@@ -206,28 +206,28 @@ export default function Restaurant() {
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider mr-1">Ordering Mode:</span>
             
             <button
-              onClick={() => setOrderType('Website Order')}
+              onClick={() => setOrderType('Book Meal')}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                orderType === 'Website Order'
+                orderType === 'Book Meal'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
-              <ShoppingBag className="w-3.5 h-3.5" /> Dine-In / Menu
+              <ShoppingBag className="w-3.5 h-3.5" /> Book Meal
             </button>
 
             <button
               onClick={() => {
-                setOrderType('QR Table');
+                setOrderType('QR Menu/Dine in');
                 setShowTableModal(true);
               }}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                orderType === 'QR Table'
+                orderType === 'QR Menu/Dine in'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
             >
-              <UtensilsCrossed className="w-3.5 h-3.5" /> QR Table
+              <UtensilsCrossed className="w-3.5 h-3.5" /> QR Menu/Dine in
             </button>
 
             <button
@@ -261,14 +261,14 @@ export default function Restaurant() {
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <span>
-                {orderType === 'QR Table' && (locationDetails.tableNumber ? `Table Number: ${locationDetails.tableNumber}` : 'Please set table number')}
+                {orderType === 'QR Menu/Dine in' && (locationDetails.tableNumber ? `Table Number: ${locationDetails.tableNumber}` : 'Please set table number')}
                 {orderType === 'Room Service' && (locationDetails.roomNumber ? `Room Service: Room ${locationDetails.roomNumber}` : 'Please set room number')}
-                {orderType === 'Website Order' && 'Digital Dine-in Ordering'}
+                {orderType === 'Book Meal' && 'Digital Dine-in Ordering'}
                 {orderType === 'Takeaway' && 'Counter Pickup Order'}
               </span>
             </div>
 
-            {orderType === 'QR Table' && (
+            {orderType === 'QR Menu/Dine in' && (
               <button onClick={() => setShowTableModal(true)} className="text-emerald-700 font-bold underline hover:text-emerald-900">
                 Change
               </button>

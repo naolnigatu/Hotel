@@ -78,7 +78,7 @@ export async function logAuditAction(
   userName: string,
   userRole: Role,
   action: string,
-  module: 'Restaurant' | 'Tables' | 'Menu' | 'Rooms' | 'Reservations' | 'Staff' | 'Hotel Settings' | 'Stations' | 'Housekeeping' | 'CMS',
+  module: 'Restaurant' | 'Tables' | 'Menu' | 'Rooms' | 'Reservations' | 'Staff' | 'Hotel Settings' | 'Stations' | 'Housekeeping' | 'CMS' | 'Cashier' | 'Finance',
   details?: string,
   previousValue?: any,
   newValue?: any

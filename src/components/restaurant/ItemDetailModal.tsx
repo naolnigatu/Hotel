@@ -40,7 +40,7 @@ export default function ItemDetailModal({ item, onClose, onOrderNow }: ItemDetai
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overscroll-contain">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overscroll-contain">
       <div 
         className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto overscroll-contain shadow-2xl border border-neutral-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}

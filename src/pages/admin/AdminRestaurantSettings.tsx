@@ -82,7 +82,7 @@ export default function AdminRestaurantSettings() {
         userData?.role || 'admin',
         'Updated Restaurant Operational & Financial Settings',
         'Restaurant',
-        `VAT: ${settings.vatRate}%, Service Charge: ${settings.serviceChargeRate}%`
+        `VAT: ${settings.vatRate}%`
       );
     } catch (err: any) {
       handleFirestoreError(err, OperationType.WRITE, 'app_settings/restaurant');
@@ -241,21 +241,7 @@ export default function AdminRestaurantSettings() {
             <p className="text-[11px] text-neutral-500 mt-1">Ethiopian government VAT rate (standard 15%)</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-2">Service Charge Rate (%)</label>
-            <div className="relative">
-              <input 
-                type="number" 
-                step="0.1"
-                min="0"
-                value={settings.serviceChargeRate}
-                onChange={(e) => setSettings(prev => ({ ...prev, serviceChargeRate: parseFloat(e.target.value) || 0 }))}
-                className="w-full pl-4 pr-8 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-800 focus:outline-none focus:border-neutral-900"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 font-bold text-sm">%</span>
-            </div>
-            <p className="text-[11px] text-neutral-500 mt-1">Staff service charge applied to order subtotal</p>
-          </div>
+          {/* Removed Service Charge */}
 
           <div>
             <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-2">Room Service Fee (ETB)</label>

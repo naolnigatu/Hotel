@@ -629,12 +629,8 @@ export default function OrderTracker() {
                     <span className="font-semibold text-neutral-900">{order.subtotal?.toLocaleString()} ETB</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>VAT ({order.taxRate ?? 15}%)</span>
+                    <span>VAT ({order.taxRate ?? 15}% inc.)</span>
                     <span className="font-semibold text-neutral-900">{order.taxAmount?.toLocaleString()} ETB</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Service Charge ({order.serviceChargeRate ?? 5}%)</span>
-                    <span className="font-semibold text-neutral-900">{order.serviceChargeAmount?.toLocaleString()} ETB</span>
                   </div>
                   {Boolean(order.roomServiceFee) && (
                     <div className="flex justify-between text-emerald-700">
@@ -786,7 +782,7 @@ export default function OrderTracker() {
                   <p className="font-bold text-xs text-neutral-800 uppercase tracking-wider">Service Actions</p>
                   
                   <div className="flex flex-col gap-2">
-                    {['Dine-In', 'QR Table', 'Room Service'].includes(order.type) && order.status !== 'Completed' && (
+                    {['Dine-In', 'QR Menu/Dine in', 'Room Service'].includes(order.type) && order.status !== 'Completed' && (
                        <button
                          onClick={() => handleServiceRequest('Call Waiter')}
                          disabled={requestingService}
@@ -795,7 +791,7 @@ export default function OrderTracker() {
                          <HandPlatter className="w-4 h-4" /> Call Waiter / Staff
                        </button>
                     )}
-                    {['Dine-In', 'QR Table'].includes(order.type) && order.paymentStatus === 'Pending' && (
+                    {['Dine-In', 'QR Menu/Dine in'].includes(order.type) && order.paymentStatus === 'Pending' && (
                        <button
                          onClick={() => handleServiceRequest('Bill Request')}
                          disabled={requestingService}

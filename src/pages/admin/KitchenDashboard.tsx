@@ -281,10 +281,12 @@ export default function KitchenDashboard() {
                   </span>
                 )}
               </div>
-              <div className="text-xs text-neutral-500 font-medium flex items-center gap-2">
+              <div className="text-xs text-neutral-500 font-medium flex flex-wrap items-center gap-2">
                 <span className="bg-neutral-100 px-1.5 py-0.5 rounded text-neutral-700">{order.type}</span>
                 {order.tableNumber && <span>Table {order.tableNumber}</span>}
                 {order.roomNumber && <span>Room {order.roomNumber}</span>}
+                {order.customerName && <span>Guest: {order.customerName.split(' ')[0]}</span>}
+                {order.arrivalTime && <span className="text-rose-600 font-bold bg-rose-50 px-1 rounded border border-rose-100">Arriving: {order.arrivalTime}</span>}
               </div>
             </div>
             <ElapsedTime start={order.createdAt} />

@@ -18,7 +18,7 @@ export default function Dashboard() {
   }
 
   // Admin and Staff Dashboards
-  if (['admin', 'reception', 'housekeeping', 'kitchen', 'waiter'].includes(userData?.role || '')) {
+  if (['admin', 'reception', 'housekeeping', 'kitchen', 'waiter', 'cashier'].includes(userData?.role || '')) {
     return <Navigate to="/admin" replace />;
   }
 

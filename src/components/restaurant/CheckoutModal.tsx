@@ -53,6 +53,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [customerName, setCustomerName] = useState(locationDetails.guestName || userData?.displayName || '');
   const [customerPhone, setCustomerPhone] = useState(locationDetails.guestPhone || userData?.phone || '');
   const [customerEmail, setCustomerEmail] = useState(locationDetails.guestEmail || currentUser?.email || '');
+  const [arrivalTime, setArrivalTime] = useState('');
   const [orderNotes, setOrderNotes] = useState(locationDetails.orderNotes || '');
   const [paymentMethod, setPaymentMethod] = useState<string>('Pay at Counter');
 
@@ -365,7 +366,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     }
 
     // 2. Validate Mode Specific Context
-    if (orderType === 'QR Table' || orderType === 'Dine-In') {
+    if (orderType === 'QR Menu/Dine in' || orderType === 'Dine-In') {
       const validTable = await verifyTableValidity();
       if (!validTable) return;
     }
@@ -377,6 +378,16 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
     if (!customerName.trim()) {
       setSubmitError('Please enter your name.');
+      return;
+    }
+
+    if (orderType !== 'QR Menu/Dine in' && orderType !== 'Takeaway' && !customerPhone.trim()) {
+      setSubmitError('Please enter your phone number.');
+      return;
+    }
+
+    if (orderType === 'Book Meal' && !arrivalTime.trim()) {
+      setSubmitError('Please specify your expected arrival time.');
       return;
     }
 
@@ -444,7 +455,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
       const locationRefStr = 
         orderType === 'Room Service' ? `Room ${roomNumber}` :
-        orderType === 'QR Table' ? `Table ${tableNumber}` :
+        orderType === 'QR Menu/Dine in' ? `Table ${tableNumber}` :
         orderType === 'Dine-In' ? `Table ${tableNumber}` :
         'Takeaway / Counter';
 
@@ -457,8 +468,9 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         reservationCode: verifiedBooking?.id || reservationCode || '',
         reservationId: verifiedBooking?.id || '',
         customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
+        customerPhone: (orderType === 'QR Menu/Dine in' || orderType === 'Takeaway') ? '' : customerPhone.trim(),
         customerEmail: customerEmail.trim(),
+        arrivalTime: orderType === 'Book Meal' ? arrivalTime : '',
         customerUid: currentUser?.uid || '',
         items: orderItemsList,
         subtotal,
@@ -543,7 +555,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overscroll-contain">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overscroll-contain">
       <div 
         className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto overscroll-contain shadow-2xl border border-neutral-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -574,7 +586,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           <div className="bg-neutral-50 p-3.5 rounded-xl border border-neutral-200 flex items-center justify-between text-xs">
             <span className="font-bold text-neutral-800 flex items-center gap-2">
               {orderType === 'Room Service' && <Hotel className="w-4 h-4 text-emerald-600" />}
-              {orderType === 'QR Table' && <UtensilsCrossed className="w-4 h-4 text-emerald-600" />}
+              {orderType === 'QR Menu/Dine in' && <UtensilsCrossed className="w-4 h-4 text-emerald-600" />}
               Order Type: <span className="text-emerald-700 uppercase">{orderType}</span>
             </span>
             <span className="font-bold text-neutral-900">
@@ -583,7 +595,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           </div>
 
           {/* Location Verification Sections */}
-          {orderType === 'QR Table' || orderType === 'Dine-In' ? (
+          {orderType === 'QR Menu/Dine in' || orderType === 'Dine-In' || orderType === 'Book Meal' ? (
             <div className="space-y-2">
               <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
                 Table Number <span className="text-rose-500">*</span>
@@ -684,11 +696,11 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">
-                  Your Full Name <span className="text-rose-500">*</span>
+                  Your First Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Abebe Bikila"
+                  placeholder="e.g. Abebe"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   className="w-full p-2.5 text-xs border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -696,18 +708,36 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  placeholder="e.g. +251 911 000000"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full p-2.5 text-xs border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
-              </div>
+              {orderType !== 'QR Menu/Dine in' && orderType !== 'Takeaway' && (
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">
+                    Phone Number <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. +251 911 000000"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    required
+                  />
+                </div>
+              )}
+
+              {orderType === 'Book Meal' && (
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">
+                    Expected Arrival Time <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={arrivalTime}
+                    onChange={(e) => setArrivalTime(e.target.value)}
+                    className="w-full p-2.5 text-xs border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    required
+                  />
+                </div>
+              )}
             </div>
           </div>
 

@@ -26,7 +26,8 @@ import {
   ExternalLink,
   ChevronRight,
   MessageSquareHeart,
-  Megaphone
+  Megaphone,
+  Receipt
 } from 'lucide-react';
 
 import NotificationCenter from './NotificationCenter';
@@ -57,12 +58,13 @@ export default function AdminLayout() {
     navigate('/');
   };
 
-  if (userData?.role !== 'admin' && userData?.role !== 'reception' && userData?.role !== 'housekeeping' && userData?.role !== 'kitchen' && userData?.role !== 'waiter') {
+  if (userData?.role !== 'admin' && userData?.role !== 'reception' && userData?.role !== 'housekeeping' && userData?.role !== 'kitchen' && userData?.role !== 'waiter' && userData?.role !== 'cashier') {
     return <div className="p-8 text-center text-red-500 font-bold">Access Denied. Authorized staff only.</div>;
   }
 
   const allNavItems = [
-    { name: 'Dashboard', path: '/admin', icon: LayoutDashboard, roles: ['admin', 'reception', 'kitchen', 'waiter', 'housekeeping'] },
+    { name: 'Dashboard', path: '/admin', icon: LayoutDashboard, roles: ['admin', 'reception', 'kitchen', 'waiter', 'housekeeping', 'cashier'] },
+    { name: 'Cashier & Finance', path: '/admin/cashier', icon: Receipt, roles: ['admin', 'cashier'] },
     { name: 'Analytics', path: '/admin/analytics', icon: PieChart, roles: ['admin'] },
     { name: 'Reservations', path: '/admin/reservations', icon: Users, roles: ['admin', 'reception'] },
     { name: 'Housekeeping', path: '/admin/housekeeping', icon: Sparkles, roles: ['admin', 'reception', 'housekeeping'] },
@@ -124,6 +126,7 @@ export default function AdminLayout() {
 
   // Determine secondary quick tab for mobile bottom bar
   const getPrimaryActionItem = () => {
+    if (userRole === 'cashier') return navItems.find(i => i.path === '/admin/cashier') || navItems[0];
     if (userRole === 'kitchen') return navItems.find(i => i.path === '/admin/kitchen') || navItems[0];
     if (userRole === 'waiter') return navItems.find(i => i.path === '/admin/waiter') || navItems[0];
     if (userRole === 'housekeeping') return navItems.find(i => i.path === '/admin/housekeeping') || navItems[0];
@@ -131,6 +134,7 @@ export default function AdminLayout() {
   };
 
   const getSecondaryActionItem = () => {
+    if (userRole === 'cashier') return navItems.find(i => i.path === '/admin/reservations') || navItems[1];
     if (userRole === 'kitchen') return navItems.find(i => i.path === '/admin/menu') || navItems[1];
     if (userRole === 'waiter') return navItems.find(i => i.path === '/admin/tables') || navItems[1];
     if (userRole === 'housekeeping') return navItems.find(i => i.path === '/admin/room-inventory') || navItems[1];
