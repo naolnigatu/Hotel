@@ -262,16 +262,24 @@ export default function AdminAnalytics() {
 
   const handleExportCSV = () => {
     // Generate CSV for bookings
-    let csv = "Reservation Code,Guest Name,Type,Status,Check-In,Check-Out,Total Amount,Source\n";
+    let csv = "--- ROOM & HALL RESERVATIONS ---\n";
+    csv += "Reservation Code,Guest Name,Type,Status,Check-In,Check-Out,Total Amount,Source\n";
     bookings.forEach(b => {
       csv += `${b.reservationCode},${b.guestDetails?.firstName} ${b.guestDetails?.lastName},${b.type},${b.status},${format(new Date(b.checkIn), 'yyyy-MM-dd')},${format(new Date(b.checkOut), 'yyyy-MM-dd')},${b.totalAmount},${b.bookingSource || 'Unknown'}\n`;
     });
     
+    // Generate CSV for restaurant orders
+    csv += "\n--- RESTAURANT ORDERS ---\n";
+    csv += "Order Number,Customer Name,Type,Location,Status,Payment Method,Payment Status,Total Amount\n";
+    orders.forEach(o => {
+      csv += `${o.orderNumber},${o.customerName || 'Unknown'},${o.type},${o.locationRef || 'N/A'},${o.status},${o.paymentMethod || 'Unknown'},${o.paymentStatus || 'Pending'},${o.totalAmount}\n`;
+    });
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `reservations_report_${format(new Date(), 'yyyyMMdd')}.csv`;
+    a.download = `hotel_and_restaurant_report_${format(new Date(), 'yyyyMMdd')}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };

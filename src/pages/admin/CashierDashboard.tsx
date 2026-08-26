@@ -20,6 +20,8 @@ import {
   DollarSign, 
   CreditCard, 
   CheckCircle2, 
+  CheckCircle,
+  Hash,
   XCircle, 
   Clock, 
   AlertCircle, 
@@ -61,6 +63,7 @@ export default function CashierDashboard() {
   const [verificationScope, setVerificationScope] = useState<'all' | 'orders' | 'bookings'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
 
   // Modals
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
@@ -442,9 +445,14 @@ export default function CashierDashboard() {
       const matchesMethod = paymentMethodFilter === 'all' || 
         (o.paymentMethod && o.paymentMethod.toLowerCase() === paymentMethodFilter.toLowerCase());
 
-      return matchesSearch && matchesMethod;
+      const matchesStatus = paymentStatusFilter === 'all' ||
+        (paymentStatusFilter === 'Unpaid' ? o.paymentStatus !== 'Paid' :
+         paymentStatusFilter === 'Pending Verification' ? (o.paymentStatus === 'Pending Verification' || (Boolean(o.paymentProofUrl) && o.paymentStatus !== 'Paid')) :
+         o.paymentStatus === paymentStatusFilter);
+
+      return matchesSearch && matchesMethod && matchesStatus;
     });
-  }, [orders, searchQuery, paymentMethodFilter]);
+  }, [orders, searchQuery, paymentMethodFilter, paymentStatusFilter]);
 
   // Filtered Bookings
   const filteredBookings = useMemo(() => {
@@ -870,12 +878,25 @@ export default function CashierDashboard() {
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Filter className="w-4 h-4 text-neutral-400" />
+              <select
+                value={paymentStatusFilter}
+                onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-semibold focus:outline-none"
+              >
+                <option value="all">All Payment Statuses</option>
+                <option value="Pending Verification">Pending Verification</option>
+                <option value="Unpaid">Unpaid / Open</option>
+                <option value="Paid">Paid / Settled</option>
+                <option value="Charged to Room">Charged to Room</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+
               <select
                 value={paymentMethodFilter}
                 onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-xs focus:outline-none"
+                className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-semibold focus:outline-none"
               >
                 <option value="all">All Payment Methods</option>
                 <option value="cash">Cash</option>
@@ -898,6 +919,7 @@ export default function CashierDashboard() {
                     <th className="py-3.5 px-4">Items</th>
                     <th className="py-3.5 px-4">Total</th>
                     <th className="py-3.5 px-4">Payment Method</th>
+                    <th className="py-3.5 px-4">Proof / Slip</th>
                     <th className="py-3.5 px-4">Status</th>
                     <th className="py-3.5 px-4 text-right">Cashier Actions</th>
                   </tr>
@@ -905,12 +927,12 @@ export default function CashierDashboard() {
                 <tbody className="divide-y divide-neutral-100">
                   {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-neutral-400">
+                      <td colSpan={8} className="py-8 text-center text-neutral-400">
                         No restaurant orders found matching criteria.
                       </td>
                     </tr>
                   ) : (
-                    filteredOrders.slice(0, 30).map((order) => (
+                    filteredOrders.slice(0, 40).map((order) => (
                       <tr key={order.id} className="hover:bg-neutral-50/70 transition">
                         <td className="py-3.5 px-4 font-mono font-bold text-neutral-900">
                           #{order.orderNumber}
@@ -929,13 +951,32 @@ export default function CashierDashboard() {
                           <span className="font-semibold text-neutral-800">{order.paymentMethod || 'Unset'}</span>
                         </td>
                         <td className="py-3.5 px-4">
+                          {order.paymentProofUrl ? (
+                            <button
+                              onClick={() => setPreviewImageUrl(order.paymentProofUrl || null)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-lg font-bold text-[11px] transition cursor-pointer"
+                              title="Click to inspect uploaded payment slip"
+                            >
+                              <Receipt className="w-3.5 h-3.5 text-amber-700" />
+                              <span>View Slip</span>
+                            </button>
+                          ) : order.transactionId ? (
+                            <div className="flex items-center gap-1 font-mono text-[11px] text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md">
+                              <Hash className="w-3 h-3 text-neutral-400" />
+                              <span className="truncate max-w-[90px]">{order.transactionId}</span>
+                            </div>
+                          ) : (
+                            <span className="text-neutral-400 text-[11px]">—</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4">
                           <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
                             order.paymentStatus === 'Paid'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : order.paymentStatus === 'Charged to Room'
                               ? 'bg-purple-50 text-purple-700 border border-purple-200'
                               : order.paymentStatus === 'Pending Verification'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200 animate-pulse'
                               : order.paymentStatus === 'Rejected'
                               ? 'bg-red-50 text-red-700 border border-red-200'
                               : 'bg-neutral-100 text-neutral-700'
@@ -945,6 +986,28 @@ export default function CashierDashboard() {
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            {/* Review Proof Actions for orders with pending proof */}
+                            {order.paymentProofUrl && order.paymentStatus !== 'Paid' && (
+                              <div className="flex items-center gap-1 mr-1">
+                                <button
+                                  onClick={() => handleApproveOrderPayment(order)}
+                                  disabled={isProcessing}
+                                  className="p-1.5 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-bold transition cursor-pointer"
+                                  title="Approve Payment Slip"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setRejectionTarget({ type: 'order', id: order.id, code: `#${order.orderNumber}` })}
+                                  disabled={isProcessing}
+                                  className="p-1.5 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded-lg text-xs font-bold transition cursor-pointer"
+                                  title="Reject Payment Slip"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+
                             {/* Receipt Print */}
                             <button
                               onClick={() => setReceiptItem({ type: 'order', data: order })}

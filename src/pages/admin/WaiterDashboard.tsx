@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { Order, ServiceRequest, OrderStatus } from '../../types';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';
+import { sendNotification } from '../../lib/notificationService';
 import { 
   UtensilsCrossed, 
   Bell, 
@@ -196,6 +197,19 @@ export default function WaiterDashboard() {
         `Location: ${targetOrder?.locationRef}`
       );
 
+      // Send Testimonial Prompt when Order is Completed
+      if (newStatus === 'Completed' && targetOrder?.customerUid) {
+        await sendNotification({
+          recipientUid: targetOrder.customerUid,
+          title: `How was your meal?`,
+          message: `Your order #${targetOrder.orderNumber} is complete. Please share your experience and leave a review!`,
+          type: 'system',
+          targetRoute: `/testimonials/new?source=order&id=${targetOrder.id}`,
+          priority: 'Normal',
+          eventId: `testim_prompt_ord_${targetOrder.id}`
+        });
+      }
+
       if (selectedOrder?.id === orderId) {
         setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
       }
@@ -246,6 +260,70 @@ export default function WaiterDashboard() {
       setActionSuccess(`Service request marked as ${newStatus}`);
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `service_requests/${requestId}`);
+    }
+  };
+
+  // Waiter approves and marks cash payment as collected
+  const handleCollectCashPayment = async (order: Order) => {
+    setVerifyingPayment(true);
+    setActionError(null);
+    try {
+      const orderRef = doc(db, 'restaurant_orders', order.id);
+      const now = Date.now();
+      const newTimeline = [
+        ...(order.timeline || []),
+        {
+          status: 'Payment Received (Cash)',
+          timestamp: now,
+          note: `Cash payment of ${order.totalAmount} ETB collected & approved by Waiter ${waiterName}`,
+          updatedBy: waiterName
+        }
+      ];
+
+      await updateDoc(orderRef, {
+        paymentStatus: 'Paid',
+        paymentMethod: 'Cash',
+        timeline: newTimeline,
+        updatedAt: now
+      });
+
+      await logAuditAction(
+        waiterId,
+        waiterName,
+        userData?.role || 'waiter',
+        `Approved Cash Payment for Order #${order.orderNumber}`,
+        'Restaurant',
+        `Amount: ${order.totalAmount} ETB | Location: ${order.locationRef}`
+      );
+
+      // Notify Cashier
+      await sendNotification({
+        recipientRole: 'cashier',
+        title: `Cash Collected: #${order.orderNumber}`,
+        message: `Waiter ${waiterName} collected ${order.totalAmount} ETB cash for ${order.locationRef}.`,
+        type: 'payment',
+        relatedEntityId: order.id,
+        relatedEntityType: 'order',
+        targetRoute: '/admin/cashier',
+        priority: 'Normal',
+        eventId: `cash_coll_${order.id}_${now}`
+      });
+
+      if (selectedOrder?.id === order.id) {
+        setSelectedOrder(prev => prev ? {
+          ...prev,
+          paymentStatus: 'Paid',
+          paymentMethod: 'Cash',
+          timeline: newTimeline
+        } : null);
+      }
+
+      setActionSuccess(`Cash payment of ${order.totalAmount} ETB confirmed and marked as Paid for Order #${order.orderNumber}`);
+    } catch (err: any) {
+      handleFirestoreError(err, OperationType.UPDATE, `restaurant_orders/${order.id}`);
+      setActionError('Failed to record cash payment. Please check network connection.');
+    } finally {
+      setVerifyingPayment(false);
     }
   };
 
@@ -683,6 +761,18 @@ export default function WaiterDashboard() {
                         </div>
 
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          {order.paymentStatus !== 'Paid' && (
+                            <button
+                              disabled={verifyingPayment}
+                              onClick={() => handleCollectCashPayment(order)}
+                              title="Guest paid cash directly to waiter"
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors text-xs flex items-center gap-1 cursor-pointer shadow-2xs"
+                            >
+                              <DollarSign className="w-3.5 h-3.5" />
+                              <span>Cash Received</span>
+                            </button>
+                          )}
+
                           {isUnassigned && (
                             <button
                               disabled={claimingOrderId === order.id}
@@ -757,13 +847,49 @@ export default function WaiterDashboard() {
                   </div>
                 </div>
 
-                {/* Payment Proof Review Box */}
+                {/* Cash Payment Settlement Box for Waiters */}
+                {selectedOrder.paymentStatus !== 'Paid' ? (
+                  <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50/60 rounded-2xl border border-emerald-200 text-xs space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-2xs">
+                          <DollarSign className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-emerald-950 text-xs">Collect Cash Payment</h4>
+                          <p className="text-[10px] text-emerald-700">Approve cash handed directly to waiter</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-black text-emerald-950">{selectedOrder.totalAmount} ETB</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={verifyingPayment}
+                      onClick={() => handleCollectCashPayment(selectedOrder)}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition shadow-xs disabled:opacity-50 cursor-pointer"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>{verifyingPayment ? 'Recording Payment...' : `Confirm Cash Received (${selectedOrder.totalAmount} ETB)`}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs flex items-center justify-between text-emerald-800 font-bold">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Payment Completed</span>
+                    </div>
+                    <span className="text-emerald-950 font-black">{selectedOrder.totalAmount} ETB ({selectedOrder.paymentMethod || 'Cash'})</span>
+                  </div>
+                )}
+
+                {/* Digital Payment Proof Review Box (if attached or pending verification) */}
                 {(selectedOrder.paymentProofUrl || selectedOrder.transactionId || selectedOrder.paymentStatus === 'Pending Verification') && (
                   <div className="p-3.5 bg-amber-50/70 rounded-xl border border-amber-200 text-xs space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-amber-900 flex items-center gap-1.5">
                         <Receipt className="w-3.5 h-3.5 text-amber-700" />
-                        Payment Verification Slip
+                        Digital Payment Slip
                       </h4>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         selectedOrder.paymentStatus === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
@@ -827,7 +953,7 @@ export default function WaiterDashboard() {
                         className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs disabled:opacity-50"
                       >
                         <ShieldCheck className="w-4 h-4" />
-                        {verifyingPayment ? 'Verifying...' : 'Verify Receipt & Mark Paid'}
+                        {verifyingPayment ? 'Verifying...' : 'Verify Receipt Slip & Mark Paid'}
                       </button>
                     )}
                   </div>

@@ -302,8 +302,8 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   // Verify Table exists
   const verifyTableValidity = async () => {
     if (!tableNumber.trim()) {
-      setTableError('Please specify your table number.');
-      return false;
+      setTableVerified(true);
+      return true;
     }
 
     setVerifyingTable(true);
@@ -367,8 +367,10 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
     // 2. Validate Mode Specific Context
     if (orderType === 'QR Menu/Dine in' || orderType === 'Dine-In') {
-      const validTable = await verifyTableValidity();
-      if (!validTable) return;
+      if (tableNumber.trim()) {
+        const validTable = await verifyTableValidity();
+        if (!validTable) return;
+      }
     }
 
     if (orderType === 'Room Service') {
@@ -455,8 +457,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
       const locationRefStr = 
         orderType === 'Room Service' ? `Room ${roomNumber}` :
-        orderType === 'QR Menu/Dine in' ? `Table ${tableNumber}` :
-        orderType === 'Dine-In' ? `Table ${tableNumber}` :
+        (orderType === 'QR Menu/Dine in' || orderType === 'Dine-In' || orderType === 'Book Meal') ? (tableNumber ? `Table ${tableNumber}` : 'Unassigned Table') :
         'Takeaway / Counter';
 
       const orderData: Partial<Order> = {
@@ -597,8 +598,8 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           {/* Location Verification Sections */}
           {orderType === 'QR Menu/Dine in' || orderType === 'Dine-In' || orderType === 'Book Meal' ? (
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider">
-                Table Number <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center justify-between">
+                <span>Table Number <span className="text-neutral-400 font-normal normal-case ml-1">(Optional)</span></span>
               </label>
               <div className="flex gap-2">
                 <input
@@ -610,7 +611,6 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     setTableVerified(false);
                   }}
                   className="flex-1 p-2.5 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  required
                 />
                 <button
                   type="button"
@@ -624,6 +624,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               </div>
               {tableError && <p className="text-xs text-rose-600 font-medium mt-1">{tableError}</p>}
               {tableVerified && <p className="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Table Verified!</p>}
+              <p className="text-[10px] text-neutral-500 italic">If you don't know your table number, you can leave this blank and take any available seat.</p>
             </div>
           ) : orderType === 'Room Service' ? (
             <div className="space-y-3 bg-emerald-50/50 p-4 rounded-xl border border-emerald-200">

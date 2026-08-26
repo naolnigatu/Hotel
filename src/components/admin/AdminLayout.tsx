@@ -145,9 +145,9 @@ export default function AdminLayout() {
   const secondaryItem = getSecondaryActionItem();
 
   return (
-    <div className="min-h-screen md:h-screen bg-neutral-50 flex flex-col md:flex-row md:overflow-hidden">
+    <div className="h-screen h-[100dvh] bg-neutral-50 flex flex-col md:flex-row overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col hidden md:flex shrink-0 h-screen sticky top-0">
+      <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col hidden md:flex shrink-0 h-full">
         <div className="h-16 flex items-center justify-between px-6 border-b border-neutral-200 shrink-0">
           <Link to="/" className="flex items-center gap-2 text-neutral-900 font-bold text-lg hover:text-neutral-700 transition">
             <Building2 className="w-6 h-6 text-neutral-900 shrink-0" />
@@ -284,9 +284,9 @@ export default function AdminLayout() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-screen md:min-h-0 md:h-screen overflow-hidden pb-16 md:pb-0">
+      <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden pb-16 md:pb-0 relative">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-4 sm:px-6 md:px-8 shrink-0 sticky top-0 z-30 shadow-2xs">
+        <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-4 sm:px-6 md:px-8 shrink-0 z-30 shadow-2xs">
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Back Button */}
             <button
@@ -345,7 +345,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto overscroll-contain bg-neutral-50 p-4 sm:p-6 md:p-8">
+        <div id="admin-main-scroll-container" className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-neutral-50 p-4 sm:p-6 md:p-8">
           <Outlet />
         </div>
 

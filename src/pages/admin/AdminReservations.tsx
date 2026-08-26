@@ -244,6 +244,18 @@ export default function AdminReservations() {
           priority: newStatus === 'Approved' ? 'Important' : 'Normal',
           eventId: `res_status_${booking.reservationCode}_${newStatus}`
         });
+
+        if (newStatus === 'Checked Out') {
+          await sendNotification({
+            recipientUid: booking.guestId,
+            title: `How was your stay?`,
+            message: `Thank you for staying with us! Please share your experience and leave a testimonial.`,
+            type: 'system',
+            targetRoute: `/testimonials/new?source=booking&id=${booking.id}`,
+            priority: 'Normal',
+            eventId: `testim_prompt_book_${booking.id}`
+          });
+        }
       }
 
       if (selectedBooking && selectedBooking.id === id) {
