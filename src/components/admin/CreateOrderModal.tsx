@@ -193,9 +193,9 @@ export default function CreateOrderModal({ isOpen, onClose, onOrderCreated }: Cr
   const roomServiceFee = orderType === 'Room Service' ? (restaurantSettings.roomServiceFee || 50) : 0;
   const totalAmount = itemsTotal + roomServiceFee;
   
-  // Tax breakdown (inclusive tax formula: Tax = TotalItems * 15 / 115)
-  const taxRate = restaurantSettings.vatRate || 0.15;
-  const taxAmount = itemsTotal > 0 ? Math.round((itemsTotal - (itemsTotal / (1 + taxRate)))) : 0;
+  // Tax breakdown (straight percentage: Tax = TotalItems * 15%)
+  const taxRate = restaurantSettings.vatRate > 1 ? restaurantSettings.vatRate / 100 : (restaurantSettings.vatRate || 0.15);
+  const taxAmount = itemsTotal > 0 ? Math.round(itemsTotal * taxRate) : 0;
   const subtotal = itemsTotal - taxAmount;
 
   // Filtered menu items

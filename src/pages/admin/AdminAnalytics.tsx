@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { 
   startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths, format 
@@ -72,74 +72,50 @@ export default function AdminAnalytics() {
   }, [rangeOption, customStart, customEnd]);
 
   useEffect(() => {
-    fetchData();
-  }, [dateRange]);
-
-  const fetchData = async () => {
     setLoading(true);
-    try {
-      // Base data (not date filtered)
-      const roomsSnap = await getDocs(collection(db, 'rooms'));
-      setRooms(roomsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Room)));
 
-      const catSnap = await getDocs(collection(db, 'room_categories'));
-      setCategories(catSnap.docs.map(d => ({ id: d.id, ...d.data() } as RoomCategory)));
+    // Base data
+    getDocs(collection(db, 'rooms')).then(snap => setRooms(snap.docs.map(d => ({ id: d.id, ...d.data() } as Room))));
+    getDocs(collection(db, 'room_categories')).then(snap => setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as RoomCategory))));
 
-      // Bookings (created or overlapping with range)
-      // For simplicity, we fetch created within range, OR we could fetch all active. 
-      // To be safe and efficient, we query bookings created in range. 
-      // If we need occupancy we might need a wider net, but we'll stick to creation date for reservations, and overlapping for occupancy.
-      // Firestore doesn't easily do OR queries across different fields well for dates without composite indexes.
-      // We will just fetch bookings where createdAt >= start and <= end.
-      const bookingsQ = query(
-        collection(db, 'bookings'),
-        where('createdAt', '>=', dateRange.start),
-        where('createdAt', '<=', dateRange.end)
-      );
-      const bookingsSnap = await getDocs(bookingsQ);
-      setBookings(bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Booking)));
+    // Real-time listeners
+    const unsubBookings = onSnapshot(collection(db, 'bookings'), (snap) => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+      setBookings(all.filter(b => 
+        (b.createdAt >= dateRange.start && b.createdAt <= dateRange.end) || 
+        (b.checkOut >= dateRange.start && b.checkIn <= dateRange.end)
+      ));
+    });
 
-      // Orders
-      const ordersQ = query(
-        collection(db, 'restaurant_orders'),
-        where('createdAt', '>=', dateRange.start),
-        where('createdAt', '<=', dateRange.end)
-      );
-      const ordersSnap = await getDocs(ordersQ);
-      setOrders(ordersSnap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
+    const unsubOrders = onSnapshot(collection(db, 'restaurant_orders'), (snap) => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+      setOrders(all.filter(o => o.createdAt >= dateRange.start && o.createdAt <= dateRange.end));
+    });
 
-      // Housekeeping
-      const tasksQ = query(
-        collection(db, 'housekeeping_tasks'),
-        where('createdAt', '>=', dateRange.start),
-        where('createdAt', '<=', dateRange.end)
-      );
-      const tasksSnap = await getDocs(tasksQ);
-      setTasks(tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as HousekeepingTask)));
+    const unsubTasks = onSnapshot(collection(db, 'housekeeping_tasks'), (snap) => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as HousekeepingTask));
+      setTasks(all.filter(t => t.createdAt >= dateRange.start && t.createdAt <= dateRange.end));
+    });
 
-      // Maintenance
-      const reportsQ = query(
-        collection(db, 'maintenance_reports'),
-        where('createdAt', '>=', dateRange.start),
-        where('createdAt', '<=', dateRange.end)
-      );
-      const reportsSnap = await getDocs(reportsQ);
-      setReports(reportsSnap.docs.map(d => ({ id: d.id, ...d.data() } as MaintenanceReport)));
+    const unsubReports = onSnapshot(collection(db, 'maintenance_reports'), (snap) => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as MaintenanceReport));
+      setReports(all.filter(r => r.createdAt >= dateRange.start && r.createdAt <= dateRange.end));
+    });
 
-      // Service Requests
-      const srQ = query(
-        collection(db, 'service_requests'),
-        where('createdAt', '>=', dateRange.start),
-        where('createdAt', '<=', dateRange.end)
-      );
-      const srSnap = await getDocs(srQ);
-      setServiceRequests(srSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServiceRequest)));
+    const unsubRequests = onSnapshot(collection(db, 'service_requests'), (snap) => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as ServiceRequest));
+      setServiceRequests(all.filter(sr => sr.createdAt >= dateRange.start && sr.createdAt <= dateRange.end));
+      setLoading(false); // End loading on last listener
+    });
 
-    } catch (error) {
-      console.error('Error fetching analytics data:', error);
-    }
-    setLoading(false);
-  };
+    return () => {
+      unsubBookings();
+      unsubOrders();
+      unsubTasks();
+      unsubReports();
+      unsubRequests();
+    };
+  }, [dateRange]);
 
   // Calculations
   const totalBookings = bookings.length;
@@ -172,7 +148,7 @@ export default function AdminAnalytics() {
   const checkedInBookings = bookings.filter(b => b.status === 'Checked In').length;
   const checkedOutBookings = bookings.filter(b => b.status === 'Checked Out').length;
 
-  const validOrders = orders.filter(o => o.status === 'Completed' || o.status === 'Paid');
+  const validOrders = orders.filter(o => o.paymentStatus === 'Paid' || o.paymentStatus === 'Charged to Room');
   const restaurantRevenue = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
   const avgOrderValue = validOrders.length > 0 ? restaurantRevenue / validOrders.length : 0;
 

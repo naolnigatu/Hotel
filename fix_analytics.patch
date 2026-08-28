@@ -1,0 +1,119 @@
+--- src/pages/admin/AdminAnalytics.tsx
++++ src/pages/admin/AdminAnalytics.tsx
+@@ -2,3 +2,3 @@
+ import React, { useState, useEffect, useMemo } from 'react';
+-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
++import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+ import { db } from '../../firebase';
+@@ -75,69 +75,61 @@
+   useEffect(() => {
+-    fetchData();
++    // Base data
++    getDocs(collection(db, 'rooms')).then(snap => setRooms(snap.docs.map(d => ({ id: d.id, ...d.data() } as Room))));
++    getDocs(collection(db, 'room_categories')).then(snap => setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() } as RoomCategory))));
++
++    // Set up real-time listeners
++    const unsubBookings = onSnapshot(collection(db, 'bookings'), (snap) => {
++      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
++      // Filter bookings that overlap with date range OR were created in date range
++      setBookings(all.filter(b => 
++        (b.createdAt >= dateRange.start && b.createdAt <= dateRange.end) || 
++        (b.checkOut >= dateRange.start && b.checkIn <= dateRange.end)
++      ));
++    });
++
++    const unsubOrders = onSnapshot(collection(db, 'restaurant_orders'), (snap) => {
++      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
++      setOrders(all.filter(o => o.createdAt >= dateRange.start && o.createdAt <= dateRange.end));
++    });
++
++    const unsubTasks = onSnapshot(collection(db, 'housekeeping_tasks'), (snap) => {
++      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as HousekeepingTask));
++      setTasks(all.filter(t => t.createdAt >= dateRange.start && t.createdAt <= dateRange.end));
++    });
++
++    const unsubReports = onSnapshot(collection(db, 'maintenance_reports'), (snap) => {
++      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as MaintenanceReport));
++      setReports(all.filter(r => r.createdAt >= dateRange.start && r.createdAt <= dateRange.end));
++    });
++
++    const unsubRequests = onSnapshot(collection(db, 'service_requests'), (snap) => {
++      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as ServiceRequest));
++      setServiceRequests(all.filter(sr => sr.createdAt >= dateRange.start && sr.createdAt <= dateRange.end));
++    });
++
++    return () => {
++      unsubBookings();
++      unsubOrders();
++      unsubTasks();
++      unsubReports();
++      unsubRequests();
++    };
+   }, [dateRange]);
+-
+-  const fetchData = async () => {
+-    setLoading(true);
+-    try {
+-      // Base data (not date filtered)
+-      const roomsSnap = await getDocs(collection(db, 'rooms'));
+-      setRooms(roomsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Room)));
+-
+-      const catSnap = await getDocs(collection(db, 'room_categories'));
+-      setCategories(catSnap.docs.map(d => ({ id: d.id, ...d.data() } as RoomCategory)));
+-
+-      // Bookings (created or overlapping with range)
+-      // For simplicity, we fetch created within range, OR we could fetch all active. 
+-      // To be safe and efficient, we query bookings created in range. 
+-      // If we need occupancy we might need a wider net, but we'll stick to creation date for reservations, and overlapping for occupancy.
+-      // Firestore doesn't easily do OR queries across different fields well for dates without composite indexes.
+-      // We will just fetch bookings where createdAt >= start and <= end.
+-      const bookingsQ = query(
+-        collection(db, 'bookings'),
+-        where('createdAt', '>=', dateRange.start),
+-        where('createdAt', '<=', dateRange.end)
+-      );
+-      const bookingsSnap = await getDocs(bookingsQ);
+-      setBookings(bookingsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Booking)));
+-
+-      // Orders
+-      const ordersQ = query(
+-        collection(db, 'restaurant_orders'),
+-        where('createdAt', '>=', dateRange.start),
+-        where('createdAt', '<=', dateRange.end)
+-      );
+-      const ordersSnap = await getDocs(ordersQ);
+-      setOrders(ordersSnap.docs.map(d => ({ id: d.id, ...d.data() } as Order)));
+-
+-      // Housekeeping
+-      const tasksQ = query(
+-        collection(db, 'housekeeping_tasks'),
+-        where('createdAt', '>=', dateRange.start),
+-        where('createdAt', '<=', dateRange.end)
+-      );
+-      const tasksSnap = await getDocs(tasksQ);
+-      setTasks(tasksSnap.docs.map(d => ({ id: d.id, ...d.data() } as HousekeepingTask)));
+-
+-      // Maintenance
+-      const repQ = query(
+-        collection(db, 'maintenance_reports'),
+-        where('createdAt', '>=', dateRange.start),
+-        where('createdAt', '<=', dateRange.end)
+-      );
+-      const repSnap = await getDocs(repQ);
+-      setReports(repSnap.docs.map(d => ({ id: d.id, ...d.data() } as MaintenanceReport)));
+-
+-      // Service Requests
+-      const srQ = query(
+-        collection(db, 'service_requests'),
+-        where('createdAt', '>=', dateRange.start),
+-        where('createdAt', '<=', dateRange.end)
+-      );
+-      const srSnap = await getDocs(srQ);
+-      setServiceRequests(srSnap.docs.map(d => ({ id: d.id, ...d.data() } as ServiceRequest)));
+-
+-    } catch (error) {
+-      console.error('Error fetching analytics data:', error);
+-    }
+-    setLoading(false);
+-  };
+ 

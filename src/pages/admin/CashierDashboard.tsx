@@ -8,14 +8,16 @@ import {
   setDoc, 
   query, 
   orderBy, 
-  where 
+  where,
+  getDocs
 } from 'firebase/firestore';
-import { Order, Booking, Role } from '../../types';
+import { Order, Booking, Role, Room, RoomCategory } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';
 import { sendNotification } from '../../lib/notificationService';
 import CreateOrderModal from '../../components/admin/CreateOrderModal';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { format, differenceInDays } from 'date-fns';
 import { 
   DollarSign, 
   CreditCard, 
@@ -54,6 +56,8 @@ export default function CashierDashboard() {
   // Data states
   const [orders, setOrders] = useState<Order[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [categories, setCategories] = useState<Record<string, RoomCategory>>({});
   const [loading, setLoading] = useState(true);
 
   // Active Tab
@@ -83,6 +87,24 @@ export default function CashierDashboard() {
   useBodyScrollLock(!!previewImageUrl || !!rejectionTarget || !!receiptItem);
 
   useEffect(() => {
+    // 0. Fetch base room details
+    const fetchBaseData = async () => {
+      try {
+        const roomsSnap = await getDocs(collection(db, 'rooms'));
+        setRooms(roomsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Room)));
+        
+        const catSnap = await getDocs(collection(db, 'room_categories'));
+        const catMap: Record<string, RoomCategory> = {};
+        catSnap.docs.forEach(doc => {
+          catMap[doc.id] = { id: doc.id, ...doc.data() } as RoomCategory;
+        });
+        setCategories(catMap);
+      } catch (err) {
+        console.error('Error fetching base data:', err);
+      }
+    };
+    fetchBaseData();
+
     // 1. Real-time listener for restaurant orders
     const qOrders = query(collection(db, 'restaurant_orders'), orderBy('createdAt', 'desc'));
     const unsubOrders = onSnapshot(qOrders, (snapshot) => {
@@ -120,7 +142,8 @@ export default function CashierDashboard() {
   const pendingBookingVerifications = useMemo(() => {
     return bookings.filter(b => 
       (b.paymentProofUrl && b.status !== 'confirmed' && b.status !== 'checked-in' && b.status !== 'cancelled') ||
-      (b.paymentMethod && b.paymentMethod !== 'Pay at Hotel' && b.status === 'pending')
+      (b.paymentMethod && b.status === 'pending') ||
+      (b.type === 'hall' && b.status === 'pending')
     );
   }, [bookings]);
 
@@ -705,6 +728,17 @@ export default function CashierDashboard() {
 
                     {/* Card Body */}
                     <div className="p-4 space-y-3 flex-1 text-xs">
+                      <div className="bg-amber-100/30 p-2 rounded-lg border border-amber-100 mb-2">
+                        <span className="font-bold text-[10px] text-amber-800 uppercase tracking-wider block mb-1">Order Items:</span>
+                        <div className="max-h-20 overflow-y-auto space-y-1 pr-1">
+                          {order.items?.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-[11px] text-neutral-700">
+                              <span className="truncate pr-2">{item.quantity}x {item.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="flex items-center justify-between text-neutral-600">
                         <span>Payment Method:</span>
                         <span className="font-bold text-neutral-900">{order.paymentMethod}</span>
@@ -794,6 +828,28 @@ export default function CashierDashboard() {
 
                     {/* Card Body */}
                     <div className="p-4 space-y-3 flex-1 text-xs">
+                      <div className="bg-blue-100/30 p-2 rounded-lg border border-blue-100 mb-2">
+                        <span className="font-bold text-[10px] text-blue-800 uppercase tracking-wider block mb-1">Booking Details:</span>
+                        {booking.type === 'hall' ? (
+                          <div className="text-[11px] text-neutral-700">
+                            <span className="font-semibold block text-neutral-900">{booking.hallName || categories[booking.categoryId]?.name || 'Hall Event'}</span>
+                            <span className="text-neutral-500">{booking.eventType || 'Event'}</span>
+                            <div className="text-[10px] text-neutral-400 mt-1">
+                              {format(new Date(booking.checkIn), 'MMM d, yyyy')} - {format(new Date(booking.checkOut), 'MMM d, yyyy')}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-neutral-700">
+                            <span className="font-semibold block text-neutral-900">{categories[booking.categoryId]?.name || 'Room Stay'}</span>
+                            <span className="text-neutral-500">{booking.roomId ? `Room ${rooms.find(r => r.id === booking.roomId)?.roomNumber || booking.roomId}` : 'No Room Assigned'}</span>
+                            <div className="text-[10px] text-neutral-400 mt-1">
+                              {format(new Date(booking.checkIn), 'MMM d')} - {format(new Date(booking.checkOut), 'MMM d')} 
+                              ({differenceInDays(new Date(booking.checkOut), new Date(booking.checkIn))} nights)
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex items-center justify-between text-neutral-600">
                         <span>Payment Method:</span>
                         <span className="font-bold text-neutral-900">{booking.paymentMethod}</span>
@@ -942,7 +998,12 @@ export default function CashierDashboard() {
                           <div className="text-[11px] text-neutral-500">{order.customerName || 'Walk-in'}</div>
                         </td>
                         <td className="py-3.5 px-4 text-neutral-600">
-                          {order.items?.length || 0} items
+                          <div className="max-w-[150px] truncate font-medium text-neutral-700" title={order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}>
+                            {order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ') || '0 items'}
+                          </div>
+                          <div className="text-[10px] text-neutral-400 mt-0.5">
+                            {order.items?.length || 0} items
+                          </div>
                         </td>
                         <td className="py-3.5 px-4 font-bold text-neutral-900">
                           {order.totalAmount} ETB
@@ -1069,7 +1130,7 @@ export default function CashierDashboard() {
                   <tr>
                     <th className="py-3.5 px-4">Code</th>
                     <th className="py-3.5 px-4">Guest Name</th>
-                    <th className="py-3.5 px-4">Type</th>
+                    <th className="py-3.5 px-4">Category / Item</th>
                     <th className="py-3.5 px-4">Total</th>
                     <th className="py-3.5 px-4">Payment Method</th>
                     <th className="py-3.5 px-4">Booking Status</th>
@@ -1096,7 +1157,14 @@ export default function CashierDashboard() {
                           <div className="text-[11px] text-neutral-500">{booking.guestDetails?.phone}</div>
                         </td>
                         <td className="py-3.5 px-4 text-neutral-600">
-                          {booking.type === 'hall' ? 'Hall Event' : 'Room Stay'}
+                          {booking.type === 'hall' ? (
+                            <div className="font-semibold text-neutral-800">{booking.hallName || categories[booking.categoryId]?.name || 'Hall Event'}</div>
+                          ) : (
+                            <div className="font-semibold text-neutral-800">{categories[booking.categoryId]?.name || 'Room Stay'}</div>
+                          )}
+                          <div className="text-[10px] text-neutral-400">
+                            {booking.type === 'hall' ? booking.eventType : booking.roomId ? `Room ${rooms.find(r => r.id === booking.roomId)?.roomNumber || booking.roomId}` : 'No Room Assigned'}
+                          </div>
                         </td>
                         <td className="py-3.5 px-4 font-bold text-neutral-900">
                           {booking.totalAmount} ETB
@@ -1307,10 +1375,13 @@ export default function CashierDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl border border-neutral-200 flex flex-col">
             <div className="p-4 bg-neutral-900 text-white flex items-center justify-between">
-              <h3 className="text-xs font-bold flex items-center gap-2">
-                <Printer className="w-4 h-4" />
-                <span>Official Receipt / Folio</span>
-              </h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-xs font-bold flex items-center gap-2">
+                  <Printer className="w-4 h-4" />
+                  <span>Official Receipt / Folio</span>
+                </h3>
+                <span className="text-[10px] text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded-full border border-neutral-700 hidden sm:inline-block">Click text below to edit before printing</span>
+              </div>
               <button 
                 onClick={() => setReceiptItem(null)}
                 className="p-1 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition"
@@ -1320,7 +1391,12 @@ export default function CashierDashboard() {
             </div>
 
             {/* Thermal Slip Content */}
-            <div className="p-6 space-y-4 text-xs font-mono bg-neutral-50/50 flex-1 overflow-y-auto">
+            <div 
+              className="p-6 space-y-4 text-xs font-mono bg-neutral-50/50 flex-1 overflow-y-auto"
+              contentEditable 
+              suppressContentEditableWarning
+              style={{ outline: 'none' }}
+            >
               <div className="text-center space-y-1 border-b border-dashed border-neutral-300 pb-3">
                 <h4 className="font-bold text-sm tracking-wider uppercase">Woliso Hotel & Resort</h4>
                 <p className="text-[10px] text-neutral-500">Woliso, Ethiopia • Tel: +251 911 000000</p>
