@@ -11,7 +11,8 @@ import {
   getDocs
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Hall, HallBookingRequest } from '../../types';
+import { Hall, HallBookingRequest, Booking } from '../../types';
+import { getHallOccupancyInfo, getHallsSummary, HallOccupancyStatus } from '../../lib/occupancyUtils';
 import { useAuth } from '../../context/AuthContext';
 import { logAuditAction } from '../../lib/auditLogger';
 import { sendNotification } from '../../lib/notificationService';
@@ -41,18 +42,24 @@ import {
   Filter, 
   MessageSquare,
   Sparkles,
-  DollarSign
+  DollarSign,
+  ArrowRight
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isSameDay, addDays } from 'date-fns';
 
 export default function AdminHalls() {
   const { userData, currentUser } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'requests' | 'venues'>('requests');
+  const [activeTab, setActiveTab] = useState<'availability' | 'requests' | 'venues'>('availability');
   const [halls, setHalls] = useState<Hall[]>([]);
   const [requests, setRequests] = useState<HallBookingRequest[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Date inspection for availability tab
+  const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [hallStatusFilter, setHallStatusFilter] = useState<'ALL' | HallOccupancyStatus>('ALL');
+
   // Venue editing state
   const [editingHall, setEditingHall] = useState<Hall | null>(null);
   const [savingHall, setSavingHall] = useState(false);
@@ -103,9 +110,16 @@ export default function AdminHalls() {
       setLoading(false);
     });
 
+    // 3. Fetch Bookings (for hall type or general)
+    const unsubBookings = onSnapshot(collection(db, 'bookings'), (snapshot) => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Booking));
+      setBookings(list);
+    });
+
     return () => {
       unsubHalls();
       unsubRequests();
+      unsubBookings();
     };
   }, []);
 
@@ -339,6 +353,18 @@ export default function AdminHalls() {
           {/* Main Tab Switcher */}
           <div className="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 border border-neutral-200">
             <button
+              onClick={() => setActiveTab('availability')}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 ${
+                activeTab === 'availability'
+                  ? 'bg-white text-neutral-900 shadow-xs'
+                  : 'text-neutral-600 hover:text-neutral-900'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Live Availability ({halls.length})</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('requests')}
               className={`px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 ${
                 activeTab === 'requests'
@@ -378,6 +404,364 @@ export default function AdminHalls() {
           )}
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* TAB 0: LIVE HALL AVAILABILITY & OCCUPANCY */}
+      {/* ========================================================================= */}
+      {activeTab === 'availability' && (() => {
+        const targetDateObj = new Date(`${selectedDate}T00:00:00`);
+        const isTargetToday = isSameDay(targetDateObj, new Date());
+        const hallSummary = getHallsSummary(halls, requests, targetDateObj, bookings);
+
+        const filteredHalls = halls.filter(hall => {
+          if (hallStatusFilter === 'ALL') return true;
+          const occInfo = getHallOccupancyInfo(hall, requests, targetDateObj, bookings);
+          return occInfo.status === hallStatusFilter;
+        });
+
+        // 7-day projection dates
+        const upcomingSevenDays = Array.from({ length: 7 }, (_, i) => addDays(targetDateObj, i));
+
+        return (
+          <div className="space-y-6">
+            {/* Date Inspector Bar */}
+            <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2.5">
+                <Calendar className="w-5 h-5 text-neutral-600 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Inspect Hall Occupancy On Date</p>
+                  <p className="text-sm font-bold text-neutral-900">
+                    {format(targetDateObj, 'EEEE, MMMM d, yyyy')} {isTargetToday && '(Today)'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedDate(format(new Date(), 'yyyy-MM-dd'))}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition ${
+                    isTargetToday 
+                      ? 'bg-neutral-900 text-white border-neutral-900' 
+                      : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setSelectedDate(format(addDays(new Date(), 1), 'yyyy-MM-dd'))}
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-neutral-50 text-neutral-700 border border-neutral-200 hover:bg-neutral-100 transition"
+                >
+                  Tomorrow
+                </button>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-neutral-300 text-neutral-800 focus:outline-hidden focus:ring-2 focus:ring-neutral-900"
+                />
+              </div>
+            </div>
+
+            {/* Real-time Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div 
+                onClick={() => setHallStatusFilter('ALL')}
+                className={`p-4 rounded-2xl border cursor-pointer transition ${
+                  hallStatusFilter === 'ALL' ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm' : 'bg-white text-neutral-900 border-neutral-200 hover:border-neutral-300 shadow-2xs'
+                }`}
+              >
+                <span className={`text-[11px] font-bold uppercase tracking-wider block ${hallStatusFilter === 'ALL' ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                  Total Venues
+                </span>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-2xl font-black">{hallSummary.total}</span>
+                  <Building2 className={`w-5 h-5 ${hallStatusFilter === 'ALL' ? 'text-neutral-400' : 'text-neutral-400'}`} />
+                </div>
+                <p className={`text-[11px] mt-1 ${hallStatusFilter === 'ALL' ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                  All conference & event halls
+                </p>
+              </div>
+
+              <div 
+                onClick={() => setHallStatusFilter('Available')}
+                className={`p-4 rounded-2xl border cursor-pointer transition ${
+                  hallStatusFilter === 'Available' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-neutral-900 border-neutral-200 hover:border-emerald-300 shadow-2xs'
+                }`}
+              >
+                <span className={`text-[11px] font-bold uppercase tracking-wider block ${hallStatusFilter === 'Available' ? 'text-emerald-100' : 'text-emerald-700'}`}>
+                  Available (Open)
+                </span>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-2xl font-black">{hallSummary.available}</span>
+                  <CheckCircle2 className={`w-5 h-5 ${hallStatusFilter === 'Available' ? 'text-emerald-200' : 'text-emerald-500'}`} />
+                </div>
+                <p className={`text-[11px] mt-1 ${hallStatusFilter === 'Available' ? 'text-emerald-100' : 'text-neutral-500'}`}>
+                  Free to book on {format(targetDateObj, 'MMM d')}
+                </p>
+              </div>
+
+              <div 
+                onClick={() => setHallStatusFilter('Occupied')}
+                className={`p-4 rounded-2xl border cursor-pointer transition ${
+                  hallStatusFilter === 'Occupied' ? 'bg-rose-600 text-white border-rose-600 shadow-sm' : 'bg-white text-neutral-900 border-neutral-200 hover:border-rose-300 shadow-2xs'
+                }`}
+              >
+                <span className={`text-[11px] font-bold uppercase tracking-wider block ${hallStatusFilter === 'Occupied' ? 'text-rose-100' : 'text-rose-700'}`}>
+                  In Event / Occupied
+                </span>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-2xl font-black">{hallSummary.occupied}</span>
+                  <Clock className={`w-5 h-5 ${hallStatusFilter === 'Occupied' ? 'text-rose-200' : 'text-rose-500'}`} />
+                </div>
+                <p className={`text-[11px] mt-1 ${hallStatusFilter === 'Occupied' ? 'text-rose-100' : 'text-neutral-500'}`}>
+                  Active event in progress
+                </p>
+              </div>
+
+              <div 
+                onClick={() => setHallStatusFilter('Reserved')}
+                className={`p-4 rounded-2xl border cursor-pointer transition ${
+                  hallStatusFilter === 'Reserved' ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-white text-neutral-900 border-neutral-200 hover:border-amber-300 shadow-2xs'
+                }`}
+              >
+                <span className={`text-[11px] font-bold uppercase tracking-wider block ${hallStatusFilter === 'Reserved' ? 'text-amber-100' : 'text-amber-700'}`}>
+                  Reserved (Confirmed)
+                </span>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-2xl font-black">{hallSummary.reserved}</span>
+                  <Calendar className={`w-5 h-5 ${hallStatusFilter === 'Reserved' ? 'text-amber-200' : 'text-amber-500'}`} />
+                </div>
+                <p className={`text-[11px] mt-1 ${hallStatusFilter === 'Reserved' ? 'text-amber-100' : 'text-neutral-500'}`}>
+                  Upcoming bookings on schedule
+                </p>
+              </div>
+            </div>
+
+            {/* Hall Status Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredHalls.map(hall => {
+                const occInfo = getHallOccupancyInfo(hall, requests, targetDateObj, bookings);
+
+                return (
+                  <div 
+                    key={hall.id}
+                    className="bg-white rounded-3xl border border-neutral-200/90 shadow-2xs hover:shadow-md hover:border-neutral-300 transition-all overflow-hidden flex flex-col justify-between"
+                  >
+                    {/* Top: Hall Header & Badge */}
+                    <div className="p-5 border-b border-neutral-100">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-lg font-black text-neutral-900">{hall.name}</h3>
+                          <div className="flex items-center gap-3 text-xs text-neutral-500 mt-1">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3.5 h-3.5 text-neutral-400" />
+                              Up to {hall.capacity} guests
+                            </span>
+                            <span>•</span>
+                            <span className="font-bold text-neutral-800">
+                              {hall.price?.toLocaleString()} ETB / day
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shrink-0 ${occInfo.badgeClass}`}>
+                          <span className={`w-2 h-2 rounded-full ${occInfo.dotColor}`} />
+                          {occInfo.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Middle: Active Event or Availability details */}
+                    <div className="p-5 flex-1 space-y-4">
+                      {occInfo.activeEvent ? (
+                        <div className="p-3.5 bg-rose-50/80 border border-rose-200 rounded-2xl space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-rose-900 uppercase tracking-wider text-[10px]">
+                              Active Event Today
+                            </span>
+                            <span className="font-mono text-[11px] font-bold text-rose-700 bg-white px-2 py-0.5 rounded border border-rose-200">
+                              {occInfo.activeEvent.reservationCode}
+                            </span>
+                          </div>
+                          <p className="text-sm font-black text-neutral-900">
+                            {occInfo.activeEvent.eventType}
+                          </p>
+                          <div className="text-xs text-neutral-700 space-y-1">
+                            <p className="font-medium">
+                              <span className="text-neutral-400">Organizer:</span> {occInfo.activeEvent.organizerName}
+                            </p>
+                            <p className="flex items-center gap-2 text-neutral-600 text-[11px]">
+                              <Phone className="w-3 h-3 text-neutral-400" /> {occInfo.activeEvent.phone || 'N/A'}
+                            </p>
+                            <div className="flex items-center justify-between text-[11px] pt-1 text-neutral-600 border-t border-rose-200/50">
+                              <span>Guests: {occInfo.activeEvent.numberOfGuests}</span>
+                              <span>Slot: {occInfo.activeEvent.timeSlot || 'Full Day'}</span>
+                            </div>
+                          </div>
+                          {occInfo.activeEvent.rawRequest && (
+                            <button
+                              onClick={() => setSelectedRequest(occInfo.activeEvent!.rawRequest!)}
+                              className="w-full mt-1 py-1.5 bg-white text-rose-800 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-100 transition cursor-pointer"
+                            >
+                              Inspect Request Details
+                            </button>
+                          )}
+                        </div>
+                      ) : occInfo.status === 'Reserved' ? (
+                        <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-2xl space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-amber-900 uppercase tracking-wider text-[10px]">
+                              Upcoming Confirmed Booking
+                            </span>
+                            <span className="font-mono text-[11px] font-bold text-amber-800 bg-white px-2 py-0.5 rounded border border-amber-200">
+                              Reserved
+                            </span>
+                          </div>
+                          {occInfo.upcomingEvents[0] && (
+                            <div className="text-xs text-neutral-800 space-y-1">
+                              <p className="font-black text-sm text-neutral-900">
+                                {occInfo.upcomingEvents[0].eventType}
+                              </p>
+                              <p className="text-neutral-600">
+                                Organizer: {occInfo.upcomingEvents[0].organizerName}
+                              </p>
+                              <p className="text-[11px] text-amber-800 font-medium">
+                                Dates: {format(new Date(occInfo.upcomingEvents[0].startTs), 'MMM d')} - {format(new Date(occInfo.upcomingEvents[0].endTs), 'MMM d, yyyy')}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl text-center">
+                          <CheckCircle2 className="w-7 h-7 text-emerald-600 mx-auto mb-1.5" />
+                          <p className="text-xs font-extrabold text-emerald-900">Hall is Completely Open</p>
+                          <p className="text-[11px] text-emerald-700 mt-0.5">
+                            Available for immediate booking on {format(targetDateObj, 'MMM d, yyyy')}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Upcoming Events List */}
+                      {occInfo.upcomingEvents.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                            Upcoming Schedule ({occInfo.upcomingEvents.length})
+                          </p>
+                          <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                            {occInfo.upcomingEvents.slice(0, 3).map(ue => (
+                              <div key={ue.id} className="p-2 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between text-xs">
+                                <div className="truncate mr-2">
+                                  <p className="font-bold text-neutral-900 truncate">{ue.eventType}</p>
+                                  <p className="text-[10px] text-neutral-500">
+                                    {format(new Date(ue.startTs), 'MMM d')} • {ue.organizerName}
+                                  </p>
+                                </div>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                                  ue.status === 'Approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {ue.status}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer: Quick Actions */}
+                    <div className="p-4 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between text-xs">
+                      <button
+                        onClick={() => {
+                          setSearchTerm(hall.name);
+                          setActiveTab('requests');
+                        }}
+                        className="font-bold text-neutral-700 hover:text-neutral-900 hover:underline cursor-pointer"
+                      >
+                        View Requests
+                      </button>
+                      <button
+                        onClick={() => setEditingHall(hall)}
+                        className="px-3 py-1.5 bg-white border border-neutral-200 rounded-lg font-bold text-neutral-700 hover:bg-neutral-100 transition cursor-pointer"
+                      >
+                        Edit Venue
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 7-Day Hall Availability Schedule Matrix */}
+            <div className="bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-xs">
+              <div className="p-5 border-b border-neutral-200 bg-neutral-50">
+                <h3 className="text-base font-bold text-neutral-900">7-Day Hall Availability Outlook</h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  At-a-glance occupancy across all event halls from {format(targetDateObj, 'MMM d')} onwards
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-neutral-100/80 border-b border-neutral-200">
+                      <th className="p-3.5 font-bold text-neutral-800 uppercase tracking-wider w-48 sticky left-0 bg-neutral-100 z-10">
+                        Venue
+                      </th>
+                      {upcomingSevenDays.map(day => (
+                        <th key={day.toISOString()} className="p-3 text-center border-l border-neutral-200 min-w-[120px]">
+                          <div className="font-bold text-neutral-900">{format(day, 'EEE, MMM d')}</div>
+                          {isSameDay(day, new Date()) && (
+                            <span className="text-[10px] bg-neutral-900 text-white px-2 py-0.2 rounded-full font-bold inline-block mt-0.5">
+                              TODAY
+                            </span>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200">
+                    {halls.map(hall => (
+                      <tr key={hall.id} className="hover:bg-neutral-50/50">
+                        <td className="p-3.5 font-bold text-neutral-900 bg-white border-r border-neutral-200 sticky left-0 z-10 shadow-xs">
+                          <p className="text-sm font-black">{hall.name}</p>
+                          <p className="text-[11px] text-neutral-500 font-normal">Cap: {hall.capacity}</p>
+                        </td>
+
+                        {upcomingSevenDays.map(day => {
+                          const occ = getHallOccupancyInfo(hall, requests, day, bookings);
+                          const isOccupiedOnDay = occ.status === 'Occupied';
+                          const isReservedOnDay = occ.status === 'Reserved';
+
+                          return (
+                            <td key={day.toISOString()} className="p-2 border-l border-neutral-200 text-center align-middle">
+                              {isOccupiedOnDay || (isReservedOnDay && occ.activeEvent) ? (
+                                <div className="p-2 rounded-xl bg-rose-100 border border-rose-300 text-rose-900 text-left">
+                                  <p className="font-bold truncate text-[11px]">{occ.activeEvent?.eventType || 'Event'}</p>
+                                  <p className="text-[10px] opacity-80 truncate">{occ.activeEvent?.organizerName}</p>
+                                </div>
+                              ) : isReservedOnDay ? (
+                                <div className="p-2 rounded-xl bg-amber-100 border border-amber-300 text-amber-900 text-left">
+                                  <p className="font-bold truncate text-[11px]">Reserved</p>
+                                  <p className="text-[10px] opacity-80 truncate">{occ.upcomingEvents[0]?.eventType || 'Event'}</p>
+                                </div>
+                              ) : (
+                                <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200/60">
+                                  Available
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* TAB 1: BOOKING REQUESTS */}

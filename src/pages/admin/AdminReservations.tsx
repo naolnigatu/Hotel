@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, doc, updateDoc, orderBy, getDocs, where, runTransaction } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Booking, RoomCategory, Room, BookingStatus } from '../../types';
+import { Booking, RoomCategory, Room, BookingStatus, Hall, HallBookingRequest } from '../../types';
+import { getRoomsSummary, getHallsSummary, normalizeHallEvent, UnifiedHallEvent } from '../../lib/occupancyUtils';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Loader2, 
@@ -17,6 +18,7 @@ import {
   Users, 
   Plus, 
   Calendar as CalendarIcon, 
+  CalendarRange,
   UserCheck, 
   Sparkles, 
   Wrench, 
@@ -35,6 +37,7 @@ import { format, isToday } from 'date-fns';
 import ReservationCalendar from './ReservationCalendar';
 import WalkInModal from '../../components/admin/WalkInModal';
 import GuestProfileModal from '../../components/admin/GuestProfileModal';
+import DateIntervalAvailabilityModal from '../../components/admin/DateIntervalAvailabilityModal';
 import CopyButton from '../../components/common/CopyButton';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
@@ -46,6 +49,8 @@ export default function AdminReservations() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [categories, setCategories] = useState<Record<string, RoomCategory>>({});
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [halls, setHalls] = useState<Hall[]>([]);
+  const [hallRequests, setHallRequests] = useState<HallBookingRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modes: 'list' | 'calendar' | 'guest-directory'
@@ -62,11 +67,12 @@ export default function AdminReservations() {
   // Modals
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [selectedGuestProfile, setSelectedGuestProfile] = useState<{ phone: string; email: string; name: string } | null>(null);
   const [previewPaymentImage, setPreviewPaymentImage] = useState<string | null>(null);
 
   // Lock body scroll if any reservation modal or lightboxes are open
-  useBodyScrollLock(!!selectedBooking || showWalkInModal || !!selectedGuestProfile || !!previewPaymentImage);
+  useBodyScrollLock(!!selectedBooking || showWalkInModal || showAvailabilityModal || !!selectedGuestProfile || !!previewPaymentImage);
 
   // Action states
   const [actionLoading, setActionLoading] = useState(false);
@@ -79,6 +85,8 @@ export default function AdminReservations() {
   useEffect(() => {
     let unsubscribeBookings = () => {};
     let unsubscribeRooms = () => {};
+    let unsubscribeHalls = () => {};
+    let unsubscribeHallRequests = () => {};
 
     const setupListeners = async () => {
       try {
@@ -109,6 +117,20 @@ export default function AdminReservations() {
           console.error("Rooms listener error:", err);
         });
 
+        // Real-time halls listener
+        unsubscribeHalls = onSnapshot(collection(db, 'halls'), (snap) => {
+          setHalls(snap.docs.map(d => ({ id: d.id, ...d.data() } as Hall)));
+        }, (err) => {
+          console.error("Halls listener error:", err);
+        });
+
+        // Real-time hall requests listener
+        unsubscribeHallRequests = onSnapshot(collection(db, 'hall_requests'), (snap) => {
+          setHallRequests(snap.docs.map(d => ({ id: d.id, ...d.data() } as HallBookingRequest)));
+        }, (err) => {
+          console.error("Hall requests listener error:", err);
+        });
+
       } catch (error) {
         console.error("Error setting up listeners:", error);
         setLoading(false);
@@ -120,6 +142,8 @@ export default function AdminReservations() {
     return () => {
       unsubscribeBookings();
       unsubscribeRooms();
+      unsubscribeHalls();
+      unsubscribeHallRequests();
     };
   }, []);
 
@@ -553,8 +577,16 @@ export default function AdminReservations() {
           </div>
 
           <button
+            onClick={() => setShowAvailabilityModal(true)}
+            className="px-4 py-2.5 bg-emerald-700 text-white font-medium text-sm rounded-xl hover:bg-emerald-800 transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
+          >
+            <CalendarRange className="w-4 h-4" />
+            Check Date Availability
+          </button>
+
+          <button
             onClick={() => setShowWalkInModal(true)}
-            className="px-4 py-2.5 bg-neutral-900 text-white font-medium text-sm rounded-xl hover:bg-neutral-800 transition-colors shadow-sm flex items-center gap-2"
+            className="px-4 py-2.5 bg-neutral-900 text-white font-medium text-sm rounded-xl hover:bg-neutral-800 transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             + New Walk-in / Phone Booking
@@ -601,6 +633,63 @@ export default function AdminReservations() {
           <p className="text-2xl font-bold text-rose-700 mt-1">{maintenanceRoomsCount}</p>
         </div>
       </div>
+
+      {/* Live Resource Occupancy Overview Bar (Rooms & Halls) */}
+      {(() => {
+        const hallEvents = hallRequests.map(r => normalizeHallEvent(r)).filter(Boolean) as UnifiedHallEvent[];
+        const hallsSummary = getHallsSummary(halls, hallRequests, new Date(), bookings);
+
+        return (
+          <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-2xs flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-6 text-xs">
+              <div className="flex items-center gap-3">
+                <span className="p-2 bg-blue-50 text-blue-700 rounded-xl font-bold flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4" /> Hotel Rooms:
+                </span>
+                <div className="flex items-center gap-2 font-bold">
+                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    ● {availableRoomsCount} Available
+                  </span>
+                  <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                    ● {occupiedRoomsCount} Occupied
+                  </span>
+                  <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                    ● {bookings.filter(b => b.status === 'Approved' || b.status === 'Confirmed').length} Reserved
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-4 w-px bg-neutral-200 hidden sm:block" />
+
+              <div className="flex items-center gap-3">
+                <span className="p-2 bg-purple-50 text-purple-700 rounded-xl font-bold flex items-center gap-1.5">
+                  <Users className="w-4 h-4" /> Event Halls:
+                </span>
+                <div className="flex items-center gap-2 font-bold">
+                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    ● {hallsSummary.available} Available
+                  </span>
+                  <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                    ● {hallsSummary.occupied} In Event Today
+                  </span>
+                  <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                    ● {hallsSummary.reserved} Reserved
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode('calendar')}
+                className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold rounded-lg transition cursor-pointer"
+              >
+                Open Calendar Matrix
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* MAIN VIEW CONTENT */}
       {viewMode === 'list' && (
@@ -836,6 +925,8 @@ export default function AdminReservations() {
           rooms={rooms} 
           categories={categories} 
           onSelectBooking={setSelectedBooking} 
+          halls={halls}
+          hallEvents={hallRequests.map(r => normalizeHallEvent(r)).filter(Boolean) as UnifiedHallEvent[]}
         />
       )}
 
@@ -1278,6 +1369,26 @@ export default function AdminReservations() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* DATE INTERVAL AVAILABILITY MODAL */}
+      {showAvailabilityModal && (
+        <DateIntervalAvailabilityModal
+          isOpen={showAvailabilityModal}
+          onClose={() => setShowAvailabilityModal(false)}
+          rooms={rooms}
+          categories={categories}
+          bookings={bookings}
+          halls={halls}
+          hallRequests={hallRequests}
+          onSelectRoomForBooking={(_room, _checkInStr, _checkOutStr) => {
+            setShowAvailabilityModal(false);
+            setShowWalkInModal(true);
+          }}
+          onSelectHallForBooking={(_hall, _startDate, _endDate) => {
+            setShowAvailabilityModal(false);
+          }}
+        />
       )}
 
       {/* WALK-IN MODAL */}

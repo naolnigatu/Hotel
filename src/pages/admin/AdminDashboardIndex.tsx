@@ -28,7 +28,8 @@ import {
   Megaphone,
   Receipt
 } from 'lucide-react';
-import { Booking, Room, Order, HousekeepingTask } from '../../types';
+import { Booking, Room, Order, HousekeepingTask, Hall, HallBookingRequest } from '../../types';
+import { getRoomsSummary, getHallsSummary } from '../../lib/occupancyUtils';
 
 interface ModuleItem {
   name: string;
@@ -46,6 +47,8 @@ export default function AdminDashboardIndex() {
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [halls, setHalls] = useState<Hall[]>([]);
+  const [hallRequests, setHallRequests] = useState<HallBookingRequest[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [tasks, setTasks] = useState<HousekeepingTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +74,20 @@ export default function AdminDashboardIndex() {
       console.warn("Rooms listener warning:", err);
     });
 
+    // Real-time listener for halls
+    const unsubHalls = onSnapshot(collection(db, 'halls'), (snap) => {
+      setHalls(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Hall[]);
+    }, (err) => {
+      console.warn("Halls listener warning:", err);
+    });
+
+    // Real-time listener for hall requests
+    const unsubHallReqs = onSnapshot(collection(db, 'hall_requests'), (snap) => {
+      setHallRequests(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as HallBookingRequest[]);
+    }, (err) => {
+      console.warn("Hall requests listener warning:", err);
+    });
+
     // Real-time listener for restaurant orders
     const unsubOrders = onSnapshot(collection(db, 'restaurant_orders'), (snap) => {
       const oList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Order[];
@@ -90,19 +107,25 @@ export default function AdminDashboardIndex() {
     return () => {
       unsubBookings();
       unsubRooms();
+      unsubHalls();
+      unsubHallReqs();
       unsubOrders();
       unsubTasks();
     };
   }, []);
 
-  // Calculate Metrics
+  // Calculate Standardized Occupancy Metrics
   const todayStr = new Date().toISOString().split('T')[0];
   const activeBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'checked-in');
   const todayCheckIns = bookings.filter(b => b.checkInDate === todayStr || (b as any).checkIn === todayStr);
-  
-  const occupiedRoomsCount = rooms.filter(r => r.status === 'Occupied' || r.condition === 'Occupied').length;
-  const availableRoomsCount = rooms.filter(r => r.status === 'Available' && (r.condition === 'Clean' || r.condition === 'Ready')).length;
-  const dirtyRoomsCount = rooms.filter(r => r.condition === 'Dirty' || r.condition === 'Needs Cleaning' || r.condition === 'Cleaning In Progress').length;
+
+  const roomsSummary = getRoomsSummary(rooms, bookings);
+  const hallsSummary = getHallsSummary(halls, hallRequests, new Date(), bookings);
+
+  const occupiedRoomsCount = roomsSummary.occupied;
+  const availableRoomsCount = roomsSummary.available;
+  const reservedRoomsCount = roomsSummary.reserved;
+  const dirtyRoomsCount = roomsSummary.needsCleaning;
 
   const activeOrdersCount = orders.filter(o => o.status === 'pending' || o.status === 'preparing' || o.status === 'ready').length;
   const pendingTasksCount = tasks.filter(t => t.status === 'Pending' || t.status === 'In Progress').length;
@@ -141,7 +164,8 @@ export default function AdminDashboardIndex() {
       icon: Users,
       description: 'Conference halls, wedding venues, capacity, and event bookings.',
       category: 'Front Desk',
-      roles: ['admin'],
+      roles: ['admin', 'reception'],
+      badge: hallsSummary.occupied > 0 ? `${hallsSummary.occupied} In Event` : `${hallsSummary.available} Available`,
     },
 
     // Restaurant & Kitchen
@@ -432,7 +456,7 @@ export default function AdminDashboardIndex() {
       </div>
 
       {/* Live Operational KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Bookings KPI */}
         <Link
           to={(userRole === 'admin' || userRole === 'reception') ? '/admin/reservations' : '#'}
@@ -460,7 +484,7 @@ export default function AdminDashboardIndex() {
           className="bg-white p-4 rounded-xl border border-neutral-200/80 shadow-2xs hover:shadow-sm hover:border-neutral-300 transition group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-neutral-500">Room Status</span>
+            <span className="text-xs font-semibold text-neutral-500">Room Occupancy</span>
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors">
               <Building2 className="w-4 h-4" />
             </div>
@@ -470,7 +494,28 @@ export default function AdminDashboardIndex() {
               {loading ? '...' : `${availableRoomsCount} / ${rooms.length || 0}`}
             </div>
             <p className="text-[11px] text-neutral-500 mt-0.5">
-              {occupiedRoomsCount} occupied, {dirtyRoomsCount} cleaning
+              {occupiedRoomsCount} occupied, {reservedRoomsCount} reserved
+            </p>
+          </div>
+        </Link>
+
+        {/* Hall Status KPI */}
+        <Link
+          to={(userRole === 'admin' || userRole === 'reception') ? '/admin/halls' : '#'}
+          className="bg-white p-4 rounded-xl border border-neutral-200/80 shadow-2xs hover:shadow-sm hover:border-neutral-300 transition group flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-neutral-500">Hall Occupancy</span>
+            <div className="p-2 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="text-2xl font-bold text-neutral-900">
+              {loading ? '...' : `${hallsSummary.available} / ${halls.length || 0}`}
+            </div>
+            <p className="text-[11px] text-neutral-500 mt-0.5">
+              {hallsSummary.occupied} in event, {hallsSummary.reserved} reserved
             </p>
           </div>
         </Link>
@@ -503,7 +548,7 @@ export default function AdminDashboardIndex() {
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-neutral-500">Pending Tasks</span>
-            <div className="p-2 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition-colors">
+            <div className="p-2 bg-rose-50 text-rose-600 rounded-lg group-hover:bg-rose-600 group-hover:text-white transition-colors">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
@@ -517,6 +562,60 @@ export default function AdminDashboardIndex() {
           </div>
         </Link>
       </div>
+
+      {/* Real-time Occupancy Overview Banner for Frontdesk & Admin */}
+      {(userRole === 'admin' || userRole === 'reception') && (
+        <div className="bg-white p-5 rounded-2xl border border-neutral-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h3 className="text-sm font-black text-neutral-900 uppercase tracking-wide">
+                Live Occupancy & Space Availability Radar
+              </h3>
+            </div>
+            <p className="text-xs text-neutral-500">
+              Real-time synchronization for Frontdesk & Admin reception teams.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <div className="p-2.5 bg-neutral-50 rounded-xl border border-neutral-200 flex items-center gap-2.5">
+              <Building2 className="w-4 h-4 text-neutral-600" />
+              <span className="font-bold text-neutral-700">Rooms:</span>
+              <span className="text-emerald-700 font-black">{availableRoomsCount} Free</span>
+              <span className="text-neutral-300">•</span>
+              <span className="text-rose-700 font-black">{occupiedRoomsCount} Occupied</span>
+              <span className="text-neutral-300">•</span>
+              <span className="text-amber-700 font-black">{reservedRoomsCount} Reserved</span>
+            </div>
+
+            <div className="p-2.5 bg-neutral-50 rounded-xl border border-neutral-200 flex items-center gap-2.5">
+              <Users className="w-4 h-4 text-purple-600" />
+              <span className="font-bold text-neutral-700">Halls:</span>
+              <span className="text-emerald-700 font-black">{hallsSummary.available} Free</span>
+              <span className="text-neutral-300">•</span>
+              <span className="text-rose-700 font-black">{hallsSummary.occupied} In Event</span>
+              <span className="text-neutral-300">•</span>
+              <span className="text-amber-700 font-black">{hallsSummary.reserved} Reserved</span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Link
+                to="/admin/room-inventory"
+                className="px-3 py-2 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-800 transition"
+              >
+                Room Inventory
+              </Link>
+              <Link
+                to="/admin/halls"
+                className="px-3 py-2 bg-neutral-100 text-neutral-800 rounded-xl text-xs font-bold hover:bg-neutral-200 transition"
+              >
+                Hall Schedule
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modules Quick Access Navigation */}
       <div className="space-y-6">

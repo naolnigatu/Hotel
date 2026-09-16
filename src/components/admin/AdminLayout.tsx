@@ -71,7 +71,7 @@ export default function AdminLayout() {
     { name: 'Waiter Dashboard', path: '/admin/waiter', icon: UtensilsCrossed, roles: ['admin', 'waiter'] },
     { name: 'Room Inventory', path: '/admin/room-inventory', icon: Building2, roles: ['admin', 'reception', 'housekeeping'] },
     { name: 'Rooms & Categories', path: '/admin/rooms', icon: Building2, roles: ['admin', 'reception'] },
-    { name: 'Halls & Events', path: '/admin/halls', icon: Users, roles: ['admin'] },
+    { name: 'Halls & Events', path: '/admin/halls', icon: Users, roles: ['admin', 'reception'] },
     { name: 'Kitchen KDS', path: '/admin/kitchen', icon: UtensilsCrossed, roles: ['admin', 'kitchen'] },
     { name: 'Restaurant Menu', path: '/admin/menu', icon: UtensilsCrossed, roles: ['admin'] },
     { name: 'Restaurant Tables', path: '/admin/tables', icon: UtensilsCrossed, roles: ['admin'] },
