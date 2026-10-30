@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, getDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { CmsContact, CmsFooter } from '../types';
 
 export default function Footer() {

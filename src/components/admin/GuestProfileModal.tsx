@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Booking, Room, RoomCategory } from '../../types';
-import { db } from '../../firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/supabaseAdapter';
+import { doc, updateDoc } from '@/lib/supabaseAdapter';
 import { useAuth } from '../../context/AuthContext';
 import { X, User, Phone, Mail, Award, History, Building2, Calendar, FileText, Send, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';

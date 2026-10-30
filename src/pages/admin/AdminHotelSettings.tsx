@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/supabaseAdapter';
+import { doc, getDoc, setDoc } from '@/lib/supabaseAdapter';
 import { HotelSettings, BankDetail } from '../../types';
 import { sendNotification } from '../../lib/notificationService';
 import { useAuth } from '../../context/AuthContext';

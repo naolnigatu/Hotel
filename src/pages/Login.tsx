@@ -7,8 +7,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile
-} from 'firebase/auth';
-import { auth, db } from '../firebase';
+} from '@/lib/supabaseAdapter';
+import { auth, db } from '@/lib/supabaseAdapter';
 import { Building2, Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
@@ -66,7 +66,7 @@ export default function Login() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
         // Ensure name is written correctly to Firestore before context creates a 'Guest' document due to async race
-        const { setDoc, doc } = await import('firebase/firestore');
+        const { setDoc, doc } = await import('@/lib/supabaseAdapter');
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           uid: userCredential.user.uid,
           email: userCredential.user.email || email,
@@ -79,7 +79,7 @@ export default function Login() {
       }
       navigate('/dashboard');
     } catch (err: any) {
-      // Improve Firebase error messages slightly for user presentation
+      // Improve Auth error messages slightly for user presentation
       let msg = err.message;
       if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in.';
       if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') msg = 'Invalid email or password.';

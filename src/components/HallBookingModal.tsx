@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, addDoc, doc, setDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Hall, HallBookingRequest, Booking } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { sendNotification } from '../lib/notificationService';

@@ -1,1 +1,0 @@
-sed -i 's/const \[bookings, setBookings\] = useState<Booking\[\]>(\[\]);/const [bookings, setBookings] = useState<Booking[]>([]);\n  const [rooms, setRooms] = useState<Room[]>([]);\n  const [categories, setCategories] = useState<Record<string, RoomCategory>>({});/' src/pages/admin/CashierDashboard.tsx

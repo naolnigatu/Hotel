@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase';
-import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
-import { initializeApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
-import firebaseConfig from '../../../firebase-applet-config.json';
+import { db } from '@/lib/supabaseAdapter';
+import { collection, onSnapshot, doc, updateDoc, setDoc } from '@/lib/supabaseAdapter';
+import { initializeApp, deleteApp } from '@/lib/supabaseAdapter';
+import { getAuth, createUserWithEmailAndPassword, updateProfile, signOut } from '@/lib/supabaseAdapter';
 import { User, Role } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { logAuditAction } from '../../lib/firestoreUtils';
@@ -68,13 +67,9 @@ export default function AdminUsers() {
     e.preventDefault();
     setRegistering(true);
     setNotice(null);
-
-    // Create a secondary app to register the user without signing out the current admin
-    const secondaryApp = initializeApp(firebaseConfig, 'SecondaryAuthApp_' + Date.now());
-    const secondaryAuth = getAuth(secondaryApp);
-
+    
     try {
-      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formData.email, formData.password);
+      const userCredential = await createUserWithEmailAndPassword(null, formData.email, formData.password);
       
       await updateProfile(userCredential.user, {
         displayName: formData.name
@@ -108,9 +103,6 @@ export default function AdminUsers() {
       console.error("Registration failed:", err);
       setNotice({ type: 'error', text: err.message || 'Failed to register account.' });
     } finally {
-      // Clean up the secondary auth app
-      await signOut(secondaryAuth).catch(() => {});
-      await deleteApp(secondaryApp).catch(() => {});
       setRegistering(false);
     }
   };

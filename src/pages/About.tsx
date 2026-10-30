@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, getDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { CmsAbout } from '../types';
 import { motion } from 'motion/react';
 import { Loader2 } from 'lucide-react';

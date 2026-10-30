@@ -422,7 +422,7 @@ export interface User {
   phoneNumber?: string | null;
 }
 
-export type FirebaseUser = User;
+export type User = User;
 
 function mapSupabaseUser(user: any): User | null {
   if (!user) return null;

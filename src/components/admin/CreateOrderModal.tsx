@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../firebase';
+import { db } from '@/lib/supabaseAdapter';
 import { 
   collection, 
   onSnapshot, 
@@ -9,7 +9,7 @@ import {
   query, 
   orderBy, 
   where 
-} from 'firebase/firestore';
+} from '@/lib/supabaseAdapter';
 import { 
   MenuItem, 
   MenuCategory, 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { collection, query, getDocs, addDoc, serverTimestamp, where, doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { collection, query, getDocs, addDoc, serverTimestamp, where, doc, getDoc } from '@/lib/supabaseAdapter';
+import { ref, uploadBytes, getDownloadURL } from '@/lib/supabaseAdapter';
+import { db, storage } from '@/lib/supabaseAdapter';
 import { useAuth } from '../context/AuthContext';
 import { RoomCategory, Booking, Room, HotelSettings } from '../types';
 import { format, addDays, startOfDay } from 'date-fns';

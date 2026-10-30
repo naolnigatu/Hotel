@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { collection, query, where, getDocs, doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, query, where, getDocs, doc, onSnapshot } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { 
   Search, 
   Loader2, 

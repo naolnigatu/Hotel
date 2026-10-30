@@ -1,5 +1,5 @@
-import { auth, db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/supabaseAdapter';
+import { collection, addDoc } from '@/lib/supabaseAdapter';
 import { Role } from '../types';
 
 export enum OperationType {

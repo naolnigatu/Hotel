@@ -11,8 +11,8 @@ import {
   orderBy, 
   limit, 
   getDoc 
-} from 'firebase/firestore';
-import { db } from '../firebase';
+} from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { AppNotification, NotificationPriority, NotificationType, Role } from '../types';
 
 export interface CreateNotificationParams {

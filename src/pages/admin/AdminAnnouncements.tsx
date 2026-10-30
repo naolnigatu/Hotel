@@ -8,8 +8,8 @@ import {
   deleteDoc, 
   onSnapshot, 
   orderBy 
-} from 'firebase/firestore';
-import { db } from '../../firebase';
+} from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Announcement, AnnouncementCategory } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { logAuditAction } from '../../lib/auditLogger';

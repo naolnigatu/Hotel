@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, where, getDocs, orderBy, onSnapshot } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { 
   startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, subMonths, format 
 } from 'date-fns';

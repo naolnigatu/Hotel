@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, doc, updateDoc, orderBy, getDocs, where, runTransaction } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, onSnapshot, doc, updateDoc, orderBy, getDocs, where, runTransaction } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Booking, RoomCategory, Room, BookingStatus, Hall, HallBookingRequest } from '../../types';
 import { getRoomsSummary, getHallsSummary, normalizeHallEvent, UnifiedHallEvent } from '../../lib/occupancyUtils';
 import { useAuth } from '../../context/AuthContext';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { db } from '../../firebase';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/supabaseAdapter';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy } from '@/lib/supabaseAdapter';
 import { Table } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';

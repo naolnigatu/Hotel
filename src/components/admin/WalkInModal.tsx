@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs, doc, setDoc, where, runTransaction } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, getDocs, doc, setDoc, where, runTransaction } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Booking, RoomCategory, Room, ReservationTimelineEvent } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { cleanFirestoreData } from '../../lib/firestoreUtils';
