@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, query, orderBy, getDocs } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { GalleryImage } from '../types';
 import { Loader2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, getDoc, collection, addDoc, serverTimestamp } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { CmsContact } from '../types';
 import { motion } from 'motion/react';
 import { Phone, Mail, MapPin, Loader2, Send } from 'lucide-react';

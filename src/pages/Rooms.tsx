@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, getDocs } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { RoomCategory } from '../types';
 import { useTranslation } from 'react-i18next';
 import { Wind, Tv, ShowerHead, CheckCircle2 } from 'lucide-react';

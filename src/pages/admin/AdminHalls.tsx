@@ -9,8 +9,8 @@ import {
   updateDoc, 
   orderBy,
   getDocs
-} from 'firebase/firestore';
-import { db } from '../../firebase';
+} from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Hall, HallBookingRequest, Booking } from '../../types';
 import { getHallOccupancyInfo, getHallsSummary, HallOccupancyStatus } from '../../lib/occupancyUtils';
 import { useAuth } from '../../context/AuthContext';

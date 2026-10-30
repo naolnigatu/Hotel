@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { db } from '../../firebase';
+import { db } from '@/lib/supabaseAdapter';
 import { 
   collection, 
   onSnapshot, 
@@ -10,7 +10,7 @@ import {
   orderBy, 
   where,
   getDocs
-} from 'firebase/firestore';
+} from '@/lib/supabaseAdapter';
 import { Order, Booking, Role, Room, RoomCategory } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';

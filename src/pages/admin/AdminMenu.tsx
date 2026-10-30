@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy, getDocs } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { MenuItem, MenuCategory, KitchenStation } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
 import { useAuth } from '../../context/AuthContext';

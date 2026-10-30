@@ -3,9 +3,9 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Menu, X, Globe, User, LogOut, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { auth, db } from '../firebase';
-import { signOut } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { auth, db } from '@/lib/supabaseAdapter';
+import { signOut } from '@/lib/supabaseAdapter';
+import { doc, onSnapshot } from '@/lib/supabaseAdapter';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import Footer from './Footer';
 

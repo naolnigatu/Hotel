@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { db, storage } from '../firebase';
-import { doc, onSnapshot, collection, query, where, getDocs, addDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/lib/supabaseAdapter';
+import { doc, onSnapshot, collection, query, where, getDocs, addDoc, updateDoc } from '@/lib/supabaseAdapter';
+import { ref, uploadBytes, getDownloadURL } from '@/lib/supabaseAdapter';
 import { Order, OrderStatus } from '../types';
 import { useAuth } from '../context/AuthContext';
 import TrackingTabsHeader from '../components/TrackingTabsHeader';

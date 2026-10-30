@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { doc, getDoc, setDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { CmsAmenity } from '../../types';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import { Loader2, Plus, Pencil, Trash2, X, Save } from 'lucide-react';

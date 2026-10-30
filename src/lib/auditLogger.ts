@@ -1,5 +1,5 @@
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, addDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Role } from '../types';
 
 export interface LogAuditParams {

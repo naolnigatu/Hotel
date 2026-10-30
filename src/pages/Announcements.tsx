@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, query, where, getDocs, onSnapshot, doc, getDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Announcement, AnnouncementCategory, CmsContact } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';

@@ -1,0 +1,486 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public", "auth"]
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// 1. Profiles (Linked to auth.users)
+// -----------------------------------------------------------------------------
+model Profile {
+  id          String   @id @db.Uuid
+  email       String
+  name        String
+  role        String   @default("guest")
+  phone       String?
+  preferences Json?    @default("{}")
+  createdAt   BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt   BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("profiles")
+  @@schema("public")
+}
+
+// -----------------------------------------------------------------------------
+// 2. Staff Members
+// -----------------------------------------------------------------------------
+model StaffMember {
+  id         String   @id
+  uid        String?
+  email      String
+  name       String
+  role       String
+  phone      String?
+  isActive   Boolean  @default(true) @map("is_active")
+  department String?
+  createdAt  BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt  BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("staff_members")
+  @@schema("public")
+}
+
+// -----------------------------------------------------------------------------
+// 3. Room Categories & Rooms Inventory
+// -----------------------------------------------------------------------------
+model RoomCategory {
+  id          String    @id
+  name        String
+  description String?
+  basePrice   Decimal   @default(0) @map("base_price")
+  amenities   String[]  @default([])
+  imageUrls   String[]  @default([]) @map("image_urls")
+  createdAt   BigInt    @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  rooms       Room[]
+  bookings    Booking[]
+
+  @@map("room_categories")
+  @@schema("public")
+}
+
+model Room {
+  id                 String              @id
+  categoryId         String              @map("category_id")
+  category           RoomCategory        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  roomNumber         String              @unique @map("room_number")
+  condition          String              @default("Clean")
+  status             String              @default("Available")
+  floor              String?
+  wing               String?
+  notes              String?
+  createdAt          BigInt              @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  housekeepingTasks  HousekeepingTask[]
+  maintenanceReports MaintenanceReport[]
+  housekeepingLogs   HousekeepingLog[]
+
+  @@map("rooms")
+  @@schema("public")
+}
+
+// -----------------------------------------------------------------------------
+// 4. Halls & Hall Booking Requests
+// -----------------------------------------------------------------------------
+model Hall {
+  id          String        @id
+  name        String
+  capacity    Int           @default(0)
+  description String?
+  price       Decimal       @default(0)
+  equipment   String[]      @default([])
+  imageUrls   String[]      @default([]) @map("image_urls")
+  status      Boolean       @default(true)
+  createdAt   BigInt        @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  hallRequests HallRequest[]
+
+  @@map("halls")
+  @@schema("public")
+}
+
+model HallRequest {
+  id                  String   @id
+  reservationCode     String   @unique @map("reservation_code")
+  hallId              String?  @map("hall_id")
+  hall                Hall?    @relation(fields: [hallId], references: [id], onDelete: Cascade)
+  hallName            String?  @map("hall_name")
+  eventType           String?  @map("event_type")
+  organizerName       String?  @map("organizer_name")
+  email               String?
+  phone               String?
+  startDate           String?  @map("start_date")
+  endDate             String?  @map("end_date")
+  timeSlot            String?  @map("time_slot")
+  numberOfGuests      Int?     @default(1) @map("number_of_guests")
+  requestedEquipment  String[] @default([]) @map("requested_equipment")
+  message             String?
+  totalEstimatedPrice Decimal? @default(0) @map("total_estimated_price")
+  status              String   @default("Pending")
+  adminNotes          String?  @map("admin_notes")
+  guestId             String?  @map("guest_id")
+  createdAt           BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt           BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("hall_requests")
+  @@schema("public")
+}
+
+// -----------------------------------------------------------------------------
+// 5. Bookings
+// -----------------------------------------------------------------------------
+model Booking {
+  id                     String        @id
+  reservationCode        String        @unique @map("reservation_code")
+  type                   String        @default("room")
+  guestId                String?       @map("guest_id")
+  guestDetails           Json          @default("{}") @map("guest_details")
+  categoryId             String?       @map("category_id")
+  category               RoomCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  hallName               String?       @map("hall_name")
+  eventType              String?       @map("event_type")
+  roomId                 String?       @map("room_id")
+  numberOfGuests         Int           @default(1) @map("number_of_guests")
+  specialRequests        String?       @map("special_requests")
+  requestedEquipment     String[]      @default([]) @map("requested_equipment")
+  isVip                  Boolean?      @default(false) @map("is_vip")
+  bookingSource          String?       @default("Online") @map("booking_source")
+  checkIn                BigInt        @map("check_in")
+  checkOut               BigInt        @map("check_out")
+  status                 String        @default("Pending")
+  totalAmount            Decimal       @default(0) @map("total_amount")
+  paymentMethod          String        @map("payment_method")
+  paymentProofUrl        String?       @map("payment_proof_url")
+  transactionId          String?       @map("transaction_id")
+  paymentRejectionReason String?       @map("payment_rejection_reason")
+  timeline               Json?         @default("[]")
+  notes                  Json?         @default("[]")
+  createdAt              BigInt        @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt              BigInt        @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("bookings")
+  @@schema("public")
+}
+
+// -----------------------------------------------------------------------------
+// 6. Restaurant: Menu Categories, Kitchen Stations, Menu Items, Tables & Orders
+// -----------------------------------------------------------------------------
+model MenuCategory {
+  id           String     @id
+  name         String
+  description  String?
+  displayOrder Int        @default(0) @map("display_order")
+  isActive     Boolean    @default(true) @map("is_active")
+  createdAt    BigInt     @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  menuItems    MenuItem[]
+
+  @@map("menu_categories")
+  @@schema("public")
+}
+
+model KitchenStation {
+  id               String     @id
+  name             String
+  description      String?
+  displayOrder     Int        @default(0) @map("display_order")
+  isActive         Boolean    @default(true) @map("is_active")
+  assignedStaffIds String[]   @default([]) @map("assigned_staff_ids")
+  createdAt        BigInt     @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  menuItems        MenuItem[]
+
+  @@map("kitchen_stations")
+  @@schema("public")
+}
+
+model MenuItem {
+  id                 String          @id
+  category           String
+  categoryId         String?         @map("category_id")
+  menuCategory       MenuCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  name               String
+  description        String?
+  price              Decimal         @default(0)
+  imageUrl           String?         @map("image_url")
+  isAvailable        Boolean         @default(true) @map("is_available")
+  ingredients        String[]        @default([])
+  allergens          String[]        @default([])
+  prepTimeMinutes    Int?            @default(15) @map("prep_time_minutes")
+  isSpicy            Boolean?        @default(false) @map("is_spicy")
+  isVegetarian       Boolean?        @default(false) @map("is_vegetarian")
+  isVegan            Boolean?        @default(false) @map("is_vegan")
+  isHalal            Boolean?        @default(false) @map("is_halal")
+  calories           Int?
+  kitchenStationId   String?         @map("kitchen_station_id")
+  kitchenStation     KitchenStation? @relation(fields: [kitchenStationId], references: [id], onDelete: SetNull)
+  kitchenStationName String?         @map("kitchen_station_name")
+  createdAt          BigInt          @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  @@map("menu_items")
+  @@schema("public")
+}
+
+model RestaurantTable {
+  id          String  @id
+  tableNumber String  @unique @map("table_number")
+  area        String
+  capacity    Int     @default(4)
+  qrCodeUrl   String? @map("qr_code_url")
+  status      String  @default("Available")
+
+  @@map("restaurant_tables")
+  @@schema("public")
+}
+
+model RestaurantOrder {
+  id                     String   @id
+  orderNumber            String   @unique @map("order_number")
+  type                   String
+  locationRef            String   @map("location_ref")
+  tableId                String?  @map("table_id")
+  tableNumber            String?  @map("table_number")
+  roomNumber             String?  @map("room_number")
+  reservationCode        String?  @map("reservation_code")
+  reservationId          String?  @map("reservation_id")
+  customerName           String?  @map("customer_name")
+  customerPhone          String?  @map("customer_phone")
+  customerEmail          String?  @map("customer_email")
+  arrivalTime            String?  @map("arrival_time")
+  customerUid            String?  @map("customer_uid")
+  items                  Json     @default("[]")
+  subtotal               Decimal  @default(0)
+  taxRate                Decimal  @default(15) @map("tax_rate")
+  taxAmount              Decimal  @default(0) @map("tax_amount")
+  serviceChargeRate      Decimal  @default(5) @map("service_charge_rate")
+  serviceChargeAmount    Decimal  @default(0) @map("service_charge_amount")
+  roomServiceFee         Decimal? @default(0) @map("room_service_fee")
+  totalAmount            Decimal  @default(0) @map("total_amount")
+  paymentMethod          String   @default("Cash") @map("payment_method")
+  paymentStatus          String   @default("Pending") @map("payment_status")
+  paymentProofUrl        String?  @map("payment_proof_url")
+  transactionId          String?  @map("transaction_id")
+  paymentRejectionReason String?  @map("payment_rejection_reason")
+  status                 String   @default("Order Submitted")
+  orderNotes             String?  @map("order_notes")
+  kitchenNotes           String?  @map("kitchen_notes")
+  priority               String?  @default("Normal")
+  assignedWaiterId       String?  @map("assigned_waiter_id")
+  assignedWaiterName     String?  @map("assigned_waiter_name")
+  waiterNotes            String?  @map("waiter_notes")
+  timeline               Json?    @default("[]")
+  createdAt              BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt              BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("restaurant_orders")
+  @@schema("public")
+}
+
+model ServiceRequest {
+  id          String   @id
+  type        String
+  locationRef String   @map("location_ref")
+  tableId     String?  @map("table_id")
+  tableNumber String?  @map("table_number")
+  roomNumber  String?  @map("room_number")
+  status      String   @default("Pending")
+  notes       String?
+  createdAt   BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt   BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("service_requests")
+  @@schema("public")
+}
+
+// -----------------------------------------------------------------------------
+// 7. Housekeeping & Maintenance
+// -----------------------------------------------------------------------------
+model HousekeepingTask {
+  id               String   @id
+  roomId           String?  @map("room_id")
+  room             Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomNumber       String   @map("room_number")
+  floor            String?
+  wing             String?
+  priority         String   @default("Medium")
+  status           String   @default("Pending")
+  assignedToId     String?  @map("assigned_to_id")
+  assignedToName   String?  @map("assigned_to_name")
+  requestedBy      String?  @map("requested_by")
+  estimatedMinutes Int?     @default(30) @map("estimated_minutes")
+  startedAt        BigInt?  @map("started_at")
+  completedAt      BigInt?  @map("completed_at")
+  notes            String?
+  photos           String[] @default([])
+  createdAt        BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt        BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("housekeeping_tasks")
+  @@schema("public")
+}
+
+model MaintenanceReport {
+  id              String   @id
+  roomId          String?  @map("room_id")
+  room            Room?    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomNumber      String   @map("room_number")
+  categoryId      String?  @map("category_id")
+  category        String
+  description     String
+  priority        String   @default("Medium")
+  status          String   @default("Open")
+  photos          String[] @default([])
+  reportedByUid   String   @map("reported_by_uid")
+  reportedByName  String   @map("reported_by_name")
+  assignedToUid   String?  @map("assigned_to_uid")
+  assignedToName  String?  @map("assigned_to_name")
+  resolutionNotes String?  @map("resolution_notes")
+  createdAt       BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt       BigInt   @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("maintenance_reports")
+  @@schema("public")
+}
+
+model HousekeepingLog {
+  id             String  @id
+  roomId         String? @map("room_id")
+  room           Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomNumber     String  @map("room_number")
+  staffUid       String  @map("staff_uid")
+  staffName      String  @map("staff_name")
+  action         String
+  previousStatus String? @map("previous_status")
+  newStatus      String? @map("new_status")
+  notes          String?
+  timestamp      BigInt  @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint"))
+
+  @@map("housekeeping_logs")
+  @@schema("public")
+}
+
+// -----------------------------------------------------------------------------
+// 8. Notifications, Audit Logs, Settings & Marketing
+// -----------------------------------------------------------------------------
+model Notification {
+  id                String  @id
+  recipientUid      String? @map("recipient_uid")
+  recipientRole     String? @map("recipient_role")
+  title             String
+  message           String
+  type              String
+  relatedEntityId   String? @map("related_entity_id")
+  relatedEntityType String? @map("related_entity_type")
+  targetRoute       String? @map("target_route")
+  createdAt         BigInt  @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  isRead            Boolean @default(false) @map("is_read")
+  priority          String  @default("Normal")
+  eventId           String? @map("event_id")
+  expiresAt         BigInt? @map("expires_at")
+
+  @@map("notifications")
+  @@schema("public")
+}
+
+model AuditLog {
+  id            String @id
+  userId        String @map("user_id")
+  userName      String @map("user_name")
+  userRole      String @map("user_role")
+  action        String
+  module        String
+  details       String?
+  previousValue String? @map("previous_value")
+  newValue      String? @map("new_value")
+  timestamp     BigInt @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint"))
+
+  @@map("audit_logs")
+  @@schema("public")
+}
+
+model AppSetting {
+  id        String @id
+  data      Json   @default("{}")
+  updatedAt BigInt @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+
+  @@map("app_settings")
+  @@schema("public")
+}
+
+model Announcement {
+  id              String  @id
+  title           String
+  paragraph       String
+  imageUrl        String? @map("image_url")
+  imageCaption    String? @map("image_caption")
+  category        String  @default("General")
+  isPublished     Boolean @default(true) @map("is_published")
+  isPinned        Boolean @default(false) @map("is_pinned")
+  badge           String?
+  publishedBy     String  @map("published_by")
+  publishedByRole String? @map("published_by_role")
+  createdAt       BigInt  @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+  updatedAt       BigInt  @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("updated_at")
+  expiresAt       BigInt? @map("expires_at")
+
+  @@map("announcements")
+  @@schema("public")
+}
+
+model Testimonial {
+  id        String  @id
+  name      String
+  role      String? @default("Hotel Guest")
+  content   String
+  rating    Int     @default(5)
+  userId    String? @map("user_id")
+  userEmail String? @map("user_email")
+  status    String  @default("pending")
+  createdAt BigInt  @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  @@map("testimonials")
+  @@schema("public")
+}
+
+model Offer {
+  id          String  @id
+  title       String
+  description String?
+  startDate   String? @map("start_date")
+  endDate     String? @map("end_date")
+  bannerUrl   String? @map("banner_url")
+  active      Boolean @default(true)
+  createdAt   BigInt  @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  @@map("offers")
+  @@schema("public")
+}
+
+model GalleryItem {
+  id        String  @id
+  url       String
+  category  String  @default("Hotel")
+  caption   String?
+  createdAt BigInt  @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  @@map("gallery")
+  @@schema("public")
+}
+
+model ContactMessage {
+  id        String  @id
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  status    String  @default("Unread")
+  createdAt BigInt  @default(dbgenerated("(EXTRACT(epoch FROM now()) * 1000)::bigint")) @map("created_at")
+
+  @@map("contact_messages")
+  @@schema("public")
+}

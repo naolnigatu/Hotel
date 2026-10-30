@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { doc, getDoc, setDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { CmsAbout } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
 import { Save, Loader2 } from 'lucide-react';

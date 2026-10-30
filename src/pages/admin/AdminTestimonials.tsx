@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, getDocs, updateDoc, doc, deleteDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Star, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import ConfirmModal from '../../components/common/ConfirmModal';
 

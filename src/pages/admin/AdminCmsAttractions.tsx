@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { doc, getDoc, setDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { CmsAttraction } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
 import ConfirmModal from '../../components/common/ConfirmModal';

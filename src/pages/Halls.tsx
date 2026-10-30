@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, query, getDocs } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Hall } from '../types';
 import { Loader2, Users, CheckCircle2, Calendar, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { MenuItem, OrderType, OrderItem, RestaurantSettings, BankDetail } from '../types';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { doc, onSnapshot } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 
 export interface CartItem {
   item: MenuItem;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, orderBy, getDocs, doc, setDoc, deleteDoc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { GalleryImage } from '../../types';
 import MediaManager from '../../components/admin/MediaManager';
 import ConfirmModal from '../../components/common/ConfirmModal';

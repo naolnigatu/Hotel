@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { collection, onSnapshot, query, where, orderBy, doc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, onSnapshot, query, where, orderBy, doc } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { MenuItem, MenuCategory, OrderType } from '../types';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';

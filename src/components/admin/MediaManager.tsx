@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../firebase';
+import { ref, uploadBytes, getDownloadURL } from '@/lib/supabaseAdapter';
+import { storage } from '@/lib/supabaseAdapter';
 import { 
   Upload, 
   X, 
@@ -165,7 +165,7 @@ export default function MediaManager({ onImageSelected, currentImageUrl, folder 
       // 1. Instantly process & compress on client
       const { dataUrl, blob } = await processImageFile(file);
 
-      // 2. Try uploading to Firebase Storage with a 3.5s timeout
+      // 2. Try uploading to Supabase Storage with a 3.5s timeout
       let finalUrl = dataUrl;
       try {
         const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');

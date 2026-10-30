@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, orderBy, getDocs, limit } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, orderBy, getDocs, limit } from '@/lib/supabaseAdapter';
+import { db } from '@/lib/supabaseAdapter';
 import { Order, OrderStatus, RestaurantSettings, KitchenStation } from '../../types';
 import { sendNotification } from '../../lib/notificationService';
 import { 

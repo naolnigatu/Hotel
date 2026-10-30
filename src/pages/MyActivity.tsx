@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/supabaseAdapter';
+import { collection, query, where, getDocs } from '@/lib/supabaseAdapter';
 import { Booking, Order, HallBookingRequest } from '../types';
 import { format } from 'date-fns';
 import { Link, Navigate } from 'react-router-dom';

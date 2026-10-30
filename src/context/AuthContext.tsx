@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase';
+import { User as User, onAuthStateChanged } from '@/lib/supabaseAdapter';
+import { doc, getDoc, setDoc } from '@/lib/supabaseAdapter';
+import { auth, db } from '@/lib/supabaseAdapter';
 import { User } from '../types';
 
 const ADMIN_EMAIL = 'naolnigatu2025@gmail.com';
 
 interface AuthContextType {
-  currentUser: FirebaseUser | null;
+  currentUser: User | null;
   userData: User | null;
   loading: boolean;
 }
@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 

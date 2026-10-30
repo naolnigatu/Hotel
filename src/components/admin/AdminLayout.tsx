@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { auth, db } from '../../firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
+import { auth, db } from '@/lib/supabaseAdapter';
+import { doc, onSnapshot } from '@/lib/supabaseAdapter';
+import { signOut } from '@/lib/supabaseAdapter';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { 
   LayoutDashboard, 

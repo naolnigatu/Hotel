@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { db, storage } from '../../firebase';
-import { collection, addDoc, getDocs, getDoc, doc, query, where } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/lib/supabaseAdapter';
+import { collection, addDoc, getDocs, getDoc, doc, query, where } from '@/lib/supabaseAdapter';
+import { ref, uploadBytes, getDownloadURL } from '@/lib/supabaseAdapter';
 import { Booking, Order, OrderTimelineEvent, HotelSettings, BankDetail } from '../../types';
 import { sendNotification } from '../../lib/notificationService';
 import { cleanFirestoreData } from '../../lib/firestoreUtils';

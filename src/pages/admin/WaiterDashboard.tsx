@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth } from '../../firebase';
+import { db, auth } from '@/lib/supabaseAdapter';
 import { 
   collection, 
   query, 
@@ -10,7 +10,7 @@ import {
   arrayUnion, 
   orderBy, 
   where 
-} from 'firebase/firestore';
+} from '@/lib/supabaseAdapter';
 import { useAuth } from '../../context/AuthContext';
 import { Order, ServiceRequest, OrderStatus } from '../../types';
 import { handleFirestoreError, OperationType, logAuditAction } from '../../lib/firestoreUtils';
