@@ -529,7 +529,7 @@ export default function CreateOrderModal({ isOpen, onClose, onOrderCreated }: Cr
                   <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 block mb-1.5">
                     Order Type
                   </label>
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
                     {[
                       { id: 'Dine-In', label: 'Dine-In', icon: Utensils },
                       { id: 'Room Service', label: 'Room Serv.', icon: Building2 },
@@ -726,7 +726,7 @@ export default function CreateOrderModal({ isOpen, onClose, onOrderCreated }: Cr
                   <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 block">
                     Payment / Settlement
                   </label>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {[
                       { id: 'Pay to Cashier', label: 'Pay to Cashier' },
                       { id: 'Cash', label: 'Cash (Paid)' },

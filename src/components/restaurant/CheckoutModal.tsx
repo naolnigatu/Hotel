@@ -851,7 +851,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                         activeBankDetails.map((bank) => (
                           <div key={bank.id} className="py-2 first:pt-0 last:pb-0 flex items-center justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                              <p className="font-bold text-neutral-900 flex items-center gap-1.5 truncate">
+                              <p className="font-bold text-neutral-900 flex items-center gap-1.5 min-w-0">
                                 <Building2 className="w-3.5 h-3.5 text-neutral-700 shrink-0" />
                                 {bank.bankName || 'Commercial Bank Account'}
                               </p>

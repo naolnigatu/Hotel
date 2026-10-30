@@ -45,7 +45,7 @@ export default function Rooms() {
           <div className="w-8 h-8 border-4 border-neutral-900 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : categories.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {categories.map((category) => (
             <div key={category.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-neutral-100 flex flex-col transition-transform hover:-translate-y-1 hover:shadow-md">
               <div className="aspect-[4/3] relative">

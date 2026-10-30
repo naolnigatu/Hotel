@@ -133,8 +133,8 @@ export default function GuestProfileModal({
                 <p className="flex items-center gap-2 font-medium">
                   <Phone className="w-3.5 h-3.5 text-neutral-400" /> {primaryGuest.phone || 'No phone'}
                 </p>
-                <p className="flex items-center gap-2 truncate font-medium">
-                  <Mail className="w-3.5 h-3.5 text-neutral-400" /> {primaryGuest.email || 'No email'}
+                <p className="flex items-center gap-2 font-medium min-w-0">
+                  <Mail className="w-3.5 h-3.5 text-neutral-400 shrink-0" /> <span className="truncate">{primaryGuest.email || "No email"}</span>
                 </p>
               </div>
             </div>

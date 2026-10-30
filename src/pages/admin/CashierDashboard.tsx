@@ -537,7 +537,7 @@ export default function CashierDashboard() {
       )}
 
       {/* Financial Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Metric 1: Today's Revenue */}
         <div className="p-5 bg-white rounded-2xl border border-neutral-200 shadow-2xs space-y-2">
           <div className="flex items-center justify-between text-neutral-500 text-xs">

@@ -1022,7 +1022,7 @@ export default function AdminMenu() {
                     <option value="">-- No Specific Station (All / Default) --</option>
                     {stations.map(st => (
                       <option key={st.id} value={st.id}>
-                        🍳 {st.name} {st.isActive ? '' : '(Inactive)'}
+                        {st.name} {st.isActive ? '' : '(Inactive)'}
                       </option>
                     ))}
                   </select>
