@@ -1,14 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as User, onAuthStateChanged } from '@/lib/supabaseAdapter';
-import { doc, getDoc, setDoc } from '@/lib/supabaseAdapter';
-import { auth, db } from '@/lib/supabaseAdapter';
-import { User } from '../types';
+import { User as AuthUser, onAuthStateChanged, doc, getDoc, setDoc, auth, db } from '@/lib/supabaseAdapter';
+import { User as UserProfile } from '../types';
 
 const ADMIN_EMAIL = 'naolnigatu2025@gmail.com';
 
 interface AuthContextType {
-  currentUser: User | null;
-  userData: User | null;
+  currentUser: AuthUser | null;
+  userData: UserProfile | null;
   loading: boolean;
 }
 
@@ -21,8 +19,8 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,16 +34,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
-            let data = userDoc.data() as User;
-            // Enforce admin role in Firestore for configured admin email
+            let data = userDoc.data() as UserProfile;
+            // Enforce admin role in database for configured admin email
             if (isAdminEmail && data.role !== 'admin') {
               await setDoc(userRef, { role: 'admin' }, { merge: true });
               data = { ...data, role: 'admin' };
             }
             setUserData(data);
           } else {
-            // Auto-provision user profile document in Firestore
-            const newUser: User = {
+            // Auto-provision user profile document in database
+            const newUser: UserProfile = {
               uid: user.uid,
               email: user.email || '',
               name: user.displayName || (isAdminEmail ? 'Naol Nigatu' : 'Guest'),
@@ -56,8 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUserData(newUser);
           }
         } catch (err) {
-          console.error("Error fetching or initializing user profile in Firestore:", err);
-          // Fallback in memory if Firestore fails due to network/rules before record exists
+          console.error("Error fetching or initializing user profile in database:", err);
+          // Fallback in memory if database fails due to network/rules before record exists
           setUserData({
             uid: user.uid,
             email: user.email || '',
