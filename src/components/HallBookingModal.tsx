@@ -23,7 +23,8 @@ import {
   Check, 
   ArrowRight,
   HelpCircle,
-  DollarSign
+  DollarSign,
+  AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -323,7 +324,7 @@ export default function HallBookingModal({
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-neutral-200/80 grid grid-cols-2 gap-2 text-xs text-neutral-600">
+              <div className="mt-4 pt-3 border-t border-neutral-200/80 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-neutral-600">
                 <div>
                   <span className="text-neutral-400 block text-[10px] uppercase font-bold">Event Date</span>
                   <span className="font-semibold text-neutral-800">{submittedRequest.startDate}</span>
@@ -459,7 +460,7 @@ export default function HallBookingModal({
                   </div>
                   {currentHall && numberOfGuests > currentHall.capacity && (
                     <p className="text-[11px] text-amber-600 font-semibold mt-1">
-                      ⚠️ Note: Exceeds standard seated capacity of {currentHall.capacity}.
+                      <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" /><span>Note: Exceeds standard seated capacity of {currentHall.capacity}.</span></span>
                     </p>
                   )}
                 </div>

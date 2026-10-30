@@ -279,7 +279,7 @@ export default function WalkInModal({ categories, rooms, existingBookings, onClo
           {/* Booking Source Toggle */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Booking Source</label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
               {(['Walk-in', 'Phone', 'Government/VIP'] as const).map(source => (
                 <button
                   type="button"

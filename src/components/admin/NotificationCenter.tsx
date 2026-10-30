@@ -296,7 +296,7 @@ export default function NotificationCenter() {
                   {/* Body */}
                   <div className="flex-1 min-w-0 pr-4">
                     <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <span className="font-bold text-xs text-neutral-900 truncate flex items-center gap-1.5">
+                      <span className="font-bold text-xs text-neutral-900 flex items-center gap-1.5 min-w-0">
                         {!notif.isRead && (
                           <span className="w-2 h-2 rounded-full bg-blue-600 inline-block shrink-0" />
                         )}

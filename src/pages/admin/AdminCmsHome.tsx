@@ -176,7 +176,7 @@ export default function AdminCmsHome() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Primary Button Text</label>
                 <input 
@@ -411,7 +411,7 @@ export default function AdminCmsHome() {
             {data.testimonials.map((test, index) => (
               <div key={test.id} className="flex gap-4 items-start border border-neutral-100 p-4 rounded-lg bg-neutral-50">
                 <div className="flex-1 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-neutral-500 mb-1">Name</label>
                       <input 

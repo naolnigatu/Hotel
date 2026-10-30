@@ -143,7 +143,7 @@ export default function AdminCmsGallery() {
 
       <h2 className="text-lg font-bold text-neutral-900 mb-6">Existing Images ({images.length})</h2>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {images.map(image => (
           <div key={image.id} className="bg-white border border-neutral-200 rounded-xl overflow-hidden group">
             <div className="aspect-[4/3] bg-neutral-100 relative">

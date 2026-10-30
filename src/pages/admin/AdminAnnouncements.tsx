@@ -638,7 +638,7 @@ export default function AdminAnnouncements() {
               <div className="pt-4 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
                 <span>Published by: <strong>{previewItem.publishedBy}</strong></span>
                 <span className={previewItem.isPublished ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>
-                  {previewItem.isPublished ? '● Published' : '○ Draft'}
+                  <span className={`inline-flex items-center gap-1.5 font-bold ${previewItem.isPublished ? "text-emerald-600" : "text-amber-600"}`}><span className={`w-2 h-2 rounded-full ${previewItem.isPublished ? "bg-emerald-500" : "bg-amber-400"}`} /><span>{previewItem.isPublished ? "Published" : "Draft"}</span></span>
                 </span>
               </div>
             </div>
@@ -775,7 +775,7 @@ export default function AdminAnnouncements() {
                   <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shadow-xs ${
                     item.isPublished ? 'bg-emerald-500 text-white' : 'bg-neutral-800 text-neutral-300'
                   }`}>
-                    {item.isPublished ? '● Published' : '○ Draft'}
+                    <span className={`inline-flex items-center gap-1.5 font-semibold ${item.isPublished ? "text-emerald-600" : "text-amber-600"}`}><span className={`w-1.5 h-1.5 rounded-full ${item.isPublished ? "bg-emerald-500" : "bg-amber-400"}`} /><span>{item.isPublished ? "Published" : "Draft"}</span></span>
                   </span>
                 </div>
               </div>

@@ -12,7 +12,8 @@ import {
   CalendarRange, 
   Building2, 
   Users, 
-  CheckCircle2, 
+  CheckCircle2,
+  XCircle, 
   AlertCircle, 
   Clock, 
   Search, 
@@ -494,7 +495,7 @@ export default function DateIntervalAvailabilityModal({
                                     : 'bg-rose-50 text-rose-700 border-rose-200'
                                 }`}
                               >
-                                {format(d.date, 'dd')}: {d.isAvailable ? '✓ Free' : '✗ Booked'}
+                                <span className="inline-flex items-center gap-1">{d.isAvailable ? <CheckCircle2 className="w-2.5 h-2.5 shrink-0" /> : <XCircle className="w-2.5 h-2.5 shrink-0" />}{format(d.date, 'dd')}: {d.isAvailable ? 'Free' : 'Booked'}</span>
                               </span>
                             ))}
                           </div>
@@ -600,7 +601,7 @@ export default function DateIntervalAvailabilityModal({
                                     : 'bg-rose-50 text-rose-700 border-rose-200'
                                 }`}
                               >
-                                {format(d.date, 'MMM dd')}: {d.isAvailable ? '✓ Open' : '✗ Event'}
+                                <span className="inline-flex items-center gap-1">{d.isAvailable ? <CheckCircle2 className="w-3 h-3 shrink-0" /> : <XCircle className="w-3 h-3 shrink-0" />}{format(d.date, 'MMM dd')}: {d.isAvailable ? 'Open' : 'Event'}</span>
                               </span>
                             ))}
                           </div>

@@ -648,13 +648,13 @@ export default function AdminReservations() {
                 </span>
                 <div className="flex items-center gap-2 font-bold">
                   <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                    ● {availableRoomsCount} Available
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-1 align-middle" />{availableRoomsCount} Available
                   </span>
                   <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
-                    ● {occupiedRoomsCount} Occupied
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block mr-1 align-middle" />{occupiedRoomsCount} Occupied
                   </span>
                   <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                    ● {bookings.filter(b => b.status === 'Approved' || b.status === 'Confirmed').length} Reserved
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block mr-1 align-middle" />{bookings.filter(b => b.status === "Approved" || b.status === "Confirmed").length} Reserved
                   </span>
                 </div>
               </div>
@@ -667,13 +667,13 @@ export default function AdminReservations() {
                 </span>
                 <div className="flex items-center gap-2 font-bold">
                   <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                    ● {hallsSummary.available} Available
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-1 align-middle" />{hallsSummary.available} Available
                   </span>
                   <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
-                    ● {hallsSummary.occupied} In Event Today
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block mr-1 align-middle" />{hallsSummary.occupied} In Event Today
                   </span>
                   <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                    ● {hallsSummary.reserved} Reserved
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block mr-1 align-middle" />{hallsSummary.reserved} Reserved
                   </span>
                 </div>
               </div>
