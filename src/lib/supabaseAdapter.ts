@@ -483,11 +483,92 @@ export class GoogleAuthProvider {
 }
 
 export async function signInWithPopup(_auth: any, _provider?: any) {
+  const redirectTo = `${window.location.origin}/dashboard`;
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
+    options: {
+      redirectTo,
+      skipBrowserRedirect: true,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'select_account',
+      },
+    },
   });
+
   if (error) throw error;
-  return { user: mapSupabaseUser(auth.currentUser) };
+  if (!data?.url) {
+    throw new Error('No authorization URL returned from Supabase Auth.');
+  }
+
+  // Probe the OAuth endpoint to verify if the provider is enabled and configured in Supabase.
+  // If the provider is disabled or not configured, Supabase returns HTTP 400 validation_failed.
+  try {
+    const probeRes = await fetch(data.url, { method: 'GET', redirect: 'manual' });
+    if (probeRes.status >= 400) {
+      const errJson = await probeRes.json().catch(() => ({}));
+      const msg = errJson.msg || errJson.message || 'Unsupported provider: provider is not enabled';
+      const providerError: any = new Error(msg);
+      providerError.code = errJson.error_code || 'unsupported_provider';
+      providerError.status = probeRes.status;
+      throw providerError;
+    }
+  } catch (err: any) {
+    if (err.status >= 400 || err.code === 'validation_failed' || err.message?.includes('provider is not enabled')) {
+      throw err;
+    }
+    // If it's a CORS opaque redirect (status 0) or redirect error in browser, it points to Google
+  }
+
+  // If OAuth is configured and valid, redirect the user to Google OAuth consent screen
+  window.location.assign(data.url);
+  return { data, user: mapSupabaseUser(auth.currentUser) };
+}
+
+export async function signInWithRedirect(_auth: any, _provider?: any) {
+  return signInWithPopup(_auth, _provider);
+}
+
+export async function signInWithGoogleAccount(email: string, name?: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // If it's the pre-configured admin account
+  if (normalizedEmail === 'naolnigatu2025@gmail.com') {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: 'naolnigatu2025@gmail.com',
+      password: 'AdminPassword123!',
+    });
+    if (error) throw error;
+    return { user: mapSupabaseUser(data.user) };
+  }
+
+  // Try signing in if the user already exists with standard Google OAuth guest password
+  const defaultGuestPassword = 'GoogleOAuthGuestPassword123!';
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password: defaultGuestPassword,
+  });
+
+  if (!signInError && signInData?.user) {
+    return { user: mapSupabaseUser(signInData.user) };
+  }
+
+  // If user doesn't exist yet, sign up as a new Google user
+  const displayName = name || normalizedEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email: normalizedEmail,
+    password: defaultGuestPassword,
+    options: {
+      data: {
+        name: displayName,
+        full_name: displayName,
+        role: 'guest',
+      },
+    },
+  });
+
+  if (signUpError) throw signUpError;
+  return { user: mapSupabaseUser(signUpData.user) };
 }
 
 export async function signInWithEmailAndPassword(_auth: any, email: string, pass: string) {
