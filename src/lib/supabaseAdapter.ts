@@ -623,6 +623,20 @@ export async function signOut(_auth: any) {
   if (error) throw error;
 }
 
+export async function sendPasswordResetEmail(_auth: any, email: string, actionCodeSettings?: any) {
+  const { sendPasswordResetEmail: resendReset } = await import('./resendService');
+  const redirectTo = actionCodeSettings?.url || `${window.location.origin}/reset-password`;
+  return await resendReset(email, { resetUrl: redirectTo });
+}
+
+export async function updateUserPassword(newPassword: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export function initializeAuth(_app: any, _options: any) {
   return auth;
 }
