@@ -488,7 +488,6 @@ export async function signInWithPopup(_auth: any, _provider?: any) {
     provider: 'google',
     options: {
       redirectTo,
-      skipBrowserRedirect: true,
       queryParams: {
         access_type: 'offline',
         prompt: 'select_account',
@@ -497,31 +496,6 @@ export async function signInWithPopup(_auth: any, _provider?: any) {
   });
 
   if (error) throw error;
-  if (!data?.url) {
-    throw new Error('No authorization URL returned from Supabase Auth.');
-  }
-
-  // Probe the OAuth endpoint to verify if the provider is enabled and configured in Supabase.
-  // If the provider is disabled or not configured, Supabase returns HTTP 400 validation_failed.
-  try {
-    const probeRes = await fetch(data.url, { method: 'GET', redirect: 'manual' });
-    if (probeRes.status >= 400) {
-      const errJson = await probeRes.json().catch(() => ({}));
-      const msg = errJson.msg || errJson.message || 'Unsupported provider: provider is not enabled';
-      const providerError: any = new Error(msg);
-      providerError.code = errJson.error_code || 'unsupported_provider';
-      providerError.status = probeRes.status;
-      throw providerError;
-    }
-  } catch (err: any) {
-    if (err.status >= 400 || err.code === 'validation_failed' || err.message?.includes('provider is not enabled')) {
-      throw err;
-    }
-    // If it's a CORS opaque redirect (status 0) or redirect error in browser, it points to Google
-  }
-
-  // If OAuth is configured and valid, redirect the user to Google OAuth consent screen
-  window.location.assign(data.url);
   return { data, user: mapSupabaseUser(auth.currentUser) };
 }
 

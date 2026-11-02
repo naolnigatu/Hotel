@@ -23,7 +23,8 @@ import {
   X, 
   Info,
   Sparkles,
-  Loader2
+  Loader2,
+  ExternalLink
 } from 'lucide-react';
 
 export default function Login() {
@@ -87,28 +88,25 @@ export default function Login() {
 
   if (currentUser) return null;
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
+    setError('');
+    setGoogleModalError('');
+    setShowGoogleModal(true);
+  };
+
+  const handleDirectOAuthRedirect = async () => {
     try {
-      setLoading(true);
-      setError('');
+      setGoogleLoading(true);
+      setGoogleModalError('');
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      // If live OAuth redirect is configured in Supabase, the window will redirect to accounts.google.com
     } catch (err: any) {
-      console.warn('OAuth redirect check:', err);
-      // If Google provider is not enabled in Supabase or unconfigured, open Google Account Selector
-      if (
-        err.code === 'unsupported_provider' ||
-        err.code === 'validation_failed' ||
-        err.message?.includes('provider is not enabled') ||
-        err.message?.includes('Unsupported provider')
-      ) {
-        setShowGoogleModal(true);
-      } else {
-        setError(err.message || 'Google Sign-In could not be completed.');
-      }
+      console.warn('OAuth redirect notice:', err);
+      setGoogleModalError(
+        'Google OAuth provider is not enabled in your Supabase project (400 Bad Request). Please sign in using your verified Google account option above.'
+      );
     } finally {
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
@@ -527,6 +525,17 @@ export default function Login() {
                       <li>Add Authorized redirect URI: <code className="bg-white px-1 py-0.5 rounded border text-[10px]">https://xhvijscaogmlapxdazpm.supabase.co/auth/v1/callback</code></li>
                       <li>In Supabase Dashboard &rarr; <span className="font-semibold">Authentication &rarr; Providers &rarr; Google</span>, enable Google and paste your Client ID and Client Secret.</li>
                     </ol>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleDirectOAuthRedirect}
+                        disabled={googleLoading}
+                        className="w-full py-2 px-3 bg-white border border-neutral-300 hover:border-neutral-400 text-neutral-800 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-neutral-500" />
+                        Test Direct Google OAuth Redirect
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
