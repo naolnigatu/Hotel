@@ -80,12 +80,15 @@ export default function AdminCmsGallery() {
   const predefinedCategories = ['Rooms', 'Restaurant', 'Exterior', 'Lobby', 'Events'];
 
   return (
-    <div className="max-w-6xl">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-neutral-900">Gallery Management</h1>
+    <div className="max-w-6xl mx-auto space-y-6 min-w-0 pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Gallery Management</h1>
+          <p className="text-xs sm:text-sm text-neutral-500">Upload and categorize hotel property, event, and interior photos</p>
+        </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm mb-12">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-sm mb-8">
         <h2 className="text-lg font-bold text-neutral-900 mb-6">Upload New Image</h2>
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-4">

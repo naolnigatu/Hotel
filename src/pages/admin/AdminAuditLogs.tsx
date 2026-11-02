@@ -50,22 +50,22 @@ export default function AdminAuditLogs() {
   });
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-neutral-900 text-white rounded-xl">
+          <div className="p-2.5 bg-neutral-900 text-white rounded-xl shrink-0">
             <FileText className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">System Audit Trail & Security Logs</h1>
-            <p className="text-sm text-neutral-500">Immutable record of all management changes, settings updates & staff actions</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">System Audit Trail & Security Logs</h1>
+            <p className="text-xs sm:text-sm text-neutral-500">Immutable record of all management changes, settings updates & staff actions</p>
           </div>
         </div>
 
         <button 
           onClick={() => window.location.reload()}
-          className="p-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-700 transition-colors"
+          className="p-2.5 rounded-xl border border-neutral-200 hover:bg-neutral-50 text-neutral-700 transition-colors shrink-0"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
@@ -84,7 +84,7 @@ export default function AdminAuditLogs() {
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto scrollbar-none pb-1">
           {modules.map(mod => (
             <button
               key={mod}
@@ -111,7 +111,7 @@ export default function AdminAuditLogs() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[600px] sm:min-w-0">
               <thead className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-neutral-500 tracking-wider">
                 <tr>
                   <th className="p-4">Timestamp</th>

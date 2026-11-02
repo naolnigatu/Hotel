@@ -113,17 +113,18 @@ export default function AdminUsers() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <Users className="w-6 h-6 text-neutral-700" /> User Management
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 flex items-center gap-2">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-700 flex-shrink-0" />
+            <span>User Management</span>
           </h1>
-          <p className="text-sm text-neutral-500">Manage accounts, assign roles, and register new staff members.</p>
+          <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">Manage accounts, assign roles, and register new staff members.</p>
         </div>
         <button
           onClick={() => setIsRegisterOpen(true)}
-          className="px-4 py-2 bg-neutral-900 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-neutral-800 transition"
+          className="w-full sm:w-auto justify-center px-4 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-neutral-800 transition shadow-xs"
         >
           <Plus className="w-4 h-4" /> Register Staff Account
         </button>
@@ -139,14 +140,14 @@ export default function AdminUsers() {
       )}
 
       {/* Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm flex items-center gap-3">
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-neutral-200 shadow-sm flex items-center gap-3">
         <Search className="w-5 h-5 text-neutral-400 shrink-0" />
         <input
           type="text"
           placeholder="Search users by name or email..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-transparent border-none focus:ring-0 text-sm p-0"
+          className="w-full bg-transparent border-none focus:ring-0 text-sm p-0 focus:outline-none"
         />
       </div>
 
@@ -156,32 +157,32 @@ export default function AdminUsers() {
           <table className="w-full text-left text-sm">
             <thead className="bg-neutral-50 text-neutral-500 font-medium border-b border-neutral-200">
               <tr>
-                <th className="px-6 py-4">User</th>
-                <th className="px-6 py-4">Current Role</th>
-                <th className="px-6 py-4">Promote / Change Role</th>
-                <th className="px-6 py-4">Joined</th>
+                <th className="px-3 sm:px-6 py-3.5">User</th>
+                <th className="px-3 sm:px-6 py-3.5">Current Role</th>
+                <th className="px-3 sm:px-6 py-3.5">Promote / Change Role</th>
+                <th className="px-3 sm:px-6 py-3.5">Joined</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
               {loading ? (
-                <tr><td colSpan={4} className="px-6 py-8 text-center text-neutral-400">Loading users...</td></tr>
+                <tr><td colSpan={4} className="px-3 sm:px-6 py-8 text-center text-neutral-400">Loading users...</td></tr>
               ) : filteredUsers.length === 0 ? (
-                <tr><td colSpan={4} className="px-6 py-8 text-center text-neutral-400">No users found.</td></tr>
+                <tr><td colSpan={4} className="px-3 sm:px-6 py-8 text-center text-neutral-400">No users found.</td></tr>
               ) : (
                 filteredUsers.map(user => (
                   <tr key={user.uid} className="hover:bg-neutral-50/50">
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center font-bold">
+                        <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
                           {user.name?.charAt(0).toUpperCase() || '?'}
                         </div>
-                        <div>
-                          <p className="font-bold text-neutral-900">{user.name}</p>
-                          <p className="text-[11px] text-neutral-500">{user.email}</p>
+                        <div className="min-w-0">
+                          <p className="font-bold text-neutral-900 truncate">{user.name}</p>
+                          <p className="text-[11px] text-neutral-500 truncate">{user.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-3.5">
                       <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                         user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
                         user.role === 'guest' ? 'bg-neutral-100 text-neutral-600' :
@@ -190,7 +191,7 @@ export default function AdminUsers() {
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-3.5 min-w-[160px]">
                       <select
                         value={user.role}
                         onChange={(e) => handleUpdateRole(user.uid, e.target.value as Role)}
@@ -202,7 +203,7 @@ export default function AdminUsers() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-6 py-4 text-xs text-neutral-500 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-3.5 text-xs text-neutral-500 whitespace-nowrap">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
@@ -216,7 +217,7 @@ export default function AdminUsers() {
       {/* Register Staff Modal */}
       {isRegisterOpen && (
         <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-6 shadow-xl">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <h2 className="text-lg font-bold text-neutral-900">Register Staff Account</h2>
               <button onClick={() => setIsRegisterOpen(false)} className="text-neutral-400 hover:text-neutral-600">

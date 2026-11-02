@@ -326,7 +326,7 @@ export default function AdminHalls() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 min-w-0">
       
       {/* Alert Notice Banner */}
       {actionNotice && (
@@ -341,20 +341,20 @@ export default function AdminHalls() {
       )}
 
       {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-neutral-200">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight">Halls & Events Management</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-neutral-900 tracking-tight">Halls & Events Management</h1>
           <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">
             Review guest hall reservation requests, manage event spaces, equipment, and pricing.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
           {/* Main Tab Switcher */}
-          <div className="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 border border-neutral-200">
+          <div className="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 border border-neutral-200 overflow-x-auto scrollbar-none w-full sm:w-auto">
             <button
               onClick={() => setActiveTab('availability')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 ${
+              className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'availability'
                   ? 'bg-white text-neutral-900 shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -366,7 +366,7 @@ export default function AdminHalls() {
 
             <button
               onClick={() => setActiveTab('requests')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 ${
+              className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'requests'
                   ? 'bg-white text-neutral-900 shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -383,7 +383,7 @@ export default function AdminHalls() {
 
             <button
               onClick={() => setActiveTab('venues')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 ${
+              className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'venues'
                   ? 'bg-white text-neutral-900 shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
@@ -397,7 +397,7 @@ export default function AdminHalls() {
           {activeTab === 'venues' && (
             <button 
               onClick={() => setEditingHall({ id: '', name: '', capacity: 50, description: '', price: 5000, equipment: ['Projector', 'PA System'], imageUrls: [], status: true })}
-              className="flex items-center gap-1.5 px-4 py-2 bg-neutral-900 text-white text-xs font-bold rounded-xl hover:bg-neutral-800 transition-colors shadow-xs"
+              className="w-full sm:w-auto justify-center flex items-center gap-1.5 px-4 py-2 bg-neutral-900 text-white text-xs font-bold rounded-xl hover:bg-neutral-800 transition-colors shadow-xs"
             >
               <Plus className="w-4 h-4" /> Add Venue
             </button>
@@ -1316,10 +1316,10 @@ export default function AdminHalls() {
       {/* REQUEST DETAILS MODAL */}
       {/* ========================================================================= */}
       {selectedRequest && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
-          <div className="bg-white rounded-3xl max-w-xl w-full my-8 shadow-2xl border border-neutral-200 overflow-hidden space-y-0 animate-in zoom-in-95 duration-150 overscroll-contain">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-3xl max-w-xl w-full my-4 sm:my-8 shadow-2xl border border-neutral-200 overflow-hidden space-y-0 animate-in zoom-in-95 duration-150 overscroll-contain max-h-[92vh] flex flex-col">
             {/* Header */}
-            <div className="bg-neutral-900 text-white p-6 flex items-center justify-between">
+            <div className="bg-neutral-900 text-white p-4 sm:p-6 flex flex-wrap items-center justify-between gap-3 shrink-0">
               <div>
                 <div className="flex items-center gap-2.5 mb-1">
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
@@ -1332,7 +1332,7 @@ export default function AdminHalls() {
                   <span className="text-xs text-neutral-400">•</span>
                   <span className="text-xs text-neutral-400 font-mono">ID: {selectedRequest.id}</span>
                 </div>
-                <h3 className="text-xl font-bold font-mono tracking-wide">
+                <h3 className="text-lg sm:text-xl font-bold font-mono tracking-wide">
                   Reservation {selectedRequest.reservationCode}
                 </h3>
               </div>
@@ -1354,7 +1354,7 @@ export default function AdminHalls() {
             </div>
 
             {/* Body */}
-            <div className="p-6 space-y-5 text-xs max-h-[70vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 text-xs flex-1 overflow-y-auto">
               
               {/* Event & Venue Box */}
               <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200 space-y-2">
@@ -1439,7 +1439,7 @@ export default function AdminHalls() {
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="p-5 bg-neutral-50 border-t border-neutral-200 flex flex-wrap items-center justify-between gap-3">
+            <div className="p-4 sm:p-5 bg-neutral-50 border-t border-neutral-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setSelectedRequest(null)}

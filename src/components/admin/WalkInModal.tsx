@@ -255,20 +255,20 @@ export default function WalkInModal({ categories, rooms, existingBookings, onClo
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
-      <div className="bg-white rounded-2xl w-full max-w-2xl my-8 overflow-hidden shadow-2xl overscroll-contain">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain">
+      <div className="bg-white rounded-2xl w-full max-w-2xl my-4 sm:my-8 overflow-hidden shadow-2xl overscroll-contain max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="bg-neutral-900 text-white p-6 flex justify-between items-center">
+        <div className="bg-neutral-900 text-white p-4 sm:p-6 flex justify-between items-center shrink-0">
           <div>
-            <h2 className="text-xl font-bold">New Manual Reservation</h2>
+            <h2 className="text-lg sm:text-xl font-bold">New Manual Reservation</h2>
             <p className="text-xs text-neutral-400">Walk-in, Phone & VIP Bookings</p>
           </div>
-          <button onClick={onClose} className="p-2 text-neutral-400 hover:text-white rounded-full">
-            <X className="w-6 h-6" />
+          <button onClick={onClose} className="p-2 text-neutral-400 hover:text-white rounded-full shrink-0 cursor-pointer">
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6 flex-1 overflow-y-auto">
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center gap-3">
               <ShieldAlert className="w-5 h-5 shrink-0" />
@@ -538,18 +538,18 @@ export default function WalkInModal({ categories, rooms, existingBookings, onClo
           </div>
 
           {/* Submit Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-neutral-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-lg border border-neutral-300 text-neutral-700 text-sm font-medium hover:bg-neutral-50"
+              className="w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg border border-neutral-300 text-neutral-700 text-sm font-medium hover:bg-neutral-50 cursor-pointer text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2"
+              className="w-full sm:w-auto justify-center px-6 py-2.5 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 disabled:opacity-50 flex items-center gap-2 cursor-pointer text-center"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               Create Reservation

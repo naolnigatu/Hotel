@@ -302,18 +302,18 @@ export default function AdminAnnouncements() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-16">
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-16 min-w-0">
       {/* Top Banner / Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-neutral-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-6 md:p-8 rounded-3xl border border-neutral-200 shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-neutral-500 text-xs font-bold uppercase tracking-wider">
             <Megaphone className="w-4 h-4 text-neutral-900" />
             <span>Public Communications & CMS</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-black text-neutral-900 tracking-tight">
             Hotel Announcements
           </h1>
-          <p className="text-sm text-neutral-600 max-w-2xl">
+          <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl">
             Publish news, events, notices, and updates with high-resolution pictures, bold titles, and formatted paragraphs for your guests.
           </p>
         </div>
@@ -323,7 +323,7 @@ export default function AdminAnnouncements() {
             <button
               onClick={() => setShowSeedModal(true)}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-sm font-semibold rounded-xl transition cursor-pointer"
+              className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-sm font-semibold rounded-xl transition cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-amber-600" />
               Load Sample News
@@ -333,14 +333,14 @@ export default function AdminAnnouncements() {
             href="/announcements"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 border border-neutral-300 hover:bg-neutral-50 text-neutral-700 text-sm font-medium rounded-xl transition"
+            className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3.5 py-2.5 border border-neutral-300 hover:bg-neutral-50 text-neutral-700 text-sm font-medium rounded-xl transition"
           >
             <ExternalLink className="w-4 h-4" />
             Live Guest View
           </a>
           <button
             onClick={handleStartNew}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-bold rounded-xl transition shadow-xs cursor-pointer"
+            className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-bold rounded-xl transition shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Create Announcement
@@ -360,19 +360,19 @@ export default function AdminAnnouncements() {
 
       {/* Edit / Create Modal or Slide-in Drawer */}
       {editingItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
-          <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200 overscroll-contain">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-3xl rounded-2xl sm:rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-4 sm:my-8 animate-in fade-in zoom-in-95 duration-200 overscroll-contain max-h-[92vh] flex flex-col">
             {/* Modal Header */}
-            <div className="px-6 sm:px-8 py-5 border-b border-neutral-100 flex items-center justify-between bg-neutral-900 text-white">
+            <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-neutral-100 flex items-center justify-between bg-neutral-900 text-white shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
                   <Megaphone className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold">
+                  <h2 className="text-base sm:text-lg font-bold">
                     {editingItem.id ? 'Edit Announcement' : 'New Hotel Announcement'}
                   </h2>
-                  <p className="text-xs text-neutral-400">
+                  <p className="text-[11px] sm:text-xs text-neutral-400">
                     Provide picture, title, and descriptive paragraph
                   </p>
                 </div>
@@ -386,7 +386,7 @@ export default function AdminAnnouncements() {
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSave} className="p-6 sm:p-8 space-y-6 max-h-[80vh] overflow-y-auto">
+            <form onSubmit={handleSave} className="p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6 flex-1 overflow-y-auto">
               {/* Title */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700 mb-1.5">
@@ -549,18 +549,18 @@ export default function AdminAnnouncements() {
               </div>
 
               {/* Form Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-neutral-200">
                 <button
                   type="button"
                   onClick={() => setEditingItem(null)}
-                  className="px-5 py-2.5 rounded-xl border border-neutral-300 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-neutral-300 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition cursor-pointer text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-bold rounded-xl transition shadow-xs cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-bold rounded-xl transition shadow-xs cursor-pointer disabled:opacity-50 text-center"
                 >
                   <Save className="w-4 h-4" />
                   {saving ? 'Saving...' : (editingItem.id ? 'Save Changes' : 'Publish Announcement')}
@@ -573,9 +573,9 @@ export default function AdminAnnouncements() {
 
       {/* Live Preview Modal */}
       {previewItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 overscroll-contain">
-            <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-100">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden my-4 sm:my-8 animate-in fade-in zoom-in-95 overscroll-contain max-h-[90vh] flex flex-col">
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-100 shrink-0">
               <span className="text-xs font-bold uppercase tracking-wider text-neutral-600 flex items-center gap-1.5">
                 <Eye className="w-4 h-4 text-neutral-900" /> Guest View Preview
               </span>
@@ -587,7 +587,7 @@ export default function AdminAnnouncements() {
               </button>
             </div>
 
-            <div className="p-6 sm:p-8 space-y-5">
+            <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-5 flex-1 overflow-y-auto">
               {previewItem.imageUrl && (
                 <div className="rounded-2xl overflow-hidden aspect-video bg-neutral-100 border border-neutral-200 relative">
                   <img
@@ -723,7 +723,7 @@ export default function AdminAnnouncements() {
           )}
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredAnnouncements.map((item) => (
             <div
               key={item.id}

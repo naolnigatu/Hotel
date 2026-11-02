@@ -433,27 +433,32 @@ export default function KitchenDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-neutral-100 overflow-hidden">
-      {/* Header */}
-      <header className="bg-neutral-900 text-white p-4 flex flex-wrap justify-between items-center gap-3 flex-shrink-0">
+    <div className="space-y-6">
+      {/* Header Card */}
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <UtensilsCrossed className="w-6 h-6 text-emerald-400" />
-          <h1 className="text-xl font-bold tracking-tight">KDS - Kitchen Display System</h1>
+          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <UtensilsCrossed className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">Kitchen Display System (KDS)</h1>
+            <p className="text-xs sm:text-sm text-neutral-500">Live order queue and station routing</p>
+          </div>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Station Filter */}
           {visibleStations.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-neutral-800 px-3 py-1.5 rounded-lg text-xs border border-neutral-700">
-              <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="flex items-center gap-1.5 bg-neutral-100 px-3 py-1.5 rounded-xl text-xs border border-neutral-200">
+              <ChefHat className="w-3.5 h-3.5 text-neutral-600" />
               <select
                 value={filterStation}
                 onChange={(e) => setFilterStation(e.target.value)}
-                className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer"
+                className="bg-transparent text-neutral-800 font-bold text-xs focus:outline-none cursor-pointer"
               >
-                <option value="All" className="bg-neutral-800 text-white">All Stations</option>
+                <option value="All">All Stations</option>
                 {visibleStations.map(st => (
-                  <option key={st.id} value={st.id} className="bg-neutral-800 text-white">
+                  <option key={st.id} value={st.id}>
                     Station: {st.name}
                   </option>
                 ))}
@@ -461,16 +466,16 @@ export default function KitchenDashboard() {
             </div>
           )}
 
-          <div className="flex bg-neutral-800 rounded-lg p-1">
+          <div className="flex bg-neutral-100 rounded-xl p-1 border border-neutral-200">
             <button
               onClick={() => setViewMode('Active')}
-              className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${viewMode === 'Active' ? 'bg-emerald-600 text-white' : 'text-neutral-400 hover:text-white'}`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${viewMode === 'Active' ? 'bg-neutral-900 text-white shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               Active Board
             </button>
             <button
               onClick={() => setViewMode('History')}
-              className={`px-4 py-1.5 rounded-md text-sm font-bold transition ${viewMode === 'History' ? 'bg-neutral-600 text-white' : 'text-neutral-400 hover:text-white'}`}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${viewMode === 'History' ? 'bg-neutral-900 text-white shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               History
             </button>
@@ -478,61 +483,64 @@ export default function KitchenDashboard() {
 
           <button 
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className={`p-2 rounded-lg transition ${soundEnabled ? 'bg-emerald-900/50 text-emerald-400' : 'bg-neutral-800 text-neutral-500'}`}
+            className={`p-2 rounded-xl border transition cursor-pointer ${soundEnabled ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-neutral-100 text-neutral-500 border-neutral-200'}`}
+            title={soundEnabled ? 'Notification chime active' : 'Notification chime muted'}
           >
-            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-rose-500" />}
           </button>
         </div>
-      </header>
+      </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-x-auto p-6">
+      <div className="min-w-0">
         {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div>
+          <div className="flex justify-center items-center py-20 bg-white rounded-2xl border border-neutral-200">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-600"></div>
           </div>
         ) : viewMode === 'Active' ? (
-          <div className="flex gap-6 h-full items-start w-max min-w-full">
-            {columns.map(col => {
-              const columnOrders = filteredActiveOrders.filter(o => o.status === col.status);
-              return (
-                <div key={col.status} className="w-80 flex-shrink-0 flex flex-col h-full max-h-full">
-                  <div className="flex justify-between items-center mb-3">
-                    <h2 className="font-bold text-neutral-700 uppercase tracking-wider text-sm flex items-center gap-2">
-                      {col.title} 
-                      <span className="bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full text-xs">
-                        {columnOrders.length}
-                      </span>
-                    </h2>
+          <div className="overflow-x-auto pb-4 -mx-3 px-3 sm:mx-0 sm:px-0">
+            <div className="flex gap-4 sm:gap-6 min-h-[500px] items-start w-max min-w-full">
+              {columns.map(col => {
+                const columnOrders = filteredActiveOrders.filter(o => o.status === col.status);
+                return (
+                  <div key={col.status} className="w-72 sm:w-80 flex-shrink-0 flex flex-col bg-neutral-100/70 p-3 sm:p-4 rounded-2xl border border-neutral-200/80">
+                    <div className="flex justify-between items-center mb-3">
+                      <h2 className="font-bold text-neutral-800 uppercase tracking-wider text-xs sm:text-sm flex items-center gap-2">
+                        {col.title} 
+                        <span className="bg-white border border-neutral-200 text-neutral-800 font-extrabold px-2 py-0.5 rounded-full text-xs shadow-2xs">
+                          {columnOrders.length}
+                        </span>
+                      </h2>
+                    </div>
+                    <div className="space-y-3">
+                      {columnOrders.map(order => (
+                        <OrderCard key={order.id} order={order} />
+                      ))}
+                      {columnOrders.length === 0 && (
+                        <div className="text-center py-8 text-neutral-400 text-xs sm:text-sm border-2 border-dashed border-neutral-200 rounded-xl bg-white/50">
+                          No {col.title.toLowerCase()} orders
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto space-y-3 pb-4 pr-1">
-                    {columnOrders.map(order => (
-                      <OrderCard key={order.id} order={order} />
-                    ))}
-                    {columnOrders.length === 0 && (
-                      <div className="text-center py-8 text-neutral-400 text-sm border-2 border-dashed border-neutral-200 rounded-xl">
-                        No {col.title.toLowerCase()} orders
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         ) : (
-          <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-sm border border-neutral-200 p-6 h-full overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xs border border-neutral-200 p-4 sm:p-6">
             <h2 className="text-lg font-bold text-neutral-900 mb-6">Recent Completed & Cancelled Orders</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {completedOrders.map(order => (
                 <OrderCard key={order.id} order={order} />
               ))}
               {completedOrders.length === 0 && (
-                <p className="text-neutral-500 col-span-full">No recent history.</p>
+                <p className="text-neutral-500 col-span-full py-8 text-center text-sm">No recent history.</p>
               )}
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

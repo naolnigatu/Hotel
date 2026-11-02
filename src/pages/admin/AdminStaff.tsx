@@ -162,22 +162,22 @@ export default function AdminStaff() {
   });
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-neutral-900 text-white rounded-xl">
-            <Users className="w-6 h-6" />
+          <div className="p-2.5 bg-neutral-900 text-white rounded-xl flex-shrink-0">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Staff Management & Role Delegation</h1>
-            <p className="text-sm text-neutral-500">Manage employee accounts, roles & operational access</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Staff Management & Role Delegation</h1>
+            <p className="text-xs sm:text-sm text-neutral-500">Manage employee accounts, roles & operational access</p>
           </div>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition-colors"
+          className="w-full sm:w-auto justify-center px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition-colors shadow-xs"
         >
           <Plus className="w-4 h-4" /> Add Staff Member
         </button>
@@ -193,7 +193,7 @@ export default function AdminStaff() {
       )}
 
       {/* Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-neutral-200 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-neutral-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
           <input 
@@ -205,10 +205,10 @@ export default function AdminStaff() {
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none min-w-0">
           <button
             onClick={() => setRoleFilter('all')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
               roleFilter === 'all' ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
             }`}
           >
@@ -218,7 +218,7 @@ export default function AdminStaff() {
             <button
               key={r.role}
               onClick={() => setRoleFilter(r.role)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap flex-shrink-0 ${
                 roleFilter === r.role ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
@@ -311,7 +311,7 @@ export default function AdminStaff() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-6 shadow-xl">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <h2 className="text-lg font-bold text-neutral-900">
                 {editingStaff ? 'Edit Staff Profile' : 'Add Staff Member'}

@@ -149,22 +149,22 @@ export default function AdminHotelSettings() {
   }
 
   return (
-    <form onSubmit={handleSave} className="space-y-8 max-w-5xl mx-auto pb-12">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
+    <form onSubmit={handleSave} className="space-y-6 sm:space-y-8 max-w-5xl mx-auto pb-12 min-w-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-neutral-900 text-white rounded-xl">
-            <Building2 className="w-6 h-6" />
+          <div className="p-2.5 bg-neutral-900 text-white rounded-xl flex-shrink-0">
+            <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Hotel Identity, Policies & Payments</h1>
-            <p className="text-sm text-neutral-500">Configure central business parameters, check-in/out rules & payment gateways</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Hotel Identity, Policies & Payments</h1>
+            <p className="text-xs sm:text-sm text-neutral-500">Configure central business parameters, check-in/out rules & payment gateways</p>
           </div>
         </div>
 
         <button
           type="submit"
           disabled={saving}
-          className="px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+          className="w-full sm:w-auto justify-center px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition-colors disabled:opacity-50 shadow-xs"
         >
           <Save className="w-4 h-4" />
           {saving ? 'Saving...' : 'Save Configuration'}

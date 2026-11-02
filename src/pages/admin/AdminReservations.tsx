@@ -549,28 +549,28 @@ export default function AdminReservations() {
       {/* Top Title & Primary Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 pb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Reception Operations</h1>
-          <p className="text-sm text-neutral-500 mt-1">Live Operational Control Center & Reservation Management</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">Reception Operations</h1>
+          <p className="text-xs sm:text-sm text-neutral-500 mt-1">Live Operational Control Center & Reservation Management</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
           {/* Mode Switcher */}
-          <div className="flex bg-neutral-200/80 p-1 rounded-xl text-xs font-semibold">
+          <div className="flex bg-neutral-200/80 p-1 rounded-xl text-xs font-semibold w-full sm:w-auto justify-between sm:justify-start">
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3.5 py-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-600 hover:text-neutral-900'}`}
+              className={`flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 rounded-lg transition-all text-center ${viewMode === 'list' ? 'bg-white text-neutral-900 shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               Queue List
             </button>
             <button
               onClick={() => setViewMode('calendar')}
-              className={`px-3.5 py-2 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-600 hover:text-neutral-900'}`}
+              className={`flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 rounded-lg transition-all text-center ${viewMode === 'calendar' ? 'bg-white text-neutral-900 shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               Calendar Matrix
             </button>
             <button
               onClick={() => setViewMode('guest-directory')}
-              className={`px-3.5 py-2 rounded-lg transition-all ${viewMode === 'guest-directory' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-600 hover:text-neutral-900'}`}
+              className={`flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 rounded-lg transition-all text-center ${viewMode === 'guest-directory' ? 'bg-white text-neutral-900 shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900'}`}
             >
               Guest Directory
             </button>
@@ -578,24 +578,24 @@ export default function AdminReservations() {
 
           <button
             onClick={() => setShowAvailabilityModal(true)}
-            className="px-4 py-2.5 bg-emerald-700 text-white font-medium text-sm rounded-xl hover:bg-emerald-800 transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 bg-emerald-700 text-white font-medium text-sm rounded-xl hover:bg-emerald-800 transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           >
-            <CalendarRange className="w-4 h-4" />
-            Check Date Availability
+            <CalendarRange className="w-4 h-4 shrink-0" />
+            <span>Check Date Availability</span>
           </button>
 
           <button
             onClick={() => setShowWalkInModal(true)}
-            className="px-4 py-2.5 bg-neutral-900 text-white font-medium text-sm rounded-xl hover:bg-neutral-800 transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 bg-neutral-900 text-white font-medium text-sm rounded-xl hover:bg-neutral-800 transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            + New Walk-in / Phone Booking
+            <Plus className="w-4 h-4 shrink-0" />
+            <span>+ New Walk-in / Phone Booking</span>
           </button>
         </div>
       </div>
 
       {/* Live Operational KPI Cards (9 KPI Metrics) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-2.5 sm:gap-3">
         <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs">
           <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Arrivals Today</p>
           <p className="text-2xl font-bold text-emerald-700 mt-1">{arrivalsToday}</p>
@@ -998,10 +998,10 @@ export default function AdminReservations() {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto overscroll-contain">
           <div className="bg-white rounded-2xl w-full max-w-4xl my-8 overflow-hidden shadow-2xl overscroll-contain">
             {/* Modal Header */}
-            <div className="p-6 bg-neutral-900 text-white flex justify-between items-center sticky top-0 z-10">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h2 className="text-2xl font-bold font-mono">Reservation {selectedBooking.reservationCode}</h2>
+            <div className="p-4 sm:p-6 bg-neutral-900 text-white flex justify-between items-start sm:items-center gap-3 sticky top-0 z-10">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <h2 className="text-lg sm:text-2xl font-bold font-mono">Reservation {selectedBooking.reservationCode}</h2>
                   <CopyButton
                     text={selectedBooking.reservationCode}
                     variant="dark"
@@ -1010,7 +1010,7 @@ export default function AdminReservations() {
                     showText={true}
                     tooltip="Copy reservation code"
                   />
-                  <span className={`px-3 py-0.5 rounded-full text-xs font-extrabold ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
                     ['Approved', 'Checked In'].includes(selectedBooking.status) ? 'bg-emerald-500 text-white' :
                     selectedBooking.status === 'Checked Out' ? 'bg-neutral-700 text-white' :
                     ['Cancelled', 'Rejected'].includes(selectedBooking.status) ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white'
@@ -1018,7 +1018,7 @@ export default function AdminReservations() {
                     {selectedBooking.status}
                   </span>
                   {selectedBooking.bookingSource && (
-                    <span className="bg-neutral-800 text-neutral-300 text-xs px-2.5 py-0.5 rounded border border-neutral-700">
+                    <span className="bg-neutral-800 text-neutral-300 text-xs px-2 py-0.5 rounded border border-neutral-700">
                       {selectedBooking.bookingSource}
                     </span>
                   )}
@@ -1032,13 +1032,13 @@ export default function AdminReservations() {
                   setSelectedBooking(null);
                   setShowRejectInput(false);
                 }} 
-                className="p-2 hover:bg-neutral-800 rounded-full text-neutral-400 hover:text-white"
+                className="p-1.5 sm:p-2 hover:bg-neutral-800 rounded-full text-neutral-400 hover:text-white shrink-0 cursor-pointer"
               >
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-6 space-y-8 max-h-[80vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-h-[80vh] overflow-y-auto">
               {/* Guest & Reservation Details Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Guest Box */}

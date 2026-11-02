@@ -383,32 +383,32 @@ export default function WaiterDashboard() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto min-w-0">
       {/* Header & Status Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-xs">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-neutral-900 text-white rounded-xl">
-              <UtensilsCrossed className="w-6 h-6" />
+            <div className="p-2.5 bg-neutral-900 text-white rounded-xl flex-shrink-0">
+              <UtensilsCrossed className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-neutral-900">Waiter & Service Operations</h1>
-              <p className="text-sm text-neutral-500">Live order claiming, table/room service & guest calls</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Waiter & Service Operations</h1>
+              <p className="text-xs sm:text-sm text-neutral-500">Live order claiming, table/room service & guest calls</p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => setIsCreateOrderOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create Customer Order</span>
           </button>
           <div className="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Active Waiter: <span className="font-bold">{waiterName}</span>
+            <span>Active: <strong className="text-neutral-900">{waiterName}</strong></span>
           </div>
           <button 
             onClick={() => window.location.reload()}
@@ -442,7 +442,7 @@ export default function WaiterDashboard() {
       )}
 
       {/* Tabs & Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <button
           onClick={() => setActiveTab('ready')}
           className={`p-4 rounded-2xl border text-left transition-all ${
@@ -518,8 +518,8 @@ export default function WaiterDashboard() {
 
       {/* Filter & Search Bar */}
       {activeTab !== 'requests' && (
-        <div className="bg-white p-4 rounded-2xl border border-neutral-200 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-full md:w-80">
+        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-neutral-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
+          <div className="relative flex-1 min-w-0 md:max-w-xs">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input 
               type="text"
@@ -531,11 +531,11 @@ export default function WaiterDashboard() {
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <Filter className="w-4 h-4 text-neutral-400" />
+            <Filter className="w-4 h-4 text-neutral-400 flex-shrink-0" />
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="bg-neutral-50 border border-neutral-200 text-sm font-medium rounded-xl px-3 py-2 text-neutral-700 focus:outline-none focus:border-neutral-900"
+              className="flex-1 sm:flex-none bg-neutral-50 border border-neutral-200 text-sm font-medium rounded-xl px-3 py-2 text-neutral-700 focus:outline-none focus:border-neutral-900"
             >
               <option value="all">All Service Types</option>
               <option value="Dine-In">Table Dine-In</option>
