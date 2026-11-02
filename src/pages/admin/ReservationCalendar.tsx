@@ -111,9 +111,9 @@ export default function ReservationCalendar({
   return (
     <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden shadow-xs">
       {/* Calendar Top Controls */}
-      <div className="p-4 border-b border-neutral-200 flex flex-col md:flex-row items-center justify-between gap-4 bg-neutral-50">
+      <div className="p-3 sm:p-4 border-b border-neutral-200 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 bg-neutral-50">
         <div className="flex items-center gap-3">
-          <CalendarIcon className="w-5 h-5 text-neutral-600" />
+          <CalendarIcon className="w-5 h-5 text-neutral-600 flex-shrink-0" />
           <div>
             <h2 className="text-base sm:text-lg font-bold text-neutral-900">
               {calendarView === 'month' && format(currentDate, 'MMMM yyyy')}
@@ -128,10 +128,10 @@ export default function ReservationCalendar({
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Resource Selector: Rooms vs Halls */}
-          <div className="flex bg-neutral-200 p-1 rounded-lg text-xs font-semibold">
+          <div className="flex bg-neutral-200 p-1 rounded-lg text-xs font-semibold overflow-x-auto scrollbar-none">
             <button
               onClick={() => setResourceType('rooms')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
                 resourceType === 'rooms' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
@@ -140,7 +140,7 @@ export default function ReservationCalendar({
             </button>
             <button
               onClick={() => setResourceType('halls')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
                 resourceType === 'halls' ? 'bg-white text-neutral-900 shadow-xs' : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
@@ -211,100 +211,102 @@ export default function ReservationCalendar({
 
       {/* View Rendering */}
       {calendarView === 'month' ? (
-        <div>
-          {/* Day Headers */}
-          <div className="grid grid-cols-7 border-b border-neutral-200 bg-neutral-100/60">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="p-2.5 text-center text-xs font-bold text-neutral-600 uppercase tracking-wider border-r border-neutral-200 last:border-r-0">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Month Days Grid */}
-          <div className="grid grid-cols-7 auto-rows-fr">
-            {Array.from({ length: startOfMonth(currentDate).getDay() }).map((_, i) => (
-              <div key={`empty-${i}`} className="p-2 border-r border-b border-neutral-100 bg-neutral-50/40 min-h-[110px]" />
-            ))}
-            
-            {viewDays.map(day => {
-              const dayTs = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
-              const nextDayTs = dayTs + 86400000;
-
-              const isCurrentDay = isSameDay(day, new Date());
-
-              // Get day events/bookings based on resourceType
-              const dayRoomBookings = activeRoomBookings.filter(b => b.checkIn < nextDayTs && b.checkOut > dayTs);
-              const dayHallEvents = activeHallEvents.filter(e => e.startTs < nextDayTs && e.endTs > dayTs);
-
-              return (
-                <div 
-                  key={day.toISOString()} 
-                  className={`p-2 border-r border-b border-neutral-200 min-h-[110px] flex flex-col justify-between transition-colors ${
-                    isCurrentDay ? 'bg-amber-50/30' : 'bg-white hover:bg-neutral-50/60'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                      isCurrentDay ? 'bg-neutral-900 text-white' : 'text-neutral-700'
-                    }`}>
-                      {format(day, 'd')}
-                    </span>
-                    <span className="text-[10px] font-semibold text-neutral-400">
-                      {resourceType === 'rooms' 
-                        ? `${dayRoomBookings.length} booked`
-                        : `${dayHallEvents.length} events`}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1 flex-1 overflow-hidden">
-                    {resourceType === 'rooms' ? (
-                      <>
-                        {dayRoomBookings.slice(0, 3).map(b => (
-                          <div
-                            key={b.id}
-                            onClick={() => onSelectBooking(b)}
-                            className={`text-[11px] px-1.5 py-0.5 rounded-md truncate cursor-pointer font-medium transition-all ${
-                              b.status === 'Checked In' 
-                                ? 'bg-blue-600 text-white shadow-2xs' 
-                                : b.status === 'Approved' 
-                                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
-                                  : 'bg-amber-100 text-amber-900 border border-amber-300'
-                            }`}
-                            title={`${b.guestDetails.firstName} ${b.guestDetails.lastName} - ${b.status} (${b.reservationCode})`}
-                          >
-                            {b.guestDetails.lastName} {b.roomId ? `(Rm ${rooms.find(r => r.id === b.roomId)?.roomNumber || b.roomId})` : ''}
-                          </div>
-                        ))}
-                        {dayRoomBookings.length > 3 && (
-                          <div className="text-[10px] text-neutral-500 font-bold px-1">
-                            +{dayRoomBookings.length - 3} more
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        {dayHallEvents.slice(0, 3).map(e => (
-                          <div
-                            key={e.id}
-                            onClick={() => onSelectHallEvent && onSelectHallEvent(e)}
-                            className="text-[11px] px-1.5 py-0.5 rounded-md truncate cursor-pointer font-medium bg-purple-100 text-purple-900 border border-purple-300 shadow-2xs"
-                            title={`${e.hallName}: ${e.eventType} - ${e.organizerName} (${e.status})`}
-                          >
-                            <span className="font-bold">{e.hallName}:</span> {e.organizerName}
-                          </div>
-                        ))}
-                        {dayHallEvents.length > 3 && (
-                          <div className="text-[10px] text-neutral-500 font-bold px-1">
-                            +{dayHallEvents.length - 3} more
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
+        <div className="overflow-x-auto scrollbar-thin">
+          <div className="min-w-[700px] lg:min-w-0">
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 border-b border-neutral-200 bg-neutral-100/60">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="p-2.5 text-center text-xs font-bold text-neutral-600 uppercase tracking-wider border-r border-neutral-200 last:border-r-0">
+                  {day}
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            {/* Month Days Grid */}
+            <div className="grid grid-cols-7 auto-rows-fr">
+              {Array.from({ length: startOfMonth(currentDate).getDay() }).map((_, i) => (
+                <div key={`empty-${i}`} className="p-2 border-r border-b border-neutral-100 bg-neutral-50/40 min-h-[110px]" />
+              ))}
+              
+              {viewDays.map(day => {
+                const dayTs = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+                const nextDayTs = dayTs + 86400000;
+
+                const isCurrentDay = isSameDay(day, new Date());
+
+                // Get day events/bookings based on resourceType
+                const dayRoomBookings = activeRoomBookings.filter(b => b.checkIn < nextDayTs && b.checkOut > dayTs);
+                const dayHallEvents = activeHallEvents.filter(e => e.startTs < nextDayTs && e.endTs > dayTs);
+
+                return (
+                  <div 
+                    key={day.toISOString()} 
+                    className={`p-2 border-r border-b border-neutral-200 min-h-[110px] flex flex-col justify-between transition-colors ${
+                      isCurrentDay ? 'bg-amber-50/30' : 'bg-white hover:bg-neutral-50/60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
+                        isCurrentDay ? 'bg-neutral-900 text-white' : 'text-neutral-700'
+                      }`}>
+                        {format(day, 'd')}
+                      </span>
+                      <span className="text-[10px] font-semibold text-neutral-400">
+                        {resourceType === 'rooms' 
+                          ? `${dayRoomBookings.length} booked`
+                          : `${dayHallEvents.length} events`}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1 flex-1 overflow-hidden">
+                      {resourceType === 'rooms' ? (
+                        <>
+                          {dayRoomBookings.slice(0, 3).map(b => (
+                            <div
+                              key={b.id}
+                              onClick={() => onSelectBooking(b)}
+                              className={`text-[11px] px-1.5 py-0.5 rounded-md truncate cursor-pointer font-medium transition-all ${
+                                b.status === 'Checked In' 
+                                  ? 'bg-blue-600 text-white shadow-2xs' 
+                                  : b.status === 'Approved' 
+                                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                                    : 'bg-amber-100 text-amber-900 border border-amber-300'
+                              }`}
+                              title={`${b.guestDetails.firstName} ${b.guestDetails.lastName} - ${b.status} (${b.reservationCode})`}
+                            >
+                              {b.guestDetails.lastName} {b.roomId ? `(Rm ${rooms.find(r => r.id === b.roomId)?.roomNumber || b.roomId})` : ''}
+                            </div>
+                          ))}
+                          {dayRoomBookings.length > 3 && (
+                            <div className="text-[10px] text-neutral-500 font-bold px-1">
+                              +{dayRoomBookings.length - 3} more
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {dayHallEvents.slice(0, 3).map(e => (
+                            <div
+                              key={e.id}
+                              onClick={() => onSelectHallEvent && onSelectHallEvent(e)}
+                              className="text-[11px] px-1.5 py-0.5 rounded-md truncate cursor-pointer font-medium bg-purple-100 text-purple-900 border border-purple-300 shadow-2xs"
+                              title={`${e.hallName}: ${e.eventType} - ${e.organizerName} (${e.status})`}
+                            >
+                              <span className="font-bold">{e.hallName}:</span> {e.organizerName}
+                            </div>
+                          ))}
+                          {dayHallEvents.length > 3 && (
+                            <div className="text-[10px] text-neutral-500 font-bold px-1">
+                              +{dayHallEvents.length - 3} more
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       ) : (

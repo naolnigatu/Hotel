@@ -172,28 +172,28 @@ export default function DateIntervalAvailabilityModal({
       <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden flex flex-col my-auto max-h-[92vh]">
         
         {/* Header */}
-        <div className="p-5 sm:p-6 bg-neutral-900 text-white flex items-center justify-between border-b border-neutral-800">
+        <div className="p-4 sm:p-6 bg-neutral-900 text-white flex items-start sm:items-center justify-between gap-3 border-b border-neutral-800 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-neutral-800 rounded-2xl text-emerald-400 border border-neutral-700">
-              <CalendarRange className="w-6 h-6" />
+            <div className="p-2 sm:p-2.5 bg-neutral-800 rounded-2xl text-emerald-400 border border-neutral-700 shrink-0">
+              <CalendarRange className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-black tracking-tight text-white">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base sm:text-xl font-black tracking-tight text-white">
                   Date Interval Availability Inspector
                 </h2>
                 <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-extrabold rounded-full uppercase tracking-wider">
                   Live Engine
                 </span>
               </div>
-              <p className="text-xs text-neutral-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-neutral-400 mt-0.5">
                 Check 100% free rooms and event halls for any custom check-in & check-out stay or event span.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-neutral-400 hover:text-white rounded-xl hover:bg-neutral-800 transition"
+            className="p-1.5 sm:p-2 text-neutral-400 hover:text-white rounded-xl hover:bg-neutral-800 transition shrink-0 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>

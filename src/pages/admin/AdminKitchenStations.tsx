@@ -145,20 +145,20 @@ export default function AdminKitchenStations() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
+    <div className="space-y-6 max-w-5xl mx-auto min-w-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-neutral-900 text-white rounded-xl">
             <ChefHat className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Stations Configuration</h1>
-            <p className="text-sm text-neutral-500">Manage preparation stations for Orders</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Stations Configuration</h1>
+            <p className="text-xs sm:text-sm text-neutral-500">Manage preparation stations for Orders</p>
           </div>
         </div>
         <button
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition-colors"
+          className="w-full sm:w-auto justify-center px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Add Station
         </button>
@@ -230,8 +230,8 @@ export default function AdminKitchenStations() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-6 shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-neutral-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-4 sm:p-6 space-y-5 sm:space-y-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <h2 className="text-lg font-bold text-neutral-900">
                 {editingStation ? 'Edit Station' : 'Add Station'}

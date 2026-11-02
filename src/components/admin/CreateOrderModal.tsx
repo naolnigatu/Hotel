@@ -420,10 +420,10 @@ export default function CreateOrderModal({ isOpen, onClose, onOrderCreated }: Cr
         )}
 
         {/* Body Grid: Left = Menu Browser, Right = Cart & Customer / Payment Setup */}
-        <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-0">
+        <div className="flex-1 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-0">
           
           {/* LEFT: Menu Selection (7 Cols) */}
-          <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-neutral-200 overflow-hidden bg-neutral-50/50">
+          <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-neutral-200 lg:overflow-hidden bg-neutral-50/50">
             {/* Search & Category Pills */}
             <div className="p-4 border-b border-neutral-200 bg-white space-y-3 shrink-0">
               <div className="relative">
@@ -468,7 +468,7 @@ export default function CreateOrderModal({ isOpen, onClose, onOrderCreated }: Cr
             </div>
 
             {/* Menu Items Grid */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2.5 max-h-[300px] lg:max-h-none">
               {loading ? (
                 <div className="py-12 text-center text-neutral-400 text-xs">Loading menu items...</div>
               ) : filteredMenuItems.length === 0 ? (
@@ -518,8 +518,8 @@ export default function CreateOrderModal({ isOpen, onClose, onOrderCreated }: Cr
           </div>
 
           {/* RIGHT: Order Configuration & Cart Details (5 Cols) */}
-          <div className="lg:col-span-5 flex flex-col bg-white overflow-hidden">
-            <form onSubmit={handleSubmitOrder} className="flex flex-col h-full overflow-hidden">
+          <div className="lg:col-span-5 flex flex-col bg-white lg:overflow-hidden">
+            <form onSubmit={handleSubmitOrder} className="flex flex-col h-full lg:overflow-hidden">
               
               {/* Scrollable Setup & Items */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">

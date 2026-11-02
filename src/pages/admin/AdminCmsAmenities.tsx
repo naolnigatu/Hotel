@@ -86,28 +86,31 @@ export default function AdminCmsAmenities() {
   const commonIcons = ['Wifi', 'Coffee', 'Car', 'Tv', 'Wind', 'Dumbbell', 'Waves', 'Utensils', 'ShieldCheck'];
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-neutral-900">Amenities</h1>
+    <div className="max-w-5xl mx-auto space-y-6 min-w-0 pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Amenities</h1>
+          <p className="text-xs sm:text-sm text-neutral-500">Manage hotel facilities, perks, and guest services</p>
+        </div>
         <button 
           onClick={() => setEditingItem({ id: '', icon: 'Wifi', title: '', description: '' })}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors"
+          className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2.5 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors font-medium text-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Add Amenity
         </button>
       </div>
 
       {editingItem ? (
-        <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm mb-8">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-sm mb-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-neutral-900">{editingItem.id ? 'Edit Amenity' : 'New Amenity'}</h2>
-            <button onClick={() => setEditingItem(null)} className="p-2 text-neutral-500 hover:bg-neutral-100 rounded-full">
+            <h2 className="text-lg sm:text-xl font-bold text-neutral-900">{editingItem.id ? 'Edit Amenity' : 'New Amenity'}</h2>
+            <button onClick={() => setEditingItem(null)} className="p-2 text-neutral-500 hover:bg-neutral-100 rounded-full cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <form onSubmit={handleSave} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Title</label>
                 <input 
@@ -144,7 +147,7 @@ export default function AdminCmsAmenities() {
             <div className="flex justify-end pt-4">
               <button 
                 type="submit" disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white rounded-lg font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70"
+                className="w-full sm:w-auto justify-center flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 cursor-pointer"
               >
                 {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 {saving ? 'Saving...' : 'Save Amenity'}
@@ -154,7 +157,7 @@ export default function AdminCmsAmenities() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {amenities.map(amenity => {
           const IconComponent = (Icons as any)[amenity.icon] || Icons.HelpCircle;
           return (

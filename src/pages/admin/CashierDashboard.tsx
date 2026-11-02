@@ -491,17 +491,17 @@ export default function CashierDashboard() {
   }, [bookings, searchQuery]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto min-w-0">
       
       {/* Top Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-neutral-900 text-white flex items-center justify-center shadow-xs">
-            <Receipt className="w-6 h-6 text-amber-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-neutral-900 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+            <Receipt className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-neutral-900">Cashier & Finance Desk</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-neutral-900">Cashier & Finance Desk</h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                 Active Till
               </span>
@@ -515,7 +515,7 @@ export default function CashierDashboard() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setIsCreateOrderOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Take Customer Order (POS)</span>
@@ -609,11 +609,11 @@ export default function CashierDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
-        <div className="flex gap-2">
+      <div className="border-b border-neutral-200 pb-2 overflow-x-auto scrollbar-none">
+        <div className="flex gap-2 min-w-max pb-1">
           <button
             onClick={() => setActiveTab('verification')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer flex-shrink-0 ${
               activeTab === 'verification'
                 ? 'bg-neutral-900 text-white shadow-xs'
                 : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50'
@@ -630,7 +630,7 @@ export default function CashierDashboard() {
 
           <button
             onClick={() => setActiveTab('restaurant')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer flex-shrink-0 ${
               activeTab === 'restaurant'
                 ? 'bg-neutral-900 text-white shadow-xs'
                 : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50'
@@ -642,7 +642,7 @@ export default function CashierDashboard() {
 
           <button
             onClick={() => setActiveTab('reservations')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer flex-shrink-0 ${
               activeTab === 'reservations'
                 ? 'bg-neutral-900 text-white shadow-xs'
                 : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50'
@@ -654,7 +654,7 @@ export default function CashierDashboard() {
 
           <button
             onClick={() => setActiveTab('money-flow')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer flex-shrink-0 ${
               activeTab === 'money-flow'
                 ? 'bg-neutral-900 text-white shadow-xs'
                 : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50'
@@ -669,10 +669,10 @@ export default function CashierDashboard() {
       {/* TAB 1: Verification Queue */}
       {activeTab === 'verification' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-neutral-200">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-xl border border-neutral-200">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-neutral-700">Filter Scope:</span>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {(['all', 'orders', 'bookings'] as const).map(scope => (
                   <button
                     key={scope}
@@ -783,7 +783,7 @@ export default function CashierDashboard() {
                     </div>
 
                     {/* Card Actions */}
-                    <div className="p-4 bg-neutral-50 border-t border-neutral-100 grid grid-cols-2 gap-2">
+                    <div className="p-3 sm:p-4 bg-neutral-50 border-t border-neutral-100 flex flex-col sm:grid sm:grid-cols-2 gap-2">
                       <button
                         onClick={() => setRejectionTarget({ type: 'order', id: order.id, code: `#${order.orderNumber}` })}
                         disabled={isProcessing}
@@ -894,7 +894,7 @@ export default function CashierDashboard() {
                     </div>
 
                     {/* Card Actions */}
-                    <div className="p-4 bg-neutral-50 border-t border-neutral-100 grid grid-cols-2 gap-2">
+                    <div className="p-3 sm:p-4 bg-neutral-50 border-t border-neutral-100 flex flex-col sm:grid sm:grid-cols-2 gap-2">
                       <button
                         onClick={() => setRejectionTarget({ type: 'booking', id: booking.id, code: booking.reservationCode })}
                         disabled={isProcessing}
@@ -922,8 +922,8 @@ export default function CashierDashboard() {
       {/* TAB 2: Restaurant Orders Cashier Registry */}
       {activeTab === 'restaurant' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-neutral-200">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-xl border border-neutral-200">
+            <div className="relative flex-1 min-w-0 md:max-w-md">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
@@ -935,11 +935,11 @@ export default function CashierDashboard() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Filter className="w-4 h-4 text-neutral-400" />
+              <Filter className="w-4 h-4 text-neutral-400 flex-shrink-0" />
               <select
                 value={paymentStatusFilter}
                 onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-semibold focus:outline-none"
+                className="flex-1 sm:flex-none px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-semibold focus:outline-none"
               >
                 <option value="all">All Payment Statuses</option>
                 <option value="Pending Verification">Pending Verification</option>
@@ -952,7 +952,7 @@ export default function CashierDashboard() {
               <select
                 value={paymentMethodFilter}
                 onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                className="px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-semibold focus:outline-none"
+                className="flex-1 sm:flex-none px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-xs font-semibold focus:outline-none"
               >
                 <option value="all">All Payment Methods</option>
                 <option value="cash">Cash</option>
@@ -1110,8 +1110,8 @@ export default function CashierDashboard() {
       {/* TAB 3: Hotel Bookings Payment Registry */}
       {activeTab === 'reservations' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-neutral-200">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-xl border border-neutral-200">
+            <div className="relative flex-1 min-w-0 max-w-md">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
@@ -1302,7 +1302,7 @@ export default function CashierDashboard() {
       {/* MODAL: Payment Rejection */}
       {rejectionTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl border border-neutral-200 p-6 space-y-4">
+          <div className="bg-white rounded-2xl overflow-y-auto max-w-md w-full shadow-2xl border border-neutral-200 p-4 sm:p-6 space-y-4 max-h-[90vh]">
             <div className="flex items-center gap-3 text-red-600">
               <div className="p-2 bg-red-100 rounded-xl">
                 <XCircle className="w-6 h-6" />
@@ -1373,7 +1373,7 @@ export default function CashierDashboard() {
       {/* MODAL: Printable Receipt */}
       {receiptItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl border border-neutral-200 flex flex-col">
+          <div className="bg-white rounded-2xl overflow-hidden max-w-md w-full shadow-2xl border border-neutral-200 flex flex-col max-h-[90vh]">
             <div className="p-4 bg-neutral-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <h3 className="text-xs font-bold flex items-center gap-2">

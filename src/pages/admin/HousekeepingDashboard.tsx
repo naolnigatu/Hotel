@@ -612,15 +612,15 @@ export default function HousekeepingDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto min-w-0">
       {/* Header Title */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
-            <Sparkles className="w-7 h-7 text-emerald-600" />
-            Housekeeping Operations
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 flex items-center gap-2">
+            <Sparkles className="w-6 h-6 sm:w-7 h-7 text-emerald-600 flex-shrink-0" />
+            <span>Housekeeping Operations</span>
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">
             Real-time room cleaning queue, quality inspections, and maintenance tracking.
           </p>
         </div>
@@ -633,7 +633,7 @@ export default function HousekeepingDashboard() {
                 setShowMaintenanceModal(true);
               }
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium text-sm transition"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium text-sm transition shadow-sm"
           >
             <Wrench className="w-4 h-4" />
             Report Issue
@@ -642,56 +642,56 @@ export default function HousekeepingDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-        <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-semibold text-neutral-500 uppercase">To Clean</div>
-          <div className="text-2xl font-bold text-amber-600 mt-1">{metrics.dirtyCount}</div>
-          <div className="text-[11px] text-neutral-400 mt-1">Dirty / Needs Cleaning</div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3">
+        <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
+          <div className="text-[11px] sm:text-xs font-semibold text-neutral-500 uppercase">To Clean</div>
+          <div className="text-xl sm:text-2xl font-bold text-amber-600 mt-1">{metrics.dirtyCount}</div>
+          <div className="text-[10px] sm:text-[11px] text-neutral-400 mt-1 truncate">Dirty / Needs Cleaning</div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-semibold text-neutral-500 uppercase">Cleaning</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">{metrics.cleaningCount}</div>
-          <div className="text-[11px] text-neutral-400 mt-1">In Progress</div>
+        <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
+          <div className="text-[11px] sm:text-xs font-semibold text-neutral-500 uppercase">Cleaning</div>
+          <div className="text-xl sm:text-2xl font-bold text-blue-600 mt-1">{metrics.cleaningCount}</div>
+          <div className="text-[10px] sm:text-[11px] text-neutral-400 mt-1 truncate">In Progress</div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-semibold text-neutral-500 uppercase">Awaiting Insp.</div>
-          <div className="text-2xl font-bold text-purple-600 mt-1">{metrics.inspectionCount}</div>
-          <div className="text-[11px] text-neutral-400 mt-1">Needs Approval</div>
+        <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
+          <div className="text-[11px] sm:text-xs font-semibold text-neutral-500 uppercase">Awaiting Insp.</div>
+          <div className="text-xl sm:text-2xl font-bold text-purple-600 mt-1">{metrics.inspectionCount}</div>
+          <div className="text-[10px] sm:text-[11px] text-neutral-400 mt-1 truncate">Needs Approval</div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-semibold text-neutral-500 uppercase">Clean & Ready</div>
-          <div className="text-2xl font-bold text-emerald-600 mt-1">{metrics.cleanReadyCount}</div>
-          <div className="text-[11px] text-neutral-400 mt-1">Available for Check-in</div>
+        <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
+          <div className="text-[11px] sm:text-xs font-semibold text-neutral-500 uppercase">Clean & Ready</div>
+          <div className="text-xl sm:text-2xl font-bold text-emerald-600 mt-1">{metrics.cleanReadyCount}</div>
+          <div className="text-[10px] sm:text-[11px] text-neutral-400 mt-1 truncate">Available for Check-in</div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-semibold text-neutral-500 uppercase">Maintenance</div>
-          <div className="text-2xl font-bold text-rose-600 mt-1">{metrics.maintenanceCount}</div>
-          <div className="text-[11px] text-neutral-400 mt-1">Issues Reported</div>
+        <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
+          <div className="text-[11px] sm:text-xs font-semibold text-neutral-500 uppercase">Maintenance</div>
+          <div className="text-xl sm:text-2xl font-bold text-rose-600 mt-1">{metrics.maintenanceCount}</div>
+          <div className="text-[10px] sm:text-[11px] text-neutral-400 mt-1 truncate">Issues Reported</div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
-          <div className="text-xs font-semibold text-neutral-500 uppercase">Out of Service</div>
-          <div className="text-2xl font-bold text-neutral-700 mt-1">{metrics.outOfServiceCount}</div>
-          <div className="text-[11px] text-neutral-400 mt-1">Blocked / Repair</div>
+        <div className="bg-white p-3 sm:p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between">
+          <div className="text-[11px] sm:text-xs font-semibold text-neutral-500 uppercase">Out of Service</div>
+          <div className="text-xl sm:text-2xl font-bold text-neutral-700 mt-1">{metrics.outOfServiceCount}</div>
+          <div className="text-[10px] sm:text-[11px] text-neutral-400 mt-1 truncate">Blocked / Repair</div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col justify-between col-span-2 bg-emerald-50/50 border-emerald-200">
-          <div className="text-xs font-semibold text-emerald-800 uppercase">Completed Today</div>
-          <div className="text-2xl font-bold text-emerald-700 mt-1">{metrics.completedTodayCount}</div>
-          <div className="text-[11px] text-emerald-600 mt-1">Rooms cleaned & verified</div>
+        <div className="bg-emerald-50/70 p-3 sm:p-3.5 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1 md:col-span-2 xl:col-span-1">
+          <div className="text-[11px] sm:text-xs font-semibold text-emerald-800 uppercase">Completed Today</div>
+          <div className="text-xl sm:text-2xl font-bold text-emerald-700 mt-1">{metrics.completedTodayCount}</div>
+          <div className="text-[10px] sm:text-[11px] text-emerald-600 mt-1 truncate">Cleaned & verified</div>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="border-b border-neutral-200 bg-white rounded-xl shadow-sm px-4 pt-2">
-        <div className="flex gap-6 overflow-x-auto">
+      <div className="border-b border-neutral-200 bg-white rounded-xl shadow-sm px-3 sm:px-4 pt-2 overflow-hidden">
+        <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-1 scrollbar-none whitespace-nowrap">
           <button
             onClick={() => setActiveTab('queue')}
-            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition ${
+            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition flex-shrink-0 ${
               activeTab === 'queue'
                 ? 'border-emerald-600 text-emerald-600'
                 : 'border-transparent text-neutral-500 hover:text-neutral-900'
@@ -708,7 +708,7 @@ export default function HousekeepingDashboard() {
 
           <button
             onClick={() => setActiveTab('inspection')}
-            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition ${
+            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition flex-shrink-0 ${
               activeTab === 'inspection'
                 ? 'border-purple-600 text-purple-600'
                 : 'border-transparent text-neutral-500 hover:text-neutral-900'
@@ -725,7 +725,7 @@ export default function HousekeepingDashboard() {
 
           <button
             onClick={() => setActiveTab('maintenance')}
-            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition ${
+            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition flex-shrink-0 ${
               activeTab === 'maintenance'
                 ? 'border-rose-600 text-rose-600'
                 : 'border-transparent text-neutral-500 hover:text-neutral-900'
@@ -742,7 +742,7 @@ export default function HousekeepingDashboard() {
 
           <button
             onClick={() => setActiveTab('rooms')}
-            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition ${
+            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition flex-shrink-0 ${
               activeTab === 'rooms'
                 ? 'border-emerald-600 text-emerald-600'
                 : 'border-transparent text-neutral-500 hover:text-neutral-900'
@@ -754,7 +754,7 @@ export default function HousekeepingDashboard() {
 
           <button
             onClick={() => setActiveTab('logs')}
-            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition ${
+            className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition flex-shrink-0 ${
               activeTab === 'logs'
                 ? 'border-emerald-600 text-emerald-600'
                 : 'border-transparent text-neutral-500 hover:text-neutral-900'
@@ -772,9 +772,9 @@ export default function HousekeepingDashboard() {
       {activeTab === 'queue' && (
         <div className="space-y-4">
           {/* Controls Bar */}
-          <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex items-center gap-3 flex-1 min-w-[280px]">
-              <div className="relative flex-1">
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-neutral-200 shadow-sm flex flex-col md:flex-row gap-3 sm:gap-4 items-stretch md:items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="relative flex-1 min-w-0">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="text"
@@ -785,30 +785,32 @@ export default function HousekeepingDashboard() {
                 />
               </div>
 
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-neutral-300 rounded-lg text-sm text-neutral-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="all">All Task Statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Paused">Paused</option>
-                <option value="Awaiting Inspection">Awaiting Inspection</option>
-                <option value="Completed">Completed</option>
-              </select>
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <select
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                  className="flex-1 sm:flex-none px-3 py-2 border border-neutral-300 rounded-lg text-sm text-neutral-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="all">All Task Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Paused">Paused</option>
+                  <option value="Awaiting Inspection">Awaiting Inspection</option>
+                  <option value="Completed">Completed</option>
+                </select>
 
-              <select
-                value={priorityFilter}
-                onChange={e => setPriorityFilter(e.target.value)}
-                className="px-3 py-2 border border-neutral-300 rounded-lg text-sm text-neutral-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="all">All Priorities</option>
-                <option value="Urgent">Urgent</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
-              </select>
+                <select
+                  value={priorityFilter}
+                  onChange={e => setPriorityFilter(e.target.value)}
+                  className="flex-1 sm:flex-none px-3 py-2 border border-neutral-300 rounded-lg text-sm text-neutral-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="Urgent">Urgent</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -1027,9 +1029,10 @@ export default function HousekeepingDashboard() {
       {/* --------------------------------------------------------------------- */}
       {activeTab === 'maintenance' && (
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm flex justify-between items-center">
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-neutral-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h3 className="font-bold text-neutral-900 flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-rose-600" /> Hotel Maintenance Tickets
+              <Wrench className="w-5 h-5 text-rose-600 flex-shrink-0" />
+              <span>Hotel Maintenance Tickets</span>
             </h3>
             <button
               onClick={() => {
@@ -1038,7 +1041,7 @@ export default function HousekeepingDashboard() {
                   setShowMaintenanceModal(true);
                 }
               }}
-              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium text-xs transition flex items-center gap-1"
+              className="w-full sm:w-auto justify-center px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium text-xs transition flex items-center gap-1 shadow-sm"
             >
               <Plus className="w-4 h-4" /> Report New Issue
             </button>
@@ -1200,8 +1203,8 @@ export default function HousekeepingDashboard() {
       {/* --------------------------------------------------------------------- */}
       {selectedTaskForAction && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-neutral-900">
+          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base sm:text-lg font-bold text-neutral-900">
               Task Action: Room {selectedTaskForAction.roomNumber}
             </h3>
 
@@ -1218,16 +1221,16 @@ export default function HousekeepingDashboard() {
                     className="w-full px-3 py-2 border rounded-lg text-sm"
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
                   <button
                     onClick={() => setSelectedTaskForAction(null)}
-                    className="px-4 py-2 border rounded-lg text-sm font-medium"
+                    className="w-full sm:w-auto px-4 py-2 border rounded-lg text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleStartCleaning(selectedTaskForAction)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold"
+                    className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold"
                   >
                     Start Cleaning Task
                   </button>
@@ -1257,16 +1260,16 @@ export default function HousekeepingDashboard() {
                     className="w-full px-3 py-2 border rounded-lg text-sm"
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
                   <button
                     onClick={() => setSelectedTaskForAction(null)}
-                    className="px-4 py-2 border rounded-lg text-sm font-medium"
+                    className="w-full sm:w-auto px-4 py-2 border rounded-lg text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => handleMarkCleaned(selectedTaskForAction)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold"
+                    className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold"
                   >
                     Submit for Inspection
                   </button>
@@ -1282,9 +1285,9 @@ export default function HousekeepingDashboard() {
       {/* --------------------------------------------------------------------- */}
       {showInspectionModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2 text-rose-600">
-              <RotateCcw className="w-5 h-5" /> Reject Room {showInspectionModal.roomNumber}
+          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base sm:text-lg font-bold text-neutral-900 flex items-center gap-2 text-rose-600">
+              <RotateCcw className="w-5 h-5 flex-shrink-0" /> Reject Room {showInspectionModal.roomNumber}
             </h3>
             <p className="text-xs text-neutral-600">Provide inspection feedback for the housekeeping team explaining why this room requires recleaning.</p>
 
@@ -1295,17 +1298,17 @@ export default function HousekeepingDashboard() {
               className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm h-24 focus:ring-2 focus:ring-rose-500"
             />
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowInspectionModal(null)}
-                className="px-4 py-2 border rounded-lg text-sm font-medium"
+                className="w-full sm:w-auto px-4 py-2 border rounded-lg text-sm font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleRejectInspection(showInspectionModal)}
                 disabled={inspectionActionLoading}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-bold"
+                className="w-full sm:w-auto px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-bold"
               >
                 Return for Recleaning
               </button>
@@ -1319,9 +1322,9 @@ export default function HousekeepingDashboard() {
       {/* --------------------------------------------------------------------- */}
       {showMaintenanceModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-amber-600" /> Report Maintenance Issue
+          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base sm:text-lg font-bold text-neutral-900 flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-amber-600 flex-shrink-0" /> Report Maintenance Issue
             </h3>
 
             <form onSubmit={handleCreateMaintenanceReport} className="space-y-3">
@@ -1397,18 +1400,18 @@ export default function HousekeepingDashboard() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowMaintenanceModal(false)}
-                  className="px-4 py-2 border rounded-lg text-sm font-medium"
+                  className="w-full sm:w-auto px-4 py-2 border rounded-lg text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={maintSubmitting}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-bold"
+                  className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-bold"
                 >
                   Submit Ticket
                 </button>

@@ -498,35 +498,35 @@ export default function AdminMenu() {
   }, [categories, items]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+    <div className="max-w-7xl mx-auto space-y-6 pb-12 min-w-0">
       {/* Top Banner & Action Header */}
-      <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-neutral-900 text-white rounded-xl shadow-xs">
-            <UtensilsCrossed className="w-6 h-6" />
+          <div className="p-2.5 sm:p-3 bg-neutral-900 text-white rounded-xl shadow-xs flex-shrink-0">
+            <UtensilsCrossed className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Restaurant Menu Management</h1>
-            <p className="text-sm text-neutral-500">
+            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Restaurant Menu Management</h1>
+            <p className="text-xs sm:text-sm text-neutral-500">
               Manage food & beverage catalog, categories, pricing (ETB), and station routing
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto">
           <button
             onClick={handleOpenAddCategory}
-            className="flex items-center gap-2 px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-xl text-sm font-bold transition-colors cursor-pointer"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-xl text-sm font-bold transition-colors cursor-pointer"
           >
             <FolderPlus className="w-4 h-4 text-neutral-600" />
-            + Add Category
+            <span>+ Add Category</span>
           </button>
           <button 
             onClick={handleOpenAddItem}
-            className="flex items-center gap-2 px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-bold shadow-xs transition-colors cursor-pointer"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-bold shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            + Add Menu Item
+            <span>+ Add Menu Item</span>
           </button>
         </div>
       </div>
@@ -547,10 +547,10 @@ export default function AdminMenu() {
       )}
 
       {/* Section Tabs */}
-      <div className="flex border-b border-neutral-200">
+      <div className="flex border-b border-neutral-200 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('items')}
-          className={`pb-3 px-6 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+          className={`pb-3 px-4 sm:px-6 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0 ${
             activeTab === 'items'
               ? 'border-neutral-900 text-neutral-900'
               : 'border-transparent text-neutral-400 hover:text-neutral-600'
@@ -561,7 +561,7 @@ export default function AdminMenu() {
         </button>
         <button
           onClick={() => setActiveTab('categories')}
-          className={`pb-3 px-6 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+          className={`pb-3 px-4 sm:px-6 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0 ${
             activeTab === 'categories'
               ? 'border-neutral-900 text-neutral-900'
               : 'border-transparent text-neutral-400 hover:text-neutral-600'
@@ -578,7 +578,7 @@ export default function AdminMenu() {
       {activeTab === 'items' && (
         <div className="space-y-6">
           {/* Filter Toolbar */}
-          <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-xs space-y-4">
+          <div className="bg-white p-3 sm:p-4 rounded-2xl border border-neutral-200 shadow-xs space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Search */}
               <div className="relative">
@@ -641,7 +641,7 @@ export default function AdminMenu() {
             </div>
 
             {/* Category Quick Chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none min-w-0">
               <span className="text-neutral-400 font-bold uppercase tracking-wider text-[10px] mr-1 shrink-0">Quick Filter:</span>
               <button
                 onClick={() => setFilterCategory('All')}
@@ -908,7 +908,7 @@ export default function AdminMenu() {
       {/* ========================================================================= */}
       {editingItem && (
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto overscroll-contain">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-2xl w-full p-6 space-y-6 shadow-2xl my-8 overscroll-contain">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-2xl w-full p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-2xl my-4 sm:my-8 overscroll-contain max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
                 <UtensilsCrossed className="w-5 h-5 text-neutral-900" />
@@ -1179,7 +1179,7 @@ export default function AdminMenu() {
       {/* ========================================================================= */}
       {isCategoryModalOpen && (
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto overscroll-contain">
-          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-6 space-y-5 shadow-2xl overscroll-contain">
+          <div className="bg-white rounded-2xl border border-neutral-200 max-w-md w-full p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl overscroll-contain max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
                 <FolderPlus className="w-5 h-5 text-neutral-900" />

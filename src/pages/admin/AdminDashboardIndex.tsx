@@ -376,9 +376,9 @@ export default function AdminDashboardIndex() {
   }).format(new Date());
 
   return (
-    <div className="space-y-6 md:space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6 md:space-y-8 max-w-7xl mx-auto min-w-0">
       {/* Welcome Banner */}
-      <div className="bg-neutral-900 text-white rounded-2xl p-5 sm:p-7 shadow-md relative overflow-hidden">
+      <div className="bg-neutral-900 text-white rounded-2xl p-4 sm:p-6 lg:p-7 shadow-md relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -578,9 +578,9 @@ export default function AdminDashboardIndex() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            <div className="p-2.5 bg-neutral-50 rounded-xl border border-neutral-200 flex items-center gap-2.5">
-              <Building2 className="w-4 h-4 text-neutral-600" />
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs w-full md:w-auto">
+            <div className="p-2 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-200 flex flex-wrap items-center gap-1.5 sm:gap-2.5 w-full sm:w-auto">
+              <Building2 className="w-4 h-4 text-neutral-600 flex-shrink-0" />
               <span className="font-bold text-neutral-700">Rooms:</span>
               <span className="text-emerald-700 font-black">{availableRoomsCount} Free</span>
               <span className="text-neutral-300">•</span>
@@ -589,8 +589,8 @@ export default function AdminDashboardIndex() {
               <span className="text-amber-700 font-black">{reservedRoomsCount} Reserved</span>
             </div>
 
-            <div className="p-2.5 bg-neutral-50 rounded-xl border border-neutral-200 flex items-center gap-2.5">
-              <Users className="w-4 h-4 text-purple-600" />
+            <div className="p-2 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-200 flex flex-wrap items-center gap-1.5 sm:gap-2.5 w-full sm:w-auto">
+              <Users className="w-4 h-4 text-purple-600 flex-shrink-0" />
               <span className="font-bold text-neutral-700">Halls:</span>
               <span className="text-emerald-700 font-black">{hallsSummary.available} Free</span>
               <span className="text-neutral-300">•</span>
@@ -599,16 +599,16 @@ export default function AdminDashboardIndex() {
               <span className="text-amber-700 font-black">{hallsSummary.reserved} Reserved</span>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
               <Link
                 to="/admin/room-inventory"
-                className="px-3 py-2 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-800 transition"
+                className="flex-1 sm:flex-none text-center px-3 py-2 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-800 transition"
               >
                 Room Inventory
               </Link>
               <Link
                 to="/admin/halls"
-                className="px-3 py-2 bg-neutral-100 text-neutral-800 rounded-xl text-xs font-bold hover:bg-neutral-200 transition"
+                className="flex-1 sm:flex-none text-center px-3 py-2 bg-neutral-100 text-neutral-800 rounded-xl text-xs font-bold hover:bg-neutral-200 transition"
               >
                 Hall Schedule
               </Link>

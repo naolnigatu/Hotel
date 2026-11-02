@@ -136,9 +136,12 @@ export default function AdminCmsHome() {
   }
 
   return (
-    <div className="max-w-4xl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-neutral-900">Homepage Content</h1>
+    <div className="max-w-4xl mx-auto space-y-6 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Homepage Content</h1>
+          <p className="text-xs sm:text-sm text-neutral-500">Configure hero, highlights, and featured sections</p>
+        </div>
       </div>
 
       {message && (
@@ -147,10 +150,10 @@ export default function AdminCmsHome() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-8">
+      <form onSubmit={handleSave} className="space-y-6 sm:space-y-8">
         
         {/* Hero Section */}
-        <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm">
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-neutral-200 shadow-sm">
           <h2 className="text-lg font-bold text-neutral-900 mb-4">Hero Section</h2>
           
           <div className="space-y-4">
@@ -488,7 +491,7 @@ export default function AdminCmsHome() {
           <button 
             type="submit" 
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white rounded-lg font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 shadow-lg"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white rounded-lg font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 shadow-lg cursor-pointer"
           >
             {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             {saving ? 'Saving...' : 'Save All Changes'}

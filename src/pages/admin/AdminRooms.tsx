@@ -74,35 +74,38 @@ export default function AdminRooms() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-neutral-900">Room Categories</h1>
+    <div className="max-w-6xl mx-auto min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Room Categories</h1>
+          <p className="text-xs sm:text-sm text-neutral-500 mt-0.5">Manage room types, pricing, amenities, and gallery images.</p>
+        </div>
         <button 
           onClick={() => setEditingCat({ id: '', name: '', description: '', basePrice: 0, amenities: [], imageUrls: [] })}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors"
+          className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2.5 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors shadow-xs"
         >
           <Plus className="w-4 h-4" /> Add Category
         </button>
       </div>
 
       {editingCat ? (
-        <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm mb-8">
+        <div className="bg-white p-4 sm:p-6 rounded-xl border border-neutral-200 shadow-sm mb-6 sm:mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-neutral-900">{editingCat.id ? 'Edit Category' : 'New Category'}</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-neutral-900">{editingCat.id ? 'Edit Category' : 'New Category'}</h2>
             <button onClick={() => setEditingCat(null)} className="p-2 text-neutral-500 hover:bg-neutral-100 rounded-full">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <form onSubmit={handleSave} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Name</label>
                 <input 
                   type="text" required
                   value={editingCat.name}
                   onChange={e => setEditingCat({...editingCat, name: e.target.value})}
-                  className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500" 
+                  className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500 text-sm" 
                 />
               </div>
               <div>
@@ -111,7 +114,7 @@ export default function AdminRooms() {
                   type="number" required min="0" step="0.01"
                   value={editingCat.basePrice || ''}
                   onChange={e => setEditingCat({...editingCat, basePrice: parseFloat(e.target.value) || 0})}
-                  className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500" 
+                  className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500 text-sm" 
                 />
               </div>
             </div>
@@ -122,7 +125,7 @@ export default function AdminRooms() {
                 required rows={3}
                 value={editingCat.description}
                 onChange={e => setEditingCat({...editingCat, description: e.target.value})}
-                className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500" 
+                className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500 text-sm" 
               />
             </div>
 
@@ -133,15 +136,15 @@ export default function AdminRooms() {
                 value={editingCat.amenities.join(', ')}
                 onChange={e => setEditingCat({...editingCat, amenities: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
                 placeholder="WiFi, AC, TV, Mini-bar"
-                className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500" 
+                className="w-full border-neutral-300 rounded-md shadow-sm p-2 border focus:ring-neutral-500 focus:border-neutral-500 text-sm" 
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-2">Images</label>
-              <div className="flex gap-4 overflow-x-auto pb-4">
+              <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-none">
                 {editingCat.imageUrls.map((url, i) => (
-                  <div key={i} className="relative shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-neutral-200">
+                  <div key={i} className="relative shrink-0 w-36 sm:w-48 h-28 sm:h-32 rounded-lg overflow-hidden border border-neutral-200">
                     <img src={url} alt="Room" className="w-full h-full object-cover" />
                     <button 
                       type="button"
@@ -152,7 +155,7 @@ export default function AdminRooms() {
                     </button>
                   </div>
                 ))}
-                <div className="shrink-0 w-48 h-32">
+                <div className="shrink-0 w-36 sm:w-48 h-28 sm:h-32">
                   <MediaManager 
                     onImageSelected={(url) => setEditingCat({...editingCat, imageUrls: [...editingCat.imageUrls, url]})}
                     folder="rooms"
@@ -164,7 +167,7 @@ export default function AdminRooms() {
             <div className="flex justify-end pt-4">
               <button 
                 type="submit" disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white rounded-lg font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70"
+                className="w-full sm:w-auto justify-center flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70"
               >
                 {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 {saving ? 'Saving...' : 'Save Category'}

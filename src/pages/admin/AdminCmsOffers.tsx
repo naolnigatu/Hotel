@@ -74,28 +74,31 @@ export default function AdminCmsOffers() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-neutral-900">Special Offers</h1>
+    <div className="max-w-6xl mx-auto space-y-6 min-w-0 pb-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Special Offers</h1>
+          <p className="text-xs sm:text-sm text-neutral-500">Manage seasonal packages, discounts, and holiday promotions</p>
+        </div>
         <button 
           onClick={() => setEditingOffer({ id: '', title: '', description: '', startDate: '', endDate: '', bannerUrl: '', active: true })}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors"
+          className="w-full sm:w-auto justify-center flex items-center gap-2 px-4 py-2.5 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 transition-colors font-medium text-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Add Offer
         </button>
       </div>
 
       {editingOffer ? (
-        <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm mb-8">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200 shadow-sm mb-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-neutral-900">{editingOffer.id ? 'Edit Offer' : 'New Offer'}</h2>
-            <button onClick={() => setEditingOffer(null)} className="p-2 text-neutral-500 hover:bg-neutral-100 rounded-full">
+            <h2 className="text-lg sm:text-xl font-bold text-neutral-900">{editingOffer.id ? 'Edit Offer' : 'New Offer'}</h2>
+            <button onClick={() => setEditingOffer(null)} className="p-2 text-neutral-500 hover:bg-neutral-100 rounded-full cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <form onSubmit={handleSave} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Title</label>
                 <input 
@@ -160,7 +163,7 @@ export default function AdminCmsOffers() {
             <div className="flex justify-end pt-4">
               <button 
                 type="submit" disabled={saving}
-                className="flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white rounded-lg font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70"
+                className="w-full sm:w-auto justify-center flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors disabled:opacity-70 cursor-pointer"
               >
                 {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 {saving ? 'Saving...' : 'Save Offer'}
@@ -170,7 +173,7 @@ export default function AdminCmsOffers() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {offers.map(offer => (
           <div key={offer.id} className="bg-white border border-neutral-200 rounded-xl overflow-hidden flex flex-col">
             <div className="h-40 bg-neutral-100 relative">

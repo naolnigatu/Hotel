@@ -284,10 +284,10 @@ export default function AdminLayout() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden pb-16 md:pb-0 relative">
+      <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden pb-16 md:pb-0 relative min-w-0">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-4 sm:px-6 md:px-8 shrink-0 z-30 shadow-2xs">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-3 sm:px-6 md:px-8 shrink-0 z-30 shadow-2xs">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             {/* Back Button */}
             <button
               onClick={() => {
@@ -297,7 +297,7 @@ export default function AdminLayout() {
                   navigate(-1);
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 active:scale-95 transition-all shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 active:scale-95 transition-all shadow-2xs cursor-pointer shrink-0"
               title={location.pathname === '/admin' ? 'Back to Guest Site' : 'Back to Previous Page'}
               aria-label="Go Back"
             >
@@ -308,18 +308,18 @@ export default function AdminLayout() {
             {/* Mobile Menu Trigger */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="p-2 rounded-lg text-neutral-700 hover:bg-neutral-100 md:hidden cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-lg text-neutral-700 hover:bg-neutral-100 md:hidden cursor-pointer shrink-0"
               aria-label="Open staff navigation menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            <h2 className="text-sm sm:text-lg md:text-xl font-bold text-neutral-900 truncate max-w-[150px] sm:max-w-xs md:max-w-md">
+            <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-neutral-900 truncate min-w-0">
               {currentRoute?.name || (hotelName ? `${hotelName} Staff Portal` : 'Staff Portal')}
             </h2>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
              <Link 
                to="/" 
                className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition"
@@ -333,7 +333,7 @@ export default function AdminLayout() {
              <div className="h-6 w-px bg-neutral-200 hidden sm:block" />
              
              <div className="flex items-center gap-2">
-               <div className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+               <div className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-sm shadow-2xs shrink-0">
                  {userData.name.charAt(0).toUpperCase()}
                </div>
                <div className="hidden sm:block text-left">
@@ -345,12 +345,12 @@ export default function AdminLayout() {
         </header>
 
         {/* Content Area */}
-        <div id="admin-main-scroll-container" className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-neutral-50 p-4 sm:p-6 md:p-8">
+        <div id="admin-main-scroll-container" className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-neutral-50 p-3 sm:p-5 md:p-8 min-w-0">
           <Outlet />
         </div>
 
         {/* Mobile Sticky Bottom Navigation Bar */}
-        <nav aria-label="Staff Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-neutral-200 flex items-center justify-around px-2 z-40 shadow-lg">
+        <nav aria-label="Staff Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-neutral-200 flex items-center justify-around px-2 z-40 shadow-lg">
           <NavLink
             to="/admin"
             end

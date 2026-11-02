@@ -261,18 +261,18 @@ export default function AdminAnalytics() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 min-w-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Reports & Analytics</h1>
-          <p className="text-sm text-neutral-500">Track hotel and restaurant performance.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Reports & Analytics</h1>
+          <p className="text-xs sm:text-sm text-neutral-500">Track hotel and restaurant performance.</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
           <select 
             value={rangeOption}
             onChange={(e) => setRangeOption(e.target.value as DateRangeOption)}
-            className="px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white"
+            className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white"
           >
             <option value="today">Today</option>
             <option value="yesterday">Yesterday</option>
@@ -284,26 +284,26 @@ export default function AdminAnalytics() {
           </select>
 
           {rangeOption === 'custom' && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
               <input 
                 type="date" 
                 value={customStart}
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="px-3 py-2 border border-neutral-300 rounded-lg text-sm"
+                className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded-lg text-sm"
               />
-              <span className="text-neutral-500">-</span>
+              <span className="text-neutral-500 hidden sm:inline">-</span>
               <input 
                 type="date" 
                 value={customEnd}
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="px-3 py-2 border border-neutral-300 rounded-lg text-sm"
+                className="w-full sm:w-auto px-3 py-2 border border-neutral-300 rounded-lg text-sm"
               />
             </div>
           )}
           
           <button 
             onClick={handleExportCSV}
-            className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-800 transition"
+            className="w-full sm:w-auto justify-center flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-800 transition"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -318,7 +318,7 @@ export default function AdminAnalytics() {
       ) : (
         <>
           {/* Tabs */}
-          <div className="flex border-b border-neutral-200 overflow-x-auto hide-scrollbar">
+          <div className="flex border-b border-neutral-200 overflow-x-auto scrollbar-none pb-0.5">
             <button
               onClick={() => setActiveTab('overview')}
               className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${

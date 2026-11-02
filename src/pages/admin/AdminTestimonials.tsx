@@ -80,17 +80,17 @@ export default function AdminTestimonials() {
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Manage Testimonials</h1>
-          <p className="text-sm text-neutral-500 mt-1">Review, approve, and manage guest testimonials.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-neutral-900">Manage Testimonials</h1>
+          <p className="text-xs sm:text-sm text-neutral-500 mt-1">Review, approve, and manage guest testimonials.</p>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm min-w-[600px] sm:min-w-0">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
                 <th className="px-6 py-4 font-bold text-neutral-700">Guest</th>
