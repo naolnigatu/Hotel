@@ -22,6 +22,7 @@ import Restaurant from './pages/Restaurant';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import MyActivity from './pages/MyActivity';
 import NotFound from './pages/NotFound';
@@ -87,6 +88,7 @@ export default function App() {
               <Route path="privacy" element={<PrivacyPolicy />} />
               <Route path="terms" element={<TermsConditions />} />
               <Route path="login" element={<Login />} />
+              <Route path="reset-password" element={<ResetPassword />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="my-activity" element={<MyActivity />} />
               <Route path="*" element={<NotFound />} />

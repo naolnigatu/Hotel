@@ -43,6 +43,13 @@ export default function Login() {
   const [googleModalError, setGoogleModalError] = useState('');
   const [showOAuthGuide, setShowOAuthGuide] = useState(false);
 
+  // Forgot Password / Resend Password Reset Modal state
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState('');
+
   // Form states
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -127,6 +134,30 @@ export default function Login() {
       return;
     }
     handleSelectGoogleAccount(customGoogleEmail, customGoogleName);
+  };
+
+  const handleSendPasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      setResetError('Please enter your account email.');
+      return;
+    }
+
+    try {
+      setResetLoading(true);
+      setResetError('');
+      const { sendPasswordResetEmail } = await import('@/lib/resendService');
+      const result = await sendPasswordResetEmail(resetEmail);
+      if (!result.success && result.error) {
+        setResetError(result.error);
+      } else {
+        setResetSuccess(true);
+      }
+    } catch (err: any) {
+      setResetError(err.message || 'Failed to dispatch reset link via Resend.');
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -227,7 +258,23 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-neutral-700 uppercase mb-1">Password</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-neutral-700 uppercase">Password</label>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEmail(email);
+                    setShowResetModal(true);
+                    setResetSuccess(false);
+                    setResetError('');
+                  }}
+                  className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors font-medium"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
             <div className="relative">
               <Lock className="w-5 h-5 text-neutral-400 absolute left-3 top-2.5" />
               <input
@@ -497,6 +544,142 @@ export default function Login() {
                   setGoogleModalError('');
                 }}
                 disabled={googleLoading}
+                className="font-bold text-neutral-700 hover:text-neutral-900"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resend Password Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl border border-neutral-100 max-w-md w-full overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-6 pb-4 border-b border-neutral-100 relative">
+              <button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetError('');
+                  setResetSuccess(false);
+                }}
+                disabled={resetLoading}
+                className="absolute top-4 right-4 p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-neutral-900 text-white shadow-sm flex items-center justify-center">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-neutral-900">Reset Your Password</h3>
+                  <p className="text-xs text-neutral-500">Powered by Resend Mail Services</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4">
+              {resetError && (
+                <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
+                  <span>{resetError}</span>
+                </div>
+              )}
+
+              {resetSuccess ? (
+                <div className="space-y-4 text-center py-2">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-neutral-900">Reset Instructions Dispatched!</h4>
+                    <p className="text-xs text-neutral-600 mt-1.5 leading-relaxed">
+                      We've dispatched a secure password recovery email to <strong>{resetEmail}</strong> via Resend.
+                      Please inspect your inbox or spam folder.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/reset-password')}
+                      className="w-full flex items-center justify-center gap-2 bg-neutral-900 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-neutral-800 transition-colors shadow-sm"
+                    >
+                      Enter New Password Directly
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setResetSuccess(false)}
+                      className="text-xs text-neutral-500 hover:text-neutral-800 underline"
+                    >
+                      Send to another address
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSendPasswordReset} className="space-y-4">
+                  <p className="text-xs text-neutral-600 leading-relaxed">
+                    Provide the email address registered with your Woliso Hotel account. We will send you a secure one-click link to choose a new password.
+                  </p>
+                  <div>
+                    <label className="block text-xs font-bold text-neutral-700 uppercase mb-1">
+                      Account Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-5 h-5 text-neutral-400 absolute left-3 top-2.5" />
+                      <input
+                        type="email"
+                        placeholder="you@example.com"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        className="w-full pl-10 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-neutral-900 focus:outline-none transition-all"
+                        disabled={resetLoading}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={resetLoading || !resetEmail}
+                    className="w-full flex items-center justify-center gap-2 bg-neutral-900 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50 shadow-sm"
+                  >
+                    {resetLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Dispatching via Resend...
+                      </>
+                    ) : (
+                      <>
+                        Send Reset Link via Resend
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
+              <span className="flex items-center gap-1.5 text-[11px]">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                Resend Mail Protection
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetError('');
+                  setResetSuccess(false);
+                }}
+                disabled={resetLoading}
                 className="font-bold text-neutral-700 hover:text-neutral-900"
               >
                 Close
