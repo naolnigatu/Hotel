@@ -2,7 +2,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as AuthUser, onAuthStateChanged, doc, getDoc, setDoc, auth, db } from '@/lib/supabaseAdapter';
 import { User as UserProfile } from '../types';
 
-const ADMIN_EMAIL = 'naolnigatu2025@gmail.com';
+const ADMIN_EMAILS = [
+  'naolnigatu2025@gmail.com',
+  'admin@wolisohotel.com',
+];
 
 interface AuthContextType {
   currentUser: AuthUser | null;
@@ -28,15 +31,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(user);
       
       if (user) {
-        const isAdminEmail = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() && user.emailVerified;
+        const userEmail = user.email?.toLowerCase() || '';
+        const isAdminEmail = ADMIN_EMAILS.includes(userEmail) && user.emailVerified;
+        const isExplicitAdmin = isAdminEmail || (user as any).user_metadata?.role === 'admin' || (user as any).app_metadata?.role === 'admin';
         const userRef = doc(db, 'users', user.uid);
         
         try {
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
             let data = userDoc.data() as UserProfile;
-            // Enforce admin role in database for configured admin email
-            if (isAdminEmail && data.role !== 'admin') {
+            // Enforce admin role in database for configured admin email / metadata
+            if (isExplicitAdmin && data.role !== 'admin') {
               await setDoc(userRef, { role: 'admin' }, { merge: true });
               data = { ...data, role: 'admin' };
             }
@@ -46,8 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const newUser: UserProfile = {
               uid: user.uid,
               email: user.email || '',
-              name: user.displayName || (isAdminEmail ? 'Naol Nigatu' : 'Guest'),
-              role: isAdminEmail ? 'admin' : 'guest',
+              name: user.displayName || (userEmail === 'admin@wolisohotel.com' ? 'System Admin' : userEmail === 'naolnigatu2025@gmail.com' ? 'Naol Nigatu' : 'Guest'),
+              role: isExplicitAdmin ? 'admin' : ((user as any).user_metadata?.role || 'guest'),
               createdAt: Date.now(),
             };
             await setDoc(userRef, newUser);
@@ -59,8 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserData({
             uid: user.uid,
             email: user.email || '',
-            name: user.displayName || 'User',
-            role: isAdminEmail ? 'admin' : 'guest',
+            name: user.displayName || (isExplicitAdmin ? (userEmail === 'admin@wolisohotel.com' ? 'System Admin' : 'Naol Nigatu') : 'User'),
+            role: isExplicitAdmin ? 'admin' : ((user as any).user_metadata?.role || 'guest'),
             createdAt: Date.now(),
           });
         }

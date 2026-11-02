@@ -30,9 +30,9 @@ export function mapObjectToPostgres(obj: any): any {
 
   const result: Record<string, any> = {};
   for (const [key, val] of Object.entries(obj)) {
-    if (val && typeof val === 'object' && val._method === 'arrayUnion') {
-      result[toSnakeCase(key)] = val.elements;
-    } else if (val && typeof val === 'object' && val._method === 'arrayRemove') {
+    if (val && typeof val === 'object' && (val as any)._method === 'arrayUnion') {
+      result[toSnakeCase(key)] = (val as any).elements;
+    } else if (val && typeof val === 'object' && (val as any)._method === 'arrayRemove') {
       result[toSnakeCase(key)] = [];
     } else {
       result[toSnakeCase(key)] = val;
@@ -420,20 +420,22 @@ export interface User {
   displayName: string | null;
   emailVerified: boolean;
   phoneNumber?: string | null;
+  isAnonymous?: boolean;
+  tenantId?: string | null;
+  providerData?: any[];
 }
-
-export type User = User;
 
 function mapSupabaseUser(user: any): User | null {
   if (!user) return null;
+  const isDefaultAdmin = user.email === 'naolnigatu2025@gmail.com' || user.email === 'admin@wolisohotel.com';
   return {
     uid: user.id,
     email: user.email || null,
     displayName:
       user.user_metadata?.name ||
       user.user_metadata?.full_name ||
-      (user.email === 'naolnigatu2025@gmail.com' ? 'Naol Nigatu' : 'Guest'),
-    emailVerified: Boolean(user.email_confirmed_at || user.confirmed_at || user.email === 'naolnigatu2025@gmail.com'),
+      (user.email === 'naolnigatu2025@gmail.com' ? 'Naol Nigatu' : user.email === 'admin@wolisohotel.com' ? 'System Admin' : 'Guest'),
+    emailVerified: Boolean(user.email_confirmed_at || user.confirmed_at || isDefaultAdmin),
     phoneNumber: user.phone || null,
   };
 }
@@ -499,8 +501,16 @@ export async function signInWithEmailAndPassword(_auth: any, email: string, pass
 
 export async function createUserWithEmailAndPassword(_auth: any, email: string, pass: string) {
   // Use a non-persisting client so admin user session is never disturbed when creating staff!
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54331';
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+  const supabaseUrl = 
+    import.meta.env.VITE_SUPABASE_URL || 
+    import.meta.env.SUPABASE_URL || 
+    'http://127.0.0.1:54331';
+  const supabaseAnonKey = 
+    import.meta.env.VITE_SUPABASE_ANON_KEY || 
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 
+    import.meta.env.SUPABASE_PUBLISHABLE_KEY || 
+    import.meta.env.SUPABASE_ANON_KEY || 
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
   
   const tempClient = (await import('@supabase/supabase-js')).createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
@@ -560,10 +570,14 @@ export function ref(_storage: any, fullPath: string): StorageRef {
   return { bucket, path };
 }
 
-export async function uploadBytes(storageRef: StorageRef, file: File | Blob) {
+export async function uploadBytes(storageRef: StorageRef, file: File | Blob, options?: { contentType?: string }) {
+  const uploadOptions: Record<string, any> = { upsert: true };
+  if (options?.contentType) {
+    uploadOptions.contentType = options.contentType;
+  }
   const { data, error } = await supabase.storage
     .from(storageRef.bucket)
-    .upload(storageRef.path, file, { upsert: true });
+    .upload(storageRef.path, file, uploadOptions);
 
   if (error) {
     console.error(`[Supabase Storage upload error in ${storageRef.bucket}]:`, error);
