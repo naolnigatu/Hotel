@@ -1,0 +1,13 @@
+services:
+  hotel-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: woliso_hotel_web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3001}:80"
+    environment:
+      - NODE_ENV=production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

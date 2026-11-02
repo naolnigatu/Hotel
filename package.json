@@ -4,12 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev": "vite --port=3001 --host=0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --port=3001",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "create:admin": "node scripts/create-admin.cjs",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio"
