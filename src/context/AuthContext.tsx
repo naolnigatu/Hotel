@@ -2,11 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as AuthUser, onAuthStateChanged, doc, getDoc, setDoc, auth, db } from '@/lib/supabaseAdapter';
 import { User as UserProfile } from '../types';
 
-const ADMIN_EMAILS = [
-  'naolnigatu2025@gmail.com',
-  'admin@wolisohotel.com',
-];
-
 interface AuthContextType {
   currentUser: AuthUser | null;
   userData: UserProfile | null;
@@ -31,28 +26,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(user);
       
       if (user) {
-        const userEmail = user.email?.toLowerCase() || '';
-        const isAdminEmail = ADMIN_EMAILS.includes(userEmail) && user.emailVerified;
-        const isExplicitAdmin = isAdminEmail || (user as any).user_metadata?.role === 'admin' || (user as any).app_metadata?.role === 'admin';
         const userRef = doc(db, 'users', user.uid);
-        
+        const metadata = (user as any).user_metadata || {};
+        const verifiedName = user.displayName || metadata.full_name || metadata.name || 'Guest';
+        const verifiedAvatar = metadata.avatar_url || metadata.picture || undefined;
+
         try {
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
-            let data = userDoc.data() as UserProfile;
-            // Enforce admin role in database for configured admin email / metadata
-            if (isExplicitAdmin && data.role !== 'admin') {
-              await setDoc(userRef, { role: 'admin' }, { merge: true });
-              data = { ...data, role: 'admin' };
+            const data = userDoc.data() as UserProfile;
+            // Keep verified name and avatar up to date with Google account
+            if (verifiedAvatar && !data.avatar) {
+              await setDoc(userRef, { avatar: verifiedAvatar }, { merge: true });
+              data.avatar = verifiedAvatar;
             }
             setUserData(data);
           } else {
-            // Auto-provision user profile document in database
+            // New user registration: apply RBAC default role 'guest'
+            // Google Sign-In strictly defaults to 'guest' and never automatically grants administrative privileges
             const newUser: UserProfile = {
               uid: user.uid,
               email: user.email || '',
-              name: user.displayName || (userEmail === 'admin@wolisohotel.com' ? 'System Admin' : userEmail === 'naolnigatu2025@gmail.com' ? 'Naol Nigatu' : 'Guest'),
-              role: isExplicitAdmin ? 'admin' : ((user as any).user_metadata?.role || 'guest'),
+              name: verifiedName,
+              role: (metadata.role as any) === 'admin' ? 'admin' : 'guest',
+              avatar: verifiedAvatar,
               createdAt: Date.now(),
             };
             await setDoc(userRef, newUser);
@@ -60,12 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (err) {
           console.error("Error fetching or initializing user profile in database:", err);
-          // Fallback in memory if database fails due to network/rules before record exists
           setUserData({
             uid: user.uid,
             email: user.email || '',
-            name: user.displayName || (isExplicitAdmin ? (userEmail === 'admin@wolisohotel.com' ? 'System Admin' : 'Naol Nigatu') : 'User'),
-            role: isExplicitAdmin ? 'admin' : ((user as any).user_metadata?.role || 'guest'),
+            name: verifiedName,
+            role: 'guest',
+            avatar: verifiedAvatar,
             createdAt: Date.now(),
           });
         }

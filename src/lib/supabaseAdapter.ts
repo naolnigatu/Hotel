@@ -502,48 +502,6 @@ export async function signInWithRedirect(_auth: any, _provider?: any) {
   return signInWithPopup(_auth, _provider);
 }
 
-export async function signInWithGoogleAccount(email: string, name?: string) {
-  const normalizedEmail = email.trim().toLowerCase();
-
-  // If it's the pre-configured admin account
-  if (normalizedEmail === 'naolnigatu2025@gmail.com') {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: 'naolnigatu2025@gmail.com',
-      password: 'AdminPassword123!',
-    });
-    if (error) throw error;
-    return { user: mapSupabaseUser(data.user) };
-  }
-
-  // Try signing in if the user already exists with standard Google OAuth guest password
-  const defaultGuestPassword = 'GoogleOAuthGuestPassword123!';
-  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-    email: normalizedEmail,
-    password: defaultGuestPassword,
-  });
-
-  if (!signInError && signInData?.user) {
-    return { user: mapSupabaseUser(signInData.user) };
-  }
-
-  // If user doesn't exist yet, sign up as a new Google user
-  const displayName = name || normalizedEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email: normalizedEmail,
-    password: defaultGuestPassword,
-    options: {
-      data: {
-        name: displayName,
-        full_name: displayName,
-        role: 'guest',
-      },
-    },
-  });
-
-  if (signUpError) throw signUpError;
-  return { user: mapSupabaseUser(signUpData.user) };
-}
-
 export async function signInWithEmailAndPassword(_auth: any, email: string, pass: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
