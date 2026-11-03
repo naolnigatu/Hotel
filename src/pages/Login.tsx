@@ -18,7 +18,9 @@ import {
   EyeOff, 
   ShieldCheck, 
   X, 
-  Loader2
+  Loader2,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function Login() {

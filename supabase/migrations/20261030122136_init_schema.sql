@@ -36,7 +36,7 @@ as $$
     (select role from public.profiles where id = auth.uid()),
     (auth.jwt() -> 'app_metadata' ->> 'role'),
     case 
-      when (auth.jwt() ->> 'email') = 'naolnigatu2025@gmail.com' then 'admin'
+      when (auth.jwt() ->> 'email') in ('admin@wolisohotel.com', 'naolnigatu2025@gmail.com') then 'admin'
       else 'guest'
     end
   );
@@ -50,7 +50,7 @@ set search_path = public
 stable
 as $$
   select public.get_current_user_role() = 'admin' 
-    or (auth.jwt() ->> 'email') = 'naolnigatu2025@gmail.com';
+    or (auth.jwt() ->> 'email') in ('admin@wolisohotel.com', 'naolnigatu2025@gmail.com');
 $$;
 
 create or replace function public.is_staff()
@@ -74,7 +74,7 @@ as $$
 declare
   assigned_role text := 'guest';
 begin
-  if new.email = 'naolnigatu2025@gmail.com' then
+  if new.email in ('admin@wolisohotel.com', 'naolnigatu2025@gmail.com') then
     assigned_role := 'admin';
   elsif (new.raw_app_meta_data->>'role') is not null then
     assigned_role := new.raw_app_meta_data->>'role';

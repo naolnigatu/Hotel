@@ -129,7 +129,13 @@ npm run prisma:generate
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3001](http://localhost:3001) in your browser.
+
+To run the dedicated **staging** environment:
+```bash
+npm run dev:staging
+```
+Open [http://localhost:3002](http://localhost:3002) in your browser.
 
 ---
 
@@ -140,6 +146,24 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run prisma:generate` | Generates type-safe TypeScript Prisma Client from `schema.prisma`. |
 | `npm run prisma:push` | Synchronizes the Prisma schema directly with the PostgreSQL database. |
 | `npm run prisma:studio` | Launches Prisma Studio GUI at `http://localhost:5555` to browse data. |
+| `npm run create:admin` | Provisions or updates the default admin account with `admin@123`. |
+
+---
+
+## 🐳 Docker Deployment (Production & Staging)
+
+The system includes separate environments and isolated ports for Production and Staging:
+
+| Environment | Port | Container Name | Startup Command |
+| :--- | :--- | :--- | :--- |
+| **Production** | `3001` | `woliso_hotel_web` | `docker compose up -d hotel-web` |
+| **Staging** | `3002` | `woliso_hotel_staging` | `docker compose up -d hotel-staging` |
+
+To stop environments:
+```bash
+docker compose stop hotel-staging # Stop staging
+docker compose stop hotel-web     # Stop production
+```
 
 ---
 
@@ -150,9 +174,14 @@ To create an optimized production build:
 npm run build
 ```
 
-To preview the production bundle locally:
+To preview the production bundle locally (Port 3001):
 ```bash
 npm run preview
+```
+
+To preview the staging bundle locally (Port 3002):
+```bash
+npm run preview:staging
 ```
 
 ---
@@ -161,7 +190,7 @@ npm run preview
 
 During initial seeding, the following default roles and administrative privileges are established:
 
-* **Administrator**: `naolnigatu2025@gmail.com` (Full administrative rights)
+* **Administrator**: `admin@wolisohotel.com` (Password: `admin@123`, Full administrative rights)
 * **Roles Available**:
   * `admin` — Full platform management, analytics, and settings
   * `reception` — Front desk, reservations, check-in/out

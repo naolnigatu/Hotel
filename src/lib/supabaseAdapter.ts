@@ -427,14 +427,14 @@ export interface User {
 
 function mapSupabaseUser(user: any): User | null {
   if (!user) return null;
-  const isDefaultAdmin = user.email === 'naolnigatu2025@gmail.com' || user.email === 'admin@wolisohotel.com';
+  const isDefaultAdmin = user.email === 'admin@wolisohotel.com' || user.email === 'naolnigatu2025@gmail.com';
   return {
     uid: user.id,
     email: user.email || null,
     displayName:
       user.user_metadata?.name ||
       user.user_metadata?.full_name ||
-      (user.email === 'naolnigatu2025@gmail.com' ? 'Naol Nigatu' : user.email === 'admin@wolisohotel.com' ? 'System Admin' : 'Guest'),
+      (user.email === 'admin@wolisohotel.com' ? 'System Admin' : user.email === 'naolnigatu2025@gmail.com' ? 'Naol Nigatu' : 'Guest'),
     emailVerified: Boolean(user.email_confirmed_at || user.confirmed_at || isDefaultAdmin),
     phoneNumber: user.phone || null,
   };
