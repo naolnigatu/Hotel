@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithGoogleAccount,
   updateProfile
 } from '@/lib/supabaseAdapter';
 import { auth, db } from '@/lib/supabaseAdapter';
+import { supabase } from '@/supabase';
 import { 
   Building2, 
   Mail, 
@@ -23,20 +21,6 @@ import {
   Loader2
 } from 'lucide-react';
 
-interface GoogleAccountItem {
-  name: string;
-  email: string;
-  avatarColor?: string;
-}
-
-const DEFAULT_GOOGLE_ACCOUNTS: GoogleAccountItem[] = [
-  {
-    name: 'Naol Nigatu',
-    email: 'naolnigatu2025@gmail.com',
-    avatarColor: '#1a73e8',
-  },
-];
-
 export default function Login() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -44,23 +28,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Google Account Chooser state
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleView, setGoogleView] = useState<'choose' | 'input'>('choose');
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
-  const [googleModalError, setGoogleModalError] = useState('');
-  const [availableAccounts, setAvailableAccounts] = useState<GoogleAccountItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('hms_google_accounts');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return DEFAULT_GOOGLE_ACCOUNTS;
-  });
 
   // Forgot Password / Resend Password Reset Modal state
   const [showResetModal, setShowResetModal] = useState(false);
@@ -73,6 +40,83 @@ export default function Login() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
+
+  // Default Google Identity Services (GIS) integration: Official Google button & One-Tap
+  useEffect(() => {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!googleClientId) return;
+
+    let isMounted = true;
+
+    const setupGoogleUI = () => {
+      if (!isMounted || !(window as any).google?.accounts?.id) return;
+
+      try {
+        (window as any).google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response: any) => {
+            try {
+              setLoading(true);
+              setError('');
+              const { error: idTokenError } = await (supabase.auth as any).signInWithIdToken({
+                provider: 'google',
+                token: response.credential,
+              });
+              if (idTokenError) throw idTokenError;
+              navigate('/dashboard');
+            } catch (err: any) {
+              console.error('Google sign-in error:', err);
+              setError(err.message || 'Google verification failed.');
+            } finally {
+              setLoading(false);
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        const btnDiv = document.getElementById('googleSignInDiv');
+        if (btnDiv) {
+          btnDiv.innerHTML = '';
+          (window as any).google.accounts.id.renderButton(btnDiv, {
+            theme: 'outline',
+            size: 'large',
+            type: 'standard',
+            text: 'continue_with',
+            shape: 'rectangular',
+            logo_alignment: 'left',
+            width: btnDiv.offsetWidth || 384,
+          });
+          setGoogleButtonRendered(true);
+        }
+
+        // Display Google One-Tap prompt
+        (window as any).google.accounts.id.prompt();
+      } catch (err) {
+        console.warn('Google Identity Services setup notice:', err);
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      setupGoogleUI();
+    } else {
+      const timer = setInterval(() => {
+        if ((window as any).google?.accounts?.id) {
+          clearInterval(timer);
+          setupGoogleUI();
+        }
+      }, 100);
+      return () => {
+        isMounted = false;
+        clearInterval(timer);
+      };
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
 
   // Read URL query/hash for OAuth callback error parameters
   useEffect(() => {
@@ -88,7 +132,7 @@ export default function Login() {
         searchParams.get('error');
 
       if (errorDesc) {
-        setError(`Google Authentication Notice: ${decodeURIComponent(errorDesc.replace(/\+/g, ' '))}`);
+        setError(decodeURIComponent(errorDesc.replace(/\+/g, ' ')));
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
       }
@@ -106,47 +150,30 @@ export default function Login() {
 
   if (currentUser) return null;
 
-  const handleGoogleSignIn = () => {
-    setError('');
-    setGoogleModalError('');
-    setGoogleView('choose');
-    setShowGoogleModal(true);
-  };
-
-  const handleSelectGoogleAccount = async (accountEmail: string, accountName?: string) => {
+  const handleGoogleSignIn = async () => {
     try {
-      setGoogleLoading(true);
-      setGoogleModalError('');
-      await signInWithGoogleAccount(accountEmail, accountName);
+      setLoading(true);
+      setError('');
+      
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            prompt: 'select_account',
+          },
+        },
+      });
 
-      // Save to remembered accounts list in localStorage
-      try {
-        const existing = [...availableAccounts];
-        if (!existing.some((a) => a.email.toLowerCase() === accountEmail.toLowerCase())) {
-          const derivedName = accountName || accountEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-          const updated = [{ name: derivedName, email: accountEmail.toLowerCase(), avatarColor: '#1a73e8' }, ...existing];
-          setAvailableAccounts(updated);
-          localStorage.setItem('hms_google_accounts', JSON.stringify(updated));
-        }
-      } catch {}
-
-      setShowGoogleModal(false);
-      navigate('/dashboard');
+      if (oauthError) {
+        throw oauthError;
+      }
     } catch (err: any) {
-      console.error('Google account selection error:', err);
-      setGoogleModalError(err.message || 'Failed to authenticate Google account.');
+      console.error('Google Sign-In error:', err);
+      setError(err.message || 'Failed to initialize Google Sign-In.');
     } finally {
-      setGoogleLoading(false);
+      setLoading(false);
     }
-  };
-
-  const handleCustomGoogleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customGoogleEmail) {
-      setGoogleModalError('Enter an email or phone number');
-      return;
-    }
-    handleSelectGoogleAccount(customGoogleEmail);
   };
 
   const handleSendPasswordReset = async (e: React.FormEvent) => {
@@ -328,32 +355,39 @@ export default function Login() {
           </div>
         </div>
 
-        <button
-          onClick={handleGoogleSignIn}
-          disabled={loading}
-          type="button"
-          className="w-full flex items-center justify-center gap-3 bg-white border border-neutral-200 text-neutral-700 px-4 py-2.5 rounded-xl font-bold hover:bg-neutral-50 transition-colors shadow-sm disabled:opacity-50"
-        >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
-            <path
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              fill="#4285F4"
-            />
-            <path
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              fill="#34A853"
-            />
-            <path
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              fill="#FBBC05"
-            />
-            <path
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              fill="#EA4335"
-            />
-          </svg>
-          Google
-        </button>
+        {/* Default Google Sign-In UI */}
+        <div className="w-full flex flex-col items-center justify-center">
+          <div id="googleSignInDiv" className="w-full flex justify-center min-h-[44px]"></div>
+          
+          {!googleButtonRendered && (
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              type="button"
+              className="w-full flex items-center justify-center gap-3 bg-white border border-neutral-200 text-neutral-700 px-4 py-2.5 rounded-xl font-bold hover:bg-neutral-50 transition-colors shadow-sm disabled:opacity-50"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              Google
+            </button>
+          )}
+        </div>
 
         <div className="mt-8 text-center text-sm text-neutral-600">
           {isSignUp ? (
@@ -373,173 +407,6 @@ export default function Login() {
           )}
         </div>
       </div>
-
-      {/* Google Native-Style Account Chooser Dialog */}
-      {showGoogleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-[448px] bg-white rounded-[28px] shadow-2xl border border-[#dadce0] p-8 md:p-10 relative overflow-hidden font-sans">
-            {googleLoading && (
-              <div className="absolute top-0 left-0 right-0 h-1 bg-[#1a73e8] overflow-hidden">
-                <div className="h-full bg-blue-300 animate-pulse w-full"></div>
-              </div>
-            )}
-
-            <button
-              onClick={() => {
-                setShowGoogleModal(false);
-                setGoogleModalError('');
-                setGoogleView('choose');
-              }}
-              disabled={googleLoading}
-              className="absolute top-6 right-6 text-[#5f6368] hover:text-[#202124] p-1.5 rounded-full hover:bg-[#f1f3f4] transition-colors"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Google Logo */}
-            <div className="mb-4">
-              <svg className="w-6 h-6" viewBox="0 0 24 24">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
-            </div>
-
-            {googleView === 'choose' ? (
-              <>
-                <h1 className="text-[24px] font-normal text-[#1f1f1f] leading-tight">Choose an account</h1>
-                <p className="text-[14px] text-[#444746] mt-1.5">
-                  to continue to <span className="text-[#1f1f1f] font-medium">Woliso Hotel</span>
-                </p>
-
-                {googleModalError && (
-                  <div className="mt-4 p-3 bg-red-50 text-[#d93025] text-xs rounded-lg border border-red-200">
-                    {googleModalError}
-                  </div>
-                )}
-
-                <div className="mt-6 border-t border-b border-[#dadce0] divide-y divide-[#dadce0]">
-                  {availableAccounts.map((acc) => (
-                    <button
-                      key={acc.email}
-                      type="button"
-                      onClick={() => handleSelectGoogleAccount(acc.email, acc.name)}
-                      disabled={googleLoading}
-                      className="w-full flex items-center py-3.5 px-1 hover:bg-[#f8f9fa] active:bg-[#f1f3f4] transition-colors text-left group"
-                    >
-                      <div
-                        className="w-10 h-10 rounded-full text-white flex items-center justify-center font-medium text-[15px] shrink-0"
-                        style={{ backgroundColor: acc.avatarColor || '#1a73e8' }}
-                      >
-                        {acc.name ? acc.name.charAt(0).toUpperCase() : acc.email.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="ml-3.5 overflow-hidden">
-                        <div className="text-[14px] font-medium text-[#1f1f1f] truncate">{acc.name}</div>
-                        <div className="text-[12px] text-[#444746] truncate">{acc.email}</div>
-                      </div>
-                    </button>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGoogleView('input');
-                      setCustomGoogleEmail('');
-                      setGoogleModalError('');
-                    }}
-                    disabled={googleLoading}
-                    className="w-full flex items-center py-3.5 px-1 hover:bg-[#f8f9fa] active:bg-[#f1f3f4] transition-colors text-left"
-                  >
-                    <div className="w-10 h-10 rounded-full border border-[#dadce0] flex items-center justify-center text-[#5f6368] shrink-0">
-                      <User className="w-5 h-5 text-[#5f6368]" />
-                    </div>
-                    <div className="ml-3.5 text-[14px] font-medium text-[#1f1f1f]">Use another account</div>
-                  </button>
-                </div>
-
-                <p className="text-[12px] text-[#444746] mt-6 leading-relaxed">
-                  To continue, Google will share your name, email address, language preference, and profile picture with Woliso Hotel. Before using this app, review Woliso Hotel's{' '}
-                  <span className="text-[#0b57d0] cursor-pointer hover:underline">privacy policy</span> and{' '}
-                  <span className="text-[#0b57d0] cursor-pointer hover:underline">terms of service</span>.
-                </p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-[24px] font-normal text-[#1f1f1f] leading-tight">Sign in</h1>
-                <p className="text-[14px] text-[#444746] mt-1.5">
-                  to continue to <span className="text-[#1f1f1f] font-medium">Woliso Hotel</span>
-                </p>
-
-                {googleModalError && (
-                  <div className="mt-4 p-3 bg-red-50 text-[#d93025] text-xs rounded-lg border border-red-200">
-                    {googleModalError}
-                  </div>
-                )}
-
-                <form onSubmit={handleCustomGoogleSubmit} className="mt-8 space-y-4">
-                  <div>
-                    <input
-                      type="email"
-                      placeholder="Email or phone"
-                      value={customGoogleEmail}
-                      onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                      className="w-full px-3.5 py-3 border border-[#747775] rounded-md text-[14px] text-[#1f1f1f] focus:border-[#0b57d0] focus:ring-1 focus:ring-[#0b57d0] outline-none transition-all placeholder:text-[#747775]"
-                      autoFocus
-                      disabled={googleLoading}
-                      required
-                    />
-                  </div>
-
-                  <p className="text-[12px] text-[#444746] leading-relaxed">
-                    Not your computer? Use Guest mode to sign in privately.
-                  </p>
-
-                  <div className="pt-6 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setGoogleView('choose')}
-                      disabled={googleLoading}
-                      className="text-[14px] font-medium text-[#0b57d0] hover:bg-[#f0f4f9] px-3 py-1.5 rounded-md transition-colors"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={googleLoading || !customGoogleEmail}
-                      className="bg-[#0b57d0] hover:bg-[#0842a0] text-white text-[14px] font-medium px-6 py-2 rounded-full transition-colors disabled:opacity-50"
-                    >
-                      {googleLoading ? 'Signing in...' : 'Next'}
-                    </button>
-                  </div>
-                </form>
-              </>
-            )}
-
-            <div className="mt-8 pt-4 border-t border-[#f1f3f4] flex items-center justify-between text-[11px] text-[#747775]">
-              <span>English (United States)</span>
-              <div className="flex gap-4">
-                <span>Help</span>
-                <span>Privacy</span>
-                <span>Terms</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Resend Password Reset Modal */}
       {showResetModal && (
