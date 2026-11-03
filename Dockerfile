@@ -6,6 +6,12 @@ WORKDIR /app
 
 # Set build-time dummy database url for Prisma schema compilation
 ENV DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:54332/postgres"
+ARG VITE_SUPABASE_URL="https://xhvijscaogmlapxdazpm.supabase.co"
+ARG VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_-zF1Xn1ydxtoI8hjvzfJUA_4oGrrBjo"
+ARG VITE_GOOGLE_CLIENT_ID="119586441416-4fdso4ala15on127c811gu5bvm1qrqkn.apps.googleusercontent.com"
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 # Copy package manifests and install dependencies
 COPY package.json package-lock.json* ./
