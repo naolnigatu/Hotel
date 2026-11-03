@@ -8,7 +8,7 @@
  *   node scripts/create-admin.cjs [email] [password] [fullName]
  *
  * Example:
- *   node scripts/create-admin.cjs naolnigatu2025@gmail.com AdminPassword123! "Naol Nigatu"
+ *   node scripts/create-admin.cjs admin@wolisohotel.com admin@123 "System Admin"
  */
 
 const fs = require('fs');
@@ -44,9 +44,9 @@ function loadEnv() {
 
 loadEnv();
 
-const targetEmail = process.argv[2] || process.env.ADMIN_EMAIL || 'naolnigatu2025@gmail.com';
-const targetPassword = process.argv[3] || process.env.ADMIN_PASSWORD || 'AdminPassword123!';
-const targetName = process.argv[4] || process.env.ADMIN_NAME || (targetEmail === 'admin@wolisohotel.com' ? 'System Admin' : 'Naol Nigatu');
+const targetEmail = process.argv[2] || process.env.ADMIN_EMAIL || 'admin@wolisohotel.com';
+const targetPassword = process.argv[3] || process.env.ADMIN_PASSWORD || 'admin@123';
+const targetName = process.argv[4] || process.env.ADMIN_NAME || 'System Admin';
 
 // Pick Supabase instance: remote first if secret key is available, else local
 const supabaseUrl = process.env.SUPABASE_URL || 'http://127.0.0.1:54331';
@@ -173,7 +173,7 @@ async function provisionAdmin() {
     console.log(`  Email:    ${targetEmail}`);
     console.log(`  Password: ${targetPassword}`);
     console.log(`  Role:     admin`);
-    console.log(`  Login at: http://localhost:3000/login`);
+    console.log(`  Login at: http://localhost:3001/login (or staging: http://localhost:3002/login)`);
     console.log(`------------------------------------------------------\n`);
   } catch (err) {
     console.error('Unexpected error during admin provisioning:', err);

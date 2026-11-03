@@ -1,4 +1,5 @@
 services:
+  # Production Application (Default Port: 3001)
   hotel-web:
     build:
       context: .
@@ -9,5 +10,19 @@ services:
       - "${PORT:-3001}:80"
     environment:
       - NODE_ENV=production
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Staging Application (Dedicated Staging Port: 3002)
+  hotel-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: woliso_hotel_staging
+    restart: unless-stopped
+    ports:
+      - "${STAGING_PORT:-3002}:80"
+    environment:
+      - NODE_ENV=staging
     extra_hosts:
       - "host.docker.internal:host-gateway"

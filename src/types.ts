@@ -5,6 +5,7 @@ export interface User {
   email: string;
   name: string;
   role: Role;
+  avatar?: string;
   phone?: string;
   preferences?: Record<string, any>;
   createdAt: number;
