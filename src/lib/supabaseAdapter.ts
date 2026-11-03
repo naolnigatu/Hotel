@@ -489,7 +489,6 @@ export async function signInWithPopup(_auth: any, _provider?: any) {
     options: {
       redirectTo,
       queryParams: {
-        access_type: 'offline',
         prompt: 'select_account',
       },
     },
