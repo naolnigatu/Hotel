@@ -7,16 +7,33 @@
 /* Hide Google Translate top banner iframe so website layout is never shifted down */
 .goog-te-banner-frame,
 .goog-te-banner-frame.skiptranslate,
-iframe.goog-te-banner-frame {
+iframe.goog-te-banner-frame,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-ORHb-OEVmcd.skiptranslate,
+iframe.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-l4eHX-hSRGPd,
+.VIpgJd-yAWNEb-L7lbkb,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc,
+body > .skiptranslate:not(#google_translate_element),
+body > iframe[src*="translate.google.com"],
+body > iframe[class*="goog"],
+#goog-gt-tt {
   display: none !important;
   visibility: hidden !important;
-  height: 0 !important;
+  height: 0px !important;
+  width: 0px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
   border: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Prevent Google Translate from adding inline top margin or position offsets to body */
+html,
 body {
   top: 0px !important;
+  margin-top: 0px !important;
+  padding-top: 0px !important;
   position: static !important;
 }
 

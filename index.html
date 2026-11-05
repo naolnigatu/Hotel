@@ -14,6 +14,47 @@
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
+    <!-- Google Translate Banner & Shift Eraser (CSS) -->
+    <style>
+      .goog-te-banner-frame,
+      .goog-te-banner-frame.skiptranslate,
+      iframe.goog-te-banner-frame,
+      .VIpgJd-ZVi9od-ORHb-OEVmcd,
+      .VIpgJd-ZVi9od-ORHb-OEVmcd.skiptranslate,
+      iframe.VIpgJd-ZVi9od-ORHb-OEVmcd,
+      .VIpgJd-ZVi9od-l4eHX-hSRGPd,
+      .VIpgJd-yAWNEb-L7lbkb,
+      .VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc,
+      body > .skiptranslate:not(#google_translate_element),
+      body > iframe[src*="translate.google.com"],
+      body > iframe[class*="goog"],
+      #goog-gt-tt,
+      .goog-tooltip,
+      .goog-tooltip:hover {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+        width: 0px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        border: none !important;
+        overflow: hidden !important;
+      }
+
+      html, body {
+        top: 0px !important;
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+        position: static !important;
+      }
+
+      .goog-text-highlight {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+    </style>
+
     <!-- Google Translate Website Widget (Google Translate Element) -->
     <script type="text/javascript">
       function googleTranslateElementInit() {
@@ -26,6 +67,46 @@
           }, 'google_translate_element');
         }
       }
+
+      // Neutralize Google Translate top banner frame & reset body offset
+      (function() {
+        function neutralizeBanner() {
+          if (document.body) {
+            if (document.body.style.top && document.body.style.top !== '0px') {
+              document.body.style.setProperty('top', '0px', 'important');
+            }
+            if (document.body.style.position && document.body.style.position !== 'static') {
+              document.body.style.setProperty('position', 'static', 'important');
+            }
+          }
+          var frames = document.querySelectorAll(
+            '.goog-te-banner-frame, .VIpgJd-ZVi9od-ORHb-OEVmcd, iframe[src*="translate.google"], body > .skiptranslate'
+          );
+          for (var i = 0; i < frames.length; i++) {
+            var el = frames[i];
+            if (el.id !== 'google_translate_element' && !el.querySelector('.goog-te-combo')) {
+              el.style.setProperty('display', 'none', 'important');
+              el.style.setProperty('visibility', 'hidden', 'important');
+              el.style.setProperty('height', '0px', 'important');
+            }
+          }
+        }
+
+        if (typeof MutationObserver !== 'undefined') {
+          var observer = new MutationObserver(neutralizeBanner);
+          if (document.documentElement) {
+            observer.observe(document.documentElement, {
+              attributes: true,
+              attributeFilter: ['style', 'class'],
+              childList: true,
+              subtree: true
+            });
+          }
+        }
+        window.addEventListener('DOMContentLoaded', neutralizeBanner);
+        window.addEventListener('load', neutralizeBanner);
+        setInterval(neutralizeBanner, 250);
+      })();
     </script>
     <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
   </head>

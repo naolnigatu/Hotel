@@ -98,6 +98,34 @@ function setGoogleTranslateCookie(targetLang: string) {
 }
 
 /**
+ * Suppresses Google Translate's injected top banner frame and keeps body.top at 0px
+ */
+export function suppressGoogleTranslateBanner(): void {
+  if (typeof document === 'undefined') return;
+
+  if (document.body) {
+    if (document.body.style.top && document.body.style.top !== '0px') {
+      document.body.style.setProperty('top', '0px', 'important');
+    }
+    if (document.body.style.position && document.body.style.position !== 'static') {
+      document.body.style.setProperty('position', 'static', 'important');
+    }
+  }
+
+  const frames = document.querySelectorAll(
+    '.goog-te-banner-frame, .VIpgJd-ZVi9od-ORHb-OEVmcd, iframe[src*="translate.google"], body > .skiptranslate'
+  );
+  frames.forEach((el) => {
+    if (el.id !== 'google_translate_element' && !el.querySelector('.goog-te-combo')) {
+      (el as HTMLElement).style.setProperty('display', 'none', 'important');
+      (el as HTMLElement).style.setProperty('visibility', 'hidden', 'important');
+      (el as HTMLElement).style.setProperty('height', '0px', 'important');
+      (el as HTMLElement).style.setProperty('width', '0px', 'important');
+    }
+  });
+}
+
+/**
  * Switches the website language using Google's standard Translate Element.
  * Supports switching to any of the 5 languages or reverting to original English.
  */
@@ -105,12 +133,15 @@ export function applyGoogleTranslateLanguage(targetCode: string): boolean {
   if (typeof window === 'undefined') return false;
 
   setGoogleTranslateCookie(targetCode);
+  suppressGoogleTranslateBanner();
 
   // Attempt 1: Locate Google Translate combo select element
   const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement | null;
   if (combo) {
     combo.value = targetCode;
     combo.dispatchEvent(new Event('change', { bubbles: true }));
+    setTimeout(suppressGoogleTranslateBanner, 50);
+    setTimeout(suppressGoogleTranslateBanner, 200);
 
     // If reverting to English, reload may be needed to completely clear Google's DOM alterations
     if (targetCode === 'en') {
