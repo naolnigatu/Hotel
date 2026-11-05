@@ -8,6 +8,7 @@ import { signOut } from '@/lib/supabaseAdapter';
 import { doc, onSnapshot } from '@/lib/supabaseAdapter';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import Footer from './Footer';
+import GoogleTranslateSelector from './common/GoogleTranslateSelector';
 
 const ROUTE_LABELS: Record<string, string> = {
   '/about': 'About Us',
@@ -189,29 +190,8 @@ export default function Layout() {
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
-            {/* Language Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => handleDropdownEnter('language')}
-              onMouseLeave={handleDropdownLeave}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button 
-                onClick={(e) => toggleDropdown(e, 'language')}
-                className={`flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-medium px-1.5 sm:px-2 py-1 rounded-md transition-colors ${activeDropdown === 'language' ? 'bg-neutral-200 text-neutral-950' : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'}`}
-              >
-                <Globe className="w-4 h-4 sm:w-4 sm:h-4" />
-                <span className="uppercase font-semibold hidden xs:inline">{i18n.language}</span>
-              </button>
-              
-              <div className={`absolute right-0 top-full pt-2 w-36 max-w-[calc(100vw-16px)] z-50 transition-all duration-200 ${activeDropdown === 'language' ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
-                <div className="bg-white rounded-xl shadow-lg border border-neutral-100 py-1.5">
-                  <button onClick={() => changeLanguage('en')} className="block w-full text-left px-4 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50">English (EN)</button>
-                  <button onClick={() => changeLanguage('am')} className="block w-full text-left px-4 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50">አማርኛ (AM)</button>
-                  <button onClick={() => changeLanguage('om')} className="block w-full text-left px-4 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50">Afaan Oromoo (OM)</button>
-                </div>
-              </div>
-            </div>
+            {/* Dedicated Google Translate Button & Selector */}
+            <GoogleTranslateSelector variant="header" />
             
             {/* Profile Dropdown */}
             {currentUser ? (
@@ -337,14 +317,7 @@ export default function Layout() {
               
               {/* Drawer Footer (Language & Book) */}
               <div className="p-4 border-t border-neutral-100 bg-neutral-50 shrink-0 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Language</span>
-                  <div className="flex gap-2">
-                    <button onClick={() => changeLanguage('en')} className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${i18n.language === 'en' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}`}>EN</button>
-                    <button onClick={() => changeLanguage('am')} className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${i18n.language === 'am' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}`}>አማ</button>
-                    <button onClick={() => changeLanguage('om')} className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-colors ${i18n.language === 'om' ? 'bg-neutral-900 text-white shadow-sm' : 'bg-white text-neutral-700 border border-neutral-200'}`}>OM</button>
-                  </div>
-                </div>
+                <GoogleTranslateSelector variant="mobile" onSelectLanguage={closeMenu} />
                 
                 <Link onClick={closeMenu} to="/book" className="flex items-center justify-center w-full py-3.5 bg-neutral-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-neutral-800 transition-colors">
                   {t('book_now')}

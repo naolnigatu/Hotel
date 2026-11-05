@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 
 import NotificationCenter from './NotificationCenter';
+import GoogleTranslateSelector from '../common/GoogleTranslateSelector';
 
 export default function AdminLayout() {
   const { userData } = useAuth();
@@ -329,6 +330,7 @@ export default function AdminLayout() {
                <span>Guest Site</span>
              </Link>
 
+             <GoogleTranslateSelector variant="header" />
              <NotificationCenter />
              <div className="h-6 w-px bg-neutral-200 hidden sm:block" />
              
