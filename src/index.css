@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+/* -------------------------------------------------------------------------- */
+/* Google Translate Widget Overrides & Layout Protection                      */
+/* -------------------------------------------------------------------------- */
+
+/* Hide Google Translate top banner iframe so website layout is never shifted down */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  border: 0 !important;
+}
+
+/* Prevent Google Translate from adding inline top margin or position offsets to body */
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+/* Hide standard Google Translate widget container (our custom UI controls it) */
+#google_translate_element {
+  display: none !important;
+}
+
+/* Ensure translated text retains clean background and does not show yellow highlight */
+.goog-text-highlight {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Hide Google Translate tooltip hover popups */
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+}
+
+/* Ensure Ethiopic script (Amharic & Tigrinya) and Horn of Africa typography render cleanly */
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Ethiopic", "Nyala", "Abyssinica SIL", "Kefa", Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
