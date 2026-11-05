@@ -34,6 +34,12 @@ import WhyChooseUs3D from '../components/home/WhyChooseUs3D';
 import PricingPackages3D from '../components/home/PricingPackages3D';
 import InquiryContact3D from '../components/home/InquiryContact3D';
 
+// 3D Virtual Hotel Walkthrough Components
+import VirtualHotelCanvas from '../components/virtualHotel/VirtualHotelCanvas';
+import VirtualHotelHUD from '../components/virtualHotel/VirtualHotelHUD';
+import HotspotModal from '../components/virtualHotel/HotspotModal';
+import { HOTEL_AREAS, HotelArea } from '../components/virtualHotel/virtualHotelData';
+
 export default function Home() {
   const { t } = useTranslation();
   const { currentUser, userData } = useAuth();
@@ -56,6 +62,14 @@ export default function Home() {
   const [submittingTestimonial, setSubmittingTestimonial] = useState(false);
   const [testimonialSuccess, setTestimonialSuccess] = useState(false);
   const [approvedTestimonials, setApprovedTestimonials] = useState<Testimonial[]>([]);
+
+  // 3D Virtual Hotel Tour State
+  const [viewMode, setViewMode] = useState<'3d' | 'classic'>('3d');
+  const [currentArea, setCurrentArea] = useState<HotelArea>(HOTEL_AREAS[0]);
+  const [selectedHotspot, setSelectedHotspot] = useState<HotelArea | null>(null);
+  const [proximityHotspot, setProximityHotspot] = useState<HotelArea | null>(null);
+  const [cameraPosition, setCameraPosition] = useState<[number, number, number]>(HOTEL_AREAS[0].cameraPos);
+  const [isTouring, setIsTouring] = useState<boolean>(false);
 
   const handleOpenTestimonial = () => {
     if (!currentUser) {
@@ -148,111 +162,190 @@ export default function Home() {
   return (
     <div className="flex flex-col bg-neutral-950 text-neutral-100 min-h-screen selection:bg-sky-500 selection:text-white">
       
-      {/* 1. Hero Section with Interactive 3D WebGL Canvas */}
-      <section className="relative min-h-[92vh] flex flex-col justify-center items-center overflow-hidden pt-20 pb-16 px-4 sm:px-6 lg:px-8">
-        
-        {/* Three.js 3D WebGL Scene in Background */}
-        <ThreeSceneHero />
+      {/* ---------------- 3D VIRTUAL HOTEL WALKTHROUGH EXPERIENCE ---------------- */}
+      {viewMode === '3d' ? (
+        <section className="relative w-full h-[88vh] sm:h-[92vh] min-h-[580px] overflow-hidden border-b border-white/10 bg-[#0a0c10]">
+          {/* Three.js 3D Virtual Hotel WebGL Canvas */}
+          <VirtualHotelCanvas
+            onSelectHotspot={(area) => setSelectedHotspot(area)}
+            currentAreaId={currentArea.id}
+            onAreaChange={(area) => {
+              setCurrentArea(area);
+              setProximityHotspot(area);
+            }}
+            isTouring={isTouring}
+            onUpdateCameraPos={(pos) => setCameraPosition(pos)}
+          />
 
-        {/* Ambient Gradient Glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-sky-500/15 via-indigo-500/10 to-transparent blur-[140px] pointer-events-none rounded-full" />
-        
-        <div className="relative z-10 text-center max-w-4xl mx-auto space-y-6 pt-4">
+          {/* Interactive HUD Overlay (Teleporter, Radar Mini-map, Tour Autopilot) */}
+          <VirtualHotelHUD
+            currentArea={currentArea}
+            activeHotspot={proximityHotspot}
+            cameraPosition={cameraPosition}
+            isTouring={isTouring}
+            onToggleTour={() => setIsTouring(prev => !prev)}
+            onSelectArea={(areaId) => {
+              const area = HOTEL_AREAS.find(a => a.id === areaId);
+              if (area) {
+                setCurrentArea(area);
+                setIsTouring(false);
+              }
+            }}
+            onSelectHotspot={(area) => setSelectedHotspot(area)}
+            onToggleViewMode={() => setViewMode('classic')}
+            viewMode={viewMode}
+          />
+
+          {/* Contextual Hotspot / Room Discovery Modal */}
+          <HotspotModal
+            area={selectedHotspot}
+            onClose={() => setSelectedHotspot(null)}
+            onTeleport={(areaId) => {
+              const area = HOTEL_AREAS.find(a => a.id === areaId);
+              if (area) {
+                setCurrentArea(area);
+                setIsTouring(false);
+              }
+            }}
+          />
+        </section>
+      ) : (
+        /* Classic SaaS Hero Section (when user toggles to classic overview) */
+        <section className="relative min-h-[92vh] flex flex-col justify-center items-center overflow-hidden pt-20 pb-16 px-4 sm:px-6 lg:px-8">
+          <ThreeSceneHero />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-sky-500/15 via-indigo-500/10 to-transparent blur-[140px] pointer-events-none rounded-full" />
           
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/15 text-xs font-semibold text-neutral-200 backdrop-blur-xl shadow-lg"
-          >
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
-            </span>
-            <span className="text-sky-400 font-bold uppercase tracking-wider text-[11px]">Woliso HMS Platform</span>
-            <span className="text-neutral-500">•</span>
-            <span>Where Luxury Hospitality Meets 3D Cloud Intelligence</span>
-          </motion.div>
-
-          {/* Main Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]"
-          >
-            The Operating System for{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-amber-300">
-              Modern Hospitality
-            </span>
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-base sm:text-xl text-neutral-300 max-w-2xl mx-auto leading-relaxed font-normal"
-          >
-            {cmsData?.heroSubtitle || 
-              'Unified Front Desk, Kitchen Display Stations, Direct Guest Booking, and Real-Time Multi-Schema PostgreSQL Analytics. Built for luxury hotels, resorts, and modern chains.'}
-          </motion.p>
-
-          {/* Primary & Secondary Call to Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2"
-          >
-            <Link
-              to="/rooms"
-              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white text-neutral-950 font-bold text-sm hover:bg-neutral-200 transition-all shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:scale-[1.02] cursor-pointer"
+          <div className="relative z-10 text-center max-w-4xl mx-auto space-y-6 pt-4">
+            
+            {/* 3D Mode Re-entry Pill */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/30 text-xs font-semibold text-sky-200 backdrop-blur-xl shadow-lg cursor-pointer hover:bg-sky-500/25 transition"
+              onClick={() => {
+                setViewMode('3d');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
             >
-              <BedDouble className="w-4 h-4 text-sky-600" />
-              <span>Direct Room Reservation</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+              <Compass className="w-3.5 h-3.5 text-sky-400 animate-spin" />
+              <span>Immersive 3D Virtual Walkthrough Available</span>
+              <span className="text-neutral-500">•</span>
+              <span className="underline font-bold text-white">Enter 3D Tour →</span>
+            </motion.div>
 
-            <Link
-              to="/dashboard"
-              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 text-white font-bold text-sm backdrop-blur-xl transition-all hover:scale-[1.02] cursor-pointer"
+            {/* Main Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]"
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Launch Staff Operations Hub</span>
-            </Link>
-          </motion.div>
+              The Operating System for{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-amber-300">
+                Modern Hospitality
+              </span>
+            </motion.h1>
 
-          {/* Quick Pillar Highlights */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-neutral-400 font-medium"
-          >
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              0% OTA Booking Fees
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-sky-400" />
-              Sub-50ms Real-Time Sync
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
-              Multi-Role Security (RLS)
-            </span>
-          </motion.div>
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-base sm:text-xl text-neutral-300 max-w-2xl mx-auto leading-relaxed font-normal"
+            >
+              {cmsData?.heroSubtitle || 
+                'Unified Front Desk, Kitchen Display Stations, Direct Guest Booking, and Real-Time Multi-Schema PostgreSQL Analytics. Built for luxury hotels, resorts, and modern chains.'}
+            </motion.p>
 
+            {/* Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2"
+            >
+              <button
+                onClick={() => {
+                  setViewMode('3d');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-sm transition-all shadow-[0_0_30px_rgba(56,189,248,0.35)] hover:scale-[1.02] cursor-pointer"
+              >
+                <Compass className="w-4 h-4 text-white" />
+                <span>Launch 3D Virtual Hotel Tour</span>
+              </button>
+
+              <Link
+                to="/rooms"
+                className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white text-neutral-950 font-bold text-sm hover:bg-neutral-200 transition-all shadow-lg hover:scale-[1.02] cursor-pointer"
+              >
+                <BedDouble className="w-4 h-4 text-sky-600" />
+                <span>Direct Room Reservation</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+
+            {/* Quick Pillar Highlights */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.5 }}
+              className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-neutral-400 font-medium"
+            >
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                0% OTA Booking Fees
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-sky-400" />
+                Sub-50ms Real-Time Sync
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
+                Multi-Role Security (RLS)
+              </span>
+            </motion.div>
+          </div>
+
+          <div className="w-full relative z-10 mt-8">
+            <Hero3DPreview />
+          </div>
+        </section>
+      )}
+
+      {/* Seamless Transition / Specifications Header Strip */}
+      <div id="specifications" className="bg-neutral-900/90 border-y border-white/10 py-3.5 px-4 backdrop-blur-xl relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div className="flex items-center gap-2.5">
+            <span className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400 shrink-0">
+              <Sparkles className="w-4 h-4" />
+            </span>
+            <div>
+              <p className="text-xs font-bold text-white">
+                {viewMode === '3d' 
+                  ? '3D Virtual Walkthrough Active: Explore Spaces & Features' 
+                  : 'Classic Overview Mode: Comprehensive System Specifications'}
+              </p>
+              <p className="text-[11px] text-neutral-400">
+                {viewMode === '3d'
+                  ? 'Walk with WASD/Arrows, click glowing beacons for PMS tools, or view complete system breakdown below.'
+                  : 'Browse all hotel amenities, restaurant menus, conference venues, and cloud PMS pricing.'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                setViewMode(v => v === '3d' ? 'classic' : '3d');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="text-xs font-bold px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 transition cursor-pointer"
+            >
+              {viewMode === '3d' ? 'Switch to Classic Layout' : 'Switch to 3D Virtual Walkthrough'}
+            </button>
+          </div>
         </div>
-
-        {/* 3D Perspective Floating Dashboard Preview */}
-        <div className="w-full relative z-10 mt-8">
-          <Hero3DPreview />
-        </div>
-
-      </section>
+      </div>
 
       {/* Pinned Announcement Notice Strip (if active in database) */}
       {pinnedAnnouncement && (
