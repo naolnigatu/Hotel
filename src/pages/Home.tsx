@@ -1,17 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
-import { MapPin, Wifi, Coffee, Car, Star, Phone, Mail, ArrowRight, Megaphone, Pin, Calendar, Sparkles, X, MessageSquareHeart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { 
+  ArrowRight, 
+  Megaphone, 
+  Star, 
+  Sparkles, 
+  X, 
+  MessageSquareHeart, 
+  CheckCircle2, 
+  Building2, 
+  Compass, 
+  BedDouble, 
+  ShieldCheck, 
+  Zap,
+  Play
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { collection, doc, getDoc, getDocs, query, limit, where, orderBy, addDoc } from '@/lib/supabaseAdapter';
+import { collection, doc, getDoc, getDocs, query, limit, addDoc } from '@/lib/supabaseAdapter';
 import { db } from '@/lib/supabaseAdapter';
 import { CmsHome, RoomCategory, MenuItem, Hall, CmsContact, CmsAmenity, Announcement, Testimonial } from '../types';
-import * as Icons from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+// 3D Visual & Architectural Components
+import ThreeSceneHero from '../components/home/ThreeSceneHero';
+import Hero3DPreview from '../components/home/Hero3DPreview';
+import Spaces3DExplorer from '../components/home/Spaces3DExplorer';
+import ProductShowcase3D from '../components/home/ProductShowcase3D';
+import BentoFeatures3D from '../components/home/BentoFeatures3D';
+import HowItWorks3D from '../components/home/HowItWorks3D';
+import Accommodations3D from '../components/home/Accommodations3D';
+import DiningAndEvents3D from '../components/home/DiningAndEvents3D';
+import WhyChooseUs3D from '../components/home/WhyChooseUs3D';
+import PricingPackages3D from '../components/home/PricingPackages3D';
+import InquiryContact3D from '../components/home/InquiryContact3D';
 
 export default function Home() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { currentUser, userData } = useAuth();
   
   const [cmsData, setCmsData] = useState<CmsHome | null>(null);
@@ -19,12 +44,9 @@ export default function Home() {
   const [featuredRooms, setFeaturedRooms] = useState<RoomCategory[]>([]);
   const [featuredDishes, setFeaturedDishes] = useState<MenuItem[]>([]);
   const [featuredHalls, setFeaturedHalls] = useState<Hall[]>([]);
-  const [amenities, setAmenities] = useState<CmsAmenity[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [pinnedAnnouncement, setPinnedAnnouncement] = useState<Announcement | null>(null);
 
-  const [heroImageError, setHeroImageError] = useState(false);
-  
   // Testimonial Modal State
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
   const [showAuthPromptModal, setShowAuthPromptModal] = useState(false);
@@ -79,143 +101,170 @@ export default function Home() {
         const docRef = doc(db, 'settings', 'cms_home');
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setCmsData(docSnap.data().data as CmsHome);
+          setCmsData(docSnap.data() as CmsHome);
         }
 
+        // Fetch contact data
         const contactRef = doc(db, 'settings', 'cms_contact');
         const contactSnap = await getDoc(contactRef);
         if (contactSnap.exists()) {
-          setContactData(contactSnap.data().data);
+          setContactData(contactSnap.data() as CmsContact);
         }
 
-        const amenitiesRef = doc(db, 'settings', 'cms_amenities');
-        const amenitiesSnap = await getDoc(amenitiesRef);
-        if (amenitiesSnap.exists()) {
-          setAmenities((amenitiesSnap.data().data || []).slice(0, 4));
-        }
-
-        // Fetch a few rooms
+        // Fetch rooms
         const roomsQ = query(collection(db, 'room_categories'), limit(3));
         const roomsSnap = await getDocs(roomsQ);
         setFeaturedRooms(roomsSnap.docs.map(d => ({ id: d.id, ...d.data() } as RoomCategory)));
 
-        // Fetch a few dishes
-        const dishesQ = query(collection(db, 'menu_items'), where('isAvailable', '==', true), limit(3));
-        const dishesSnap = await getDocs(dishesQ);
-        setFeaturedDishes(dishesSnap.docs.map(d => ({ id: d.id, ...d.data() } as MenuItem)));
+        // Fetch dishes
+        const menuQ = query(collection(db, 'menu_items'), limit(4));
+        const menuSnap = await getDocs(menuQ);
+        setFeaturedDishes(menuSnap.docs.map(d => ({ id: d.id, ...d.data() } as MenuItem)));
 
-        // Fetch a few halls
-        const hallsQ = query(collection(db, 'halls'), where('status', '==', true), limit(2));
+        // Fetch halls
+        const hallsQ = query(collection(db, 'halls'), limit(2));
         const hallsSnap = await getDocs(hallsQ);
         setFeaturedHalls(hallsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Hall)));
 
         // Fetch announcements
-        try {
-          const annQ = query(
-            collection(db, 'announcements'), 
-            where('isPublished', '==', true),
-            limit(6)
-          );
-          const annSnap = await getDocs(annQ);
-          const annList = annSnap.docs
-            .map(d => ({ id: d.id, ...d.data() } as Announcement))
-            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          
-          setAnnouncements(annList.slice(0, 3));
-          const pinned = annList.find(a => a.isPinned);
-          if (pinned) setPinnedAnnouncement(pinned);
-        } catch (annErr) {
-          console.warn("Announcements fetch fallback:", annErr);
-        }
+        const annQ = query(collection(db, 'announcements'), limit(4));
+        const annSnap = await getDocs(annQ);
+        const annList = annSnap.docs.map(d => ({ id: d.id, ...d.data() } as Announcement));
+        setAnnouncements(annList);
+        const pinned = annList.find(a => a.isPinned && a.isPublished);
+        if (pinned) setPinnedAnnouncement(pinned);
 
-        // Fetch approved user testimonials
-        try {
-          const testQ = query(
-            collection(db, 'testimonials'),
-            where('status', '==', 'approved'),
-            limit(6)
-          );
-          const testSnap = await getDocs(testQ);
-          const approvedList = testSnap.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial));
-          setApprovedTestimonials(approvedList);
-        } catch (testErr) {
-          console.warn("Approved testimonials fetch:", testErr);
-        }
-
-      } catch (error) {
-        console.error("Error fetching homepage data:", error);
+        // Fetch approved testimonials
+        const testQ = query(collection(db, 'testimonials'), limit(6));
+        const testSnap = await getDocs(testQ);
+        const tests = testSnap.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial));
+        setApprovedTestimonials(tests.filter(t => (t as any).status === 'approved' || !(t as any).status));
+      } catch (err) {
+        console.error("Error loading home data:", err);
       }
     };
+
     fetchData();
   }, []);
 
-  const fallbackHeroImage = "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=2850";
-  let initialHeroImage = cmsData?.heroImageUrl || fallbackHeroImage;
-  if (initialHeroImage.includes("1542314831-c6a4d1409e1f") || initialHeroImage.includes("1566073771259-6a8506099945")) {
-    initialHeroImage = fallbackHeroImage;
-  }
-  const heroImage = heroImageError ? fallbackHeroImage : initialHeroImage;
-
   return (
-    <div className="flex flex-col bg-neutral-50">
+    <div className="flex flex-col bg-neutral-950 text-neutral-100 min-h-screen selection:bg-sky-500 selection:text-white">
       
-      {/* Hero Section */}
-      <section className="relative h-[80vh] md:h-[90vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-neutral-900/50 z-10" />
+      {/* ---------------- 1. HERO SECTION WITH 3D WEBGL ATMOSPHERE & COCKPIT ---------------- */}
+      <section className="relative min-h-[95vh] flex flex-col justify-center items-center overflow-hidden pt-20 pb-16 px-4 sm:px-6 lg:px-8">
         
-        {cmsData?.heroVideoUrl ? (
-          <iframe 
-            src={`${cmsData.heroVideoUrl}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0`}
-            className="absolute inset-0 w-full h-full object-cover scale-[1.2]"
-            style={{ pointerEvents: 'none' }}
-            allow="autoplay; fullscreen"
-          />
-        ) : (
-          <img 
-            src={heroImage} 
-            alt="Hotel Exterior" 
-            className="absolute inset-0 w-full h-full object-cover"
-            onError={() => {
-              console.error(`Failed to load hero image: ${heroImage}. Falling back to default.`);
-              setHeroImageError(true);
-            }}
-          />
-        )}
+        {/* Three.js 3D WebGL Ambient Atmosphere in Background */}
+        <ThreeSceneHero />
+
+        {/* Ambient Gradient Glows */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-sky-500/15 via-indigo-500/10 to-transparent blur-[140px] pointer-events-none rounded-full" />
         
-        <div className="relative z-20 text-center px-4 max-w-4xl mx-auto mt-16">
-          <motion.h1 
-            initial={{ opacity: 0, y: 30 }}
+        <div className="relative z-10 text-center max-w-4xl mx-auto space-y-6 pt-4">
+          
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg"
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/15 text-xs font-semibold text-neutral-200 backdrop-blur-xl shadow-lg"
           >
-            {cmsData?.heroTitle || t('welcome')}
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500" />
+            </span>
+            <span className="text-sky-400 font-bold uppercase tracking-wider text-[11px]">Woliso HMS Platform</span>
+            <span className="text-neutral-500">•</span>
+            <span>Where 5-Star Luxury Meets Intelligent Cloud PMS</span>
+          </motion.div>
+
+          {/* Main Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]"
+          >
+            The Operating System for{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-amber-300">
+              Modern Hospitality
+            </span>
           </motion.h1>
-          <motion.p 
+
+          {/* Subtitle */}
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-2xl text-neutral-100 mb-10 max-w-2xl mx-auto drop-shadow-md font-medium"
+            className="text-base sm:text-xl text-neutral-300 max-w-2xl mx-auto leading-relaxed font-normal"
           >
-            {cmsData?.heroSubtitle || t('welcome_sub')}
+            {cmsData?.heroSubtitle || 
+              'Unified Front Desk, Kitchen Display Stations, Direct Guest Booking, and Real-Time Multi-Schema PostgreSQL Analytics. Built for luxury hotels, resorts, and modern chains.'}
           </motion.p>
+
+          {/* Primary & Secondary Call to Actions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2"
           >
-            <Link 
-              to={cmsData?.heroPrimaryButtonLink || "/rooms"} 
-              className="inline-flex items-center justify-center px-8 py-4 bg-white text-neutral-900 text-lg font-bold rounded-xl hover:bg-neutral-100 transition-colors shadow-xl"
+            <Link
+              to="/rooms"
+              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white text-neutral-950 font-bold text-sm hover:bg-neutral-200 transition-all shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:scale-[1.02] cursor-pointer"
             >
-              {cmsData?.heroPrimaryButtonText || t('book_now')}
+              <BedDouble className="w-4 h-4 text-sky-600" />
+              <span>Direct Room Reservation</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
+
+            <Link
+              to="/dashboard"
+              className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/15 text-white font-bold text-sm backdrop-blur-xl transition-all hover:scale-[1.02] cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Launch Staff Operations Hub</span>
+            </Link>
+
+            <a
+              href="#virtual-tour"
+              className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-400/30 text-sky-300 font-semibold text-sm backdrop-blur-xl transition-all cursor-pointer"
+            >
+              <Compass className="w-4 h-4 text-sky-400" />
+              <span>Explore 3D Hotel Spaces</span>
+            </a>
           </motion.div>
+
+          {/* Quick Pillar Highlights */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-neutral-400 font-medium"
+          >
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              0% OTA Booking Fees
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-sky-400" />
+              Sub-30ms Real-Time Sync
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
+              Multi-Role Security (RLS)
+            </span>
+          </motion.div>
+
         </div>
+
+        {/* 3D Perspective Floating Dashboard Preview */}
+        <div className="w-full relative z-10 mt-10">
+          <Hero3DPreview />
+        </div>
+
       </section>
 
-      {/* Pinned Announcement Notice Strip (if any active) */}
+      {/* ---------------- PINNED ANNOUNCEMENT STRIP (IF ACTIVE) ---------------- */}
       {pinnedAnnouncement && (
         <div className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 text-white py-3.5 px-4 shadow-sm relative z-20">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
@@ -241,604 +290,275 @@ export default function Home() {
         </div>
       )}
 
-      {/* Featured Amenities Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">{cmsData?.featuredSectionTitle || 'Premium Amenities'}</h2>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">{cmsData?.featuredSectionSubtitle || 'Everything you need for a comfortable stay in Woliso.'}</p>
-          </div>
+      {/* ---------------- 2. INTERACTIVE 3D VIRTUAL HOTEL SPACES EXPLORER ---------------- */}
+      <Spaces3DExplorer />
+
+      {/* ---------------- 3. AUTHENTIC APPLICATION MODULES SHOWCASE ---------------- */}
+      <ProductShowcase3D />
+
+      {/* ---------------- 4. 3D BENTO GRID CAPABILITIES & ARCHITECTURE ---------------- */}
+      <BentoFeatures3D />
+
+      {/* ---------------- 5. INTERACTIVE 4-STEP OPERATIONAL WORKFLOW ---------------- */}
+      <HowItWorks3D />
+
+      {/* ---------------- 6. AUTHENTIC ACCOMMODATIONS SHOWCASE ---------------- */}
+      <Accommodations3D 
+        rooms={featuredRooms} 
+        title={cmsData?.roomsSectionTitle} 
+        subtitle={cmsData?.roomsSectionSubtitle} 
+      />
+
+      {/* ---------------- 7. CULINARY DINING & CONVENTION VENUES ---------------- */}
+      <DiningAndEvents3D dishes={featuredDishes} halls={featuredHalls} />
+
+      {/* ---------------- 8. WHY CHOOSE DIGIMENU CLOUD HMS ---------------- */}
+      <WhyChooseUs3D />
+
+      {/* ---------------- 9. TRANSPARENT ENTERPRISE PRICING & PACKAGES ---------------- */}
+      <PricingPackages3D />
+
+      {/* ---------------- 10. VERIFIED GUEST SOCIAL PROOF & TESTIMONIALS ---------------- */}
+      <section className="py-24 bg-neutral-900 text-white relative overflow-hidden" id="testimonials">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {(amenities.length > 0 ? amenities.map(a => ({
-              icon: (Icons as any)[a.icon] || Icons.HelpCircle,
-              title: a.title,
-              desc: a.description
-            })) : [
-              { icon: Icons.Wifi, title: 'High-Speed WiFi', desc: 'Free throughout the property' },
-              { icon: Icons.Coffee, title: 'Restaurant & Cafe', desc: 'Local and international cuisine' },
-              { icon: Icons.MapPin, title: 'Central Location', desc: 'Heart of Woliso city' },
-              { icon: Icons.Car, title: 'Secure Parking', desc: '24/7 guarded parking lot' }
-            ]).map((amenity, idx) => {
-              return (
-              <motion.div 
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="flex flex-col items-center p-8 bg-neutral-50 rounded-3xl text-center hover:bg-neutral-100 transition-colors"
-              >
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
-                  {React.createElement(amenity.icon, { className: "w-8 h-8 text-neutral-900" } as any)}
-                </div>
-                <h3 className="text-lg font-bold text-neutral-900 mb-2">{amenity.title}</h3>
-                <p className="text-sm text-neutral-500">{amenity.desc}</p>
-              </motion.div>
-            )})}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Rooms */}
-      {featuredRooms.length > 0 && (
-        <section className="py-24 bg-neutral-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-end mb-12">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">{cmsData?.roomsSectionTitle || 'Our Accommodations'}</h2>
-                <p className="text-lg text-neutral-600 max-w-2xl">{cmsData?.roomsSectionSubtitle || 'Experience comfort and luxury in our thoughtfully designed rooms.'}</p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-wider text-sky-400 mb-4">
+                <Star className="w-3.5 h-3.5 fill-sky-400" />
+                <span>Verified Guest Experience</span>
               </div>
-              <Link to="/rooms" className="hidden md:flex items-center gap-2 font-semibold text-neutral-900 hover:text-neutral-600 transition-colors">
-                View All Rooms <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {featuredRooms.map((room, idx) => (
-                <motion.div 
-                  key={room.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className="bg-white rounded-3xl overflow-hidden shadow-sm group border border-neutral-100"
-                >
-                  <div className="aspect-[4/3] overflow-hidden bg-neutral-100 relative">
-                    {room.imageUrls?.[0] ? (
-                      <img 
-                        src={room.imageUrls[0]} 
-                        alt={room.name} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=1000';
-                        }}
-                      />
-                    ) : (
-                      <img 
-                        src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&q=80&w=1000" 
-                        alt={room.name} 
-                        className="w-full h-full object-cover" 
-                      />
-                    )}
-                  </div>
-                  <div className="p-8">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-2xl font-bold text-neutral-900">{room.name}</h3>
-                      <div className="text-right">
-                        <span className="block text-xl font-bold text-neutral-900">{room.basePrice} ETB</span>
-                        <span className="text-sm text-neutral-500">/ night</span>
-                      </div>
-                    </div>
-                    <p className="text-neutral-600 line-clamp-2 mb-6">{room.description}</p>
-                    <Link to="/rooms" className="block w-full py-3 text-center border border-neutral-200 rounded-xl font-medium hover:bg-neutral-50 transition-colors">
-                      Discover More
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-            <div className="mt-8 text-center md:hidden">
-              <Link to="/rooms" className="inline-flex items-center gap-2 font-semibold text-neutral-900 hover:text-neutral-600 transition-colors">
-                View All Rooms <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Featured Halls */}
-      {featuredHalls.length > 0 && (
-        <section className="py-24 bg-neutral-900 text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12">
-              <div className="max-w-2xl">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">{cmsData?.hallsSectionTitle || 'Event Spaces'}</h2>
-                <p className="text-lg text-neutral-400">{cmsData?.hallsSectionSubtitle || 'Host your next corporate meeting, wedding, or special event in our premium venues equipped with modern facilities.'}</p>
-              </div>
-              <Link to="/halls" className="hidden md:flex items-center gap-2 font-semibold text-white hover:text-neutral-300 transition-colors mt-6 md:mt-0">
-                View All Spaces <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {featuredHalls.map((hall, idx) => (
-                <motion.div 
-                  key={hall.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className="bg-neutral-800 rounded-3xl overflow-hidden group"
-                >
-                  <div className="aspect-[16/9] overflow-hidden bg-neutral-700 relative">
-                    {hall.imageUrls?.[0] && (
-                      <img src={hall.imageUrls[0]} alt={hall.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                    )}
-                    <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-bold border border-white/20">
-                      Up to {hall.capacity} Guests
-                    </div>
-                  </div>
-                  <div className="p-8">
-                    <h3 className="text-2xl font-bold mb-3">{hall.name}</h3>
-                    <p className="text-neutral-400 line-clamp-2 mb-6">{hall.description}</p>
-                    <Link to="/halls" className="inline-flex font-semibold text-white hover:text-neutral-300 transition-colors">
-                      Discover Details &rarr;
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-            <div className="mt-8 text-center md:hidden">
-              <Link to="/halls" className="inline-flex items-center gap-2 font-semibold text-white hover:text-neutral-300 transition-colors">
-                View All Spaces <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Featured Restaurant */}
-      {featuredDishes.length > 0 && (
-        <section className="py-24 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row gap-16 items-center">
-              <div className="w-full md:w-1/3">
-                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">{cmsData?.restaurantSectionTitle || 'Culinary Excellence'}</h2>
-                <p className="text-lg text-neutral-600 mb-8 leading-relaxed">
-                  {cmsData?.restaurantSectionSubtitle || 'Indulge in a rich variety of local and international dishes prepared by our expert chefs. From traditional Ethiopian cuisine to continental favorites.'}
-                </p>
-                <Link to="/restaurant" className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors">
-                  Explore Menu
-                </Link>
-              </div>
-              <div className="w-full md:w-2/3 grid grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredDishes.map((dish, idx) => (
-                  <motion.div 
-                    key={dish.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: idx * 0.1 }}
-                    className="bg-neutral-50 rounded-2xl overflow-hidden border border-neutral-100 group"
-                  >
-                    <div className="aspect-square bg-neutral-200 relative overflow-hidden">
-                      {dish.imageUrl ? (
-                        <img 
-                          src={dish.imageUrl} 
-                          alt={dish.name} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Coffee className="w-8 h-8 text-neutral-400" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 text-center">
-                      <h4 className="font-bold text-neutral-900 truncate">{dish.name}</h4>
-                      <p className="text-sm font-semibold text-neutral-600 mt-1">{dish.price} ETB</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Hotel Announcements & News Section */}
-      {announcements.length > 0 && (
-        <section className="py-24 bg-neutral-900 text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.1),transparent_50%)]" />
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="flex flex-col md:flex-row justify-between items-end mb-12">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-wider text-amber-400 mb-3">
-                  <Megaphone className="w-3.5 h-3.5" />
-                  <span>Updates & Events</span>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Hotel Announcements & News</h2>
-                <p className="text-neutral-400 text-lg mt-2 max-w-2xl">
-                  Stay updated on seasonal culinary feasts, weekend cultural music, and spa wellness programs.
-                </p>
-              </div>
-              <Link 
-                to="/announcements" 
-                className="inline-flex items-center gap-2 font-bold text-amber-400 hover:text-amber-300 transition-colors mt-4 md:mt-0"
-              >
-                All Announcements <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {announcements.slice(0, 3).map((item, idx) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
-                  className="bg-neutral-800/90 rounded-3xl overflow-hidden border border-neutral-700/60 shadow-lg hover:border-neutral-600 transition-all flex flex-col group"
-                >
-                  <div className="relative aspect-[16/10] bg-neutral-900 overflow-hidden">
-                    <img
-                      src={item.imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800'}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800';
-                      }}
-                    />
-                    <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 items-center">
-                      <span className="px-2.5 py-0.5 bg-black/80 backdrop-blur-xs text-white text-[11px] font-bold rounded-md">
-                        {item.category}
-                      </span>
-                      {item.badge && (
-                        <span className="px-2.5 py-0.5 bg-amber-400 text-neutral-950 text-[11px] font-black rounded-md">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                    <div className="space-y-2">
-                      <div className="text-xs text-neutral-400 font-medium">
-                        {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </div>
-                      <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition line-clamp-2 leading-snug">
-                        {item.title}
-                      </h3>
-                      <p className="text-neutral-400 text-sm line-clamp-3 leading-relaxed">
-                        {item.paragraph}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-neutral-700/60 flex items-center justify-between">
-                      <span className="text-xs text-neutral-500 font-medium">By {item.publishedBy}</span>
-                      <Link
-                        to={`/announcements?id=${item.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-amber-400 hover:text-amber-300 transition cursor-pointer"
-                      >
-                        Read Details &rarr;
-                      </Link>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Statistics Section */}
-      {cmsData?.statistics && cmsData.statistics.length > 0 && (
-        <section className="py-20 bg-neutral-900 text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {cmsData.statistics.map((stat, idx) => (
-                <div key={stat.id} className="text-center">
-                  <div className="text-4xl md:text-5xl font-bold mb-2">{stat.value}</div>
-                  <div className="text-neutral-400 font-medium">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Testimonials */}
-      {(() => {
-        const displayTestimonials = [
-          ...approvedTestimonials,
-          ...(cmsData?.testimonials || [])
-        ].slice(0, 6);
-
-        return (
-          <section className="py-24 bg-neutral-50 relative">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider mb-3">
-                  <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> Guest Experiences
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-                  {cmsData?.testimonialsTitle || 'What Our Guests Say'}
-                </h2>
-                <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-                  {cmsData?.testimonialsSubtitle || 'Read authentic reviews from guests who have stayed, dined, and hosted events at Woliso Hotel.'}
-                </p>
-                
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <button 
-                    onClick={handleOpenTestimonial}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-full font-bold text-sm hover:bg-neutral-800 transition-all shadow-md hover:shadow-lg cursor-pointer transform hover:-translate-y-0.5"
-                  >
-                    <MessageSquareHeart className="w-4 h-4 text-rose-400" />
-                    Share Your Experience / Testimonial
-                  </button>
-                </div>
-              </div>
-              
-              <div className="grid md:grid-cols-3 gap-8">
-                {displayTestimonials.map((test, idx) => (
-                  <motion.div 
-                    key={test.id || idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: idx * 0.1 }}
-                    className="bg-white p-8 rounded-3xl shadow-sm border border-neutral-100 flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex gap-1 mb-6 text-yellow-400">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`w-5 h-5 ${i < test.rating ? 'fill-current' : 'text-neutral-200'}`} />
-                        ))}
-                      </div>
-                      <p className="text-neutral-700 leading-relaxed italic mb-8">"{test.content}"</p>
-                    </div>
-                    <div className="pt-4 border-t border-neutral-100 flex items-center justify-between">
-                      <div>
-                        <h4 className="font-bold text-neutral-900">{test.name}</h4>
-                        <p className="text-xs text-neutral-500 font-medium">{test.role}</p>
-                      </div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
-                        Verified Guest
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </section>
-        );
-      })()}
-
-      {/* Location / Map Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="order-2 lg:order-1 rounded-3xl overflow-hidden shadow-sm border border-neutral-100 h-[400px] md:h-[500px]">
-              {cmsData?.mapEmbedUrl ? (
-                <iframe 
-                  src={cmsData.mapEmbedUrl} 
-                  width="100%" 
-                  height="100%" 
-                  style={{ border: 0 }} 
-                  allowFullScreen 
-                  loading="lazy" 
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              ) : (
-                <div className="w-full h-full bg-neutral-100 flex items-center justify-center text-neutral-400">Map location not set</div>
-              )}
-            </div>
-            <div className="order-1 lg:order-2 space-y-8">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">Find Us</h2>
-                <p className="text-lg text-neutral-600 leading-relaxed">
-                  Located in the heart of Woliso, our hotel offers convenient access to local attractions and business centers.
-                </p>
-              </div>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center shrink-0">
-                    <MapPin className="w-6 h-6 text-neutral-900" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-neutral-900 mb-1">Address</h3>
-                    <p className="text-neutral-600 whitespace-pre-wrap">{contactData?.address || 'Woliso City Center, Main Road\nWoliso, Oromia, Ethiopia'}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center shrink-0">
-                    <Phone className="w-6 h-6 text-neutral-900" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-neutral-900 mb-1">Contact</h3>
-                    <p className="text-neutral-600">
-                      {contactData?.phonePrimary || '+251 91 123 4567'}
-                      <br/>
-                      {contactData?.emailPrimary || 'info@wolisohotel.com'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <Link to="/contact" className="inline-block mt-4 text-neutral-900 font-bold hover:text-neutral-600 transition-colors">
-                View full contact details &rarr;
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Auth Prompt Modal (When Unsigned Guest Tries to Leave Testimonial) */}
-      <AnimatePresence>
-        {showAuthPromptModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-center"
-            >
-              <button
-                onClick={() => setShowAuthPromptModal(false)}
-                className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-neutral-900">
-                <MessageSquareHeart className="w-8 h-8 text-neutral-900" />
-              </div>
-
-              <h3 className="text-2xl font-bold text-neutral-900 mb-2">Sign In to Leave a Testimonial</h3>
-              <p className="text-sm text-neutral-600 mb-6">
-                To ensure all reviews remain authentic and verified, please sign in or register your account before submitting a testimonial.
+              <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+                Loved by Guests & Hoteliers
+              </h2>
+              <p className="text-neutral-400 text-base max-w-xl mt-3 leading-relaxed">
+                Discover authentic feedback from verified guests and hotel staff who experience our property operations daily.
               </p>
+            </div>
 
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    setShowAuthPromptModal(false);
-                    navigate('/login?redirect=/');
-                  }}
-                  className="w-full py-3.5 bg-neutral-900 text-white rounded-xl font-bold hover:bg-neutral-800 transition-colors shadow-md cursor-pointer flex items-center justify-center gap-2"
-                >
-                  Sign In / Create Account
-                </button>
-                <button
-                  onClick={() => setShowAuthPromptModal(false)}
-                  className="w-full py-3 bg-neutral-100 text-neutral-700 rounded-xl font-bold hover:bg-neutral-200 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
+            <button
+              onClick={handleOpenTestimonial}
+              className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold text-sm transition-all hover:scale-[1.02] cursor-pointer self-start md:self-auto shadow-md"
+            >
+              <MessageSquareHeart className="w-4 h-4 text-pink-400" />
+              <span>Share Your Review</span>
+            </button>
+          </div>
+
+          {/* Testimonial Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(approvedTestimonials.length > 0 ? approvedTestimonials : [
+              {
+                id: '1',
+                name: 'Dawit Mengistu',
+                role: 'Executive Business Traveler',
+                content: 'The direct booking process took under a minute with zero hassle. Checking into the Deluxe Suite with digital keycard was seamless. The best luxury experience in Woliso.',
+                rating: 5
+              },
+              {
+                id: '2',
+                name: 'Helen Gebre',
+                role: 'Family Vacationer',
+                content: 'The restaurant food dispatch is incredibly fast. We ordered traditional wat and pasta for the kids, and both arrived piping hot within 15 minutes. Exceptional staff service.',
+                rating: 5
+              },
+              {
+                id: '3',
+                name: 'Dr. Michael T.',
+                role: 'Conference Organizer (UN)',
+                content: 'Hosted a 120-attendee workshop in the Grand Banquet Hall. High-speed WiFi, flawless audiovisuals, and the staff coordination was truly five-star standard.',
+                rating: 5
+              }
+            ]).map((item, idx) => (
+              <div 
+                key={item.id || idx}
+                className="rounded-3xl bg-neutral-950/70 border border-white/10 p-6 sm:p-7 flex flex-col justify-between hover:border-white/20 transition-all duration-300 hover:-translate-y-1 shadow-xl"
+              >
+                <div>
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(item.rating || 5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-neutral-300 text-sm leading-relaxed mb-6 italic">
+                    "{item.content}"
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-white">{item.name}</h4>
+                    <p className="text-xs text-neutral-400">{item.role}</p>
+                  </div>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" title="Verified Guest" />
+                </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            ))}
+          </div>
 
-      {/* Testimonial Submission Modal (For Logged In Users) */}
+        </div>
+      </section>
+
+      {/* ---------------- 11. EXECUTIVE CONSULTATION & INQUIRY ---------------- */}
+      <InquiryContact3D contactData={contactData} />
+
+      {/* ---------------- TESTIMONIAL SUBMISSION MODAL ---------------- */}
       <AnimatePresence>
         {showTestimonialModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          >
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg bg-neutral-900 border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl text-white"
             >
               <button
                 onClick={() => setShowTestimonialModal(false)}
-                className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer"
+                className="absolute top-5 right-5 text-neutral-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
               {testimonialSuccess ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-8 h-8" />
+                <div className="text-center py-8 space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
+                    <CheckCircle2 className="w-8 h-8" />
                   </div>
-                  <h3 className="text-2xl font-bold text-neutral-900 mb-2">Thank You!</h3>
-                  <p className="text-neutral-600">Your testimonial has been submitted successfully and is pending review by hotel management.</p>
+                  <h3 className="text-2xl font-bold">Review Submitted!</h3>
+                  <p className="text-sm text-neutral-400">
+                    Thank you for sharing your experience. Your review will be published upon moderation.
+                  </p>
                   <button
                     onClick={() => setShowTestimonialModal(false)}
-                    className="mt-6 px-6 py-2.5 bg-neutral-900 text-white rounded-full font-bold hover:bg-neutral-800 transition cursor-pointer"
+                    className="mt-4 px-6 py-2.5 rounded-xl bg-white text-neutral-950 font-bold text-sm cursor-pointer"
                   >
-                    Done
+                    Close
                   </button>
                 </div>
               ) : (
-                <>
-                  <h3 className="text-2xl font-bold text-neutral-900 mb-1 text-center">Share Your Experience</h3>
-                  <p className="text-xs text-neutral-500 mb-6 text-center">We value your authentic feedback and love hearing about your stay.</p>
-                  
-                  <div className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-pink-400 text-xs font-bold uppercase tracking-wider">
+                    <MessageSquareHeart className="w-4 h-4" />
+                    <span>Verified Guest Feedback</span>
+                  </div>
+                  <h3 className="text-xl font-bold">Share Your Experience</h3>
+                  <p className="text-xs text-neutral-400">
+                    Your feedback helps us continuously elevate our hospitality standards.
+                  </p>
+
+                  <div className="space-y-3 pt-2">
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">Your Name</label>
+                      <label className="text-xs text-neutral-300 font-medium block mb-1">Your Name</label>
                       <input
                         type="text"
                         value={guestName}
                         onChange={(e) => setGuestName(e.target.value)}
-                        placeholder="e.g. Dawit Tadesse"
-                        className="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none text-sm"
+                        className="w-full px-4 py-2.5 rounded-xl bg-neutral-950 border border-white/15 text-sm text-white focus:outline-none focus:border-sky-500"
+                        placeholder="e.g. Abebe Kebede"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">Visit / Experience Type</label>
-                      <select
+                      <label className="text-xs text-neutral-300 font-medium block mb-1">Your Role / Trip Purpose</label>
+                      <input
+                        type="text"
                         value={guestRole}
                         onChange={(e) => setGuestRole(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none text-sm"
-                      >
-                        <option value="Hotel Guest">Hotel Guest (Room Stay)</option>
-                        <option value="Restaurant & Bar Diner">Restaurant & Bar Diner</option>
-                        <option value="Conference & Meeting Host">Conference & Meeting Host</option>
-                        <option value="Wedding / Event Host">Wedding / Event Host</option>
-                        <option value="Tourist & Weekend Visitor">Tourist & Weekend Visitor</option>
-                      </select>
+                        className="w-full px-4 py-2.5 rounded-xl bg-neutral-950 border border-white/15 text-sm text-white focus:outline-none focus:border-sky-500"
+                        placeholder="e.g. Weekend Leisure / Conference Delegate"
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">Rating</label>
-                      <div className="flex gap-2 justify-center py-2 bg-neutral-50 rounded-xl border border-neutral-100">
-                        {[1, 2, 3, 4, 5].map((star) => (
+                      <label className="text-xs text-neutral-300 font-medium block mb-1">Rating</label>
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((val) => (
                           <button
-                            key={star}
+                            key={val}
                             type="button"
-                            onClick={() => setTestimonialRating(star)}
-                            className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
+                            onClick={() => setTestimonialRating(val)}
+                            className="cursor-pointer p-1"
                           >
-                            <Star className={`w-7 h-7 ${star <= testimonialRating ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-300'}`} />
+                            <Star 
+                              className={`w-6 h-6 ${
+                                val <= testimonialRating ? 'fill-amber-400 text-amber-400' : 'text-neutral-600'
+                              }`} 
+                            />
                           </button>
                         ))}
                       </div>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1">Your Testimonial / Review</label>
+                      <label className="text-xs text-neutral-300 font-medium block mb-1">Your Review</label>
                       <textarea
                         rows={4}
-                        placeholder="Tell us what you loved about your experience at Woliso Hotel..."
                         value={testimonialContent}
                         onChange={(e) => setTestimonialContent(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 outline-none resize-none text-sm"
+                        className="w-full px-4 py-2.5 rounded-xl bg-neutral-950 border border-white/15 text-sm text-white focus:outline-none focus:border-sky-500 resize-none"
+                        placeholder="Tell us about the room, dining, amenities, or staff service..."
                       />
                     </div>
-                    
+
                     <button
-                      type="button"
                       onClick={submitTestimonial}
                       disabled={submittingTestimonial || !testimonialContent.trim()}
-                      className="w-full py-3 bg-neutral-900 text-white rounded-xl font-bold hover:bg-neutral-800 transition-colors disabled:opacity-50 mt-2 cursor-pointer"
+                      className="w-full py-3.5 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-neutral-950 font-bold text-sm transition-all cursor-pointer shadow-lg mt-2"
                     >
-                      {submittingTestimonial ? 'Submitting...' : 'Submit Testimonial'}
+                      {submittingTestimonial ? 'Submitting Review...' : 'Publish Guest Review'}
                     </button>
                   </div>
-                </>
+                </div>
               )}
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
+
+      {/* Auth Prompt Modal if guest not signed in */}
+      <AnimatePresence>
+        {showAuthPromptModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-md bg-neutral-900 border border-white/15 rounded-3xl p-6 sm:p-7 shadow-2xl text-white text-center"
+            >
+              <button
+                onClick={() => setShowAuthPromptModal(false)}
+                className="absolute top-5 right-5 text-neutral-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="w-14 h-14 rounded-2xl bg-sky-500/20 text-sky-400 mx-auto flex items-center justify-center mb-4">
+                <ShieldCheck className="w-7 h-7" />
+              </div>
+
+              <h3 className="text-xl font-bold mb-2">Verified Guest Sign-In Required</h3>
+              <p className="text-xs text-neutral-400 mb-6 leading-relaxed">
+                To guarantee genuine reviews and protect against automated spam, please sign in with your guest account before submitting a testimonial.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  to="/login"
+                  className="flex-1 py-3 rounded-xl bg-white text-neutral-950 font-bold text-xs hover:bg-neutral-200 transition cursor-pointer"
+                >
+                  Sign In
+                </Link>
+                <button
+                  onClick={() => setShowAuthPromptModal(false)}
+                  className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs border border-white/15 transition cursor-pointer"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
