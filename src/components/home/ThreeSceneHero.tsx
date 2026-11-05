@@ -18,12 +18,12 @@ export default function ThreeSceneHero({ className = '' }: ThreeSceneHeroProps) 
     // Scene, Camera, Renderer
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      45,
+      50,
       container.clientWidth / container.clientHeight,
       0.1,
       1000
     );
-    camera.position.set(0, 2, 9);
+    camera.position.set(0, 1.5, 8);
 
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
@@ -34,122 +34,74 @@ export default function ThreeSceneHero({ className = '' }: ThreeSceneHeroProps) 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Ambient & Point Lighting
-    const ambientLight = new THREE.AmbientLight(0x6366f1, 0.8);
+    // Warm & Cool Ambient Hospitality Lighting
+    const ambientLight = new THREE.AmbientLight(0xffeedd, 0.6);
     scene.add(ambientLight);
 
-    const primaryLight = new THREE.PointLight(0x38bdf8, 3, 20);
-    primaryLight.position.set(5, 5, 5);
-    scene.add(primaryLight);
+    const skyPoint = new THREE.PointLight(0x38bdf8, 2.5, 30);
+    skyPoint.position.set(6, 6, 4);
+    scene.add(skyPoint);
 
-    const accentLight = new THREE.PointLight(0xa855f7, 2.5, 20);
-    accentLight.position.set(-5, -3, 3);
-    scene.add(accentLight);
+    const goldPoint = new THREE.PointLight(0xf59e0b, 2.0, 25);
+    goldPoint.position.set(-6, -4, 3);
+    scene.add(goldPoint);
 
-    const goldLight = new THREE.PointLight(0xf59e0b, 1.5, 15);
-    goldLight.position.set(0, 4, -2);
-    scene.add(goldLight);
+    // Luxury Architectural Wave Mesh (Ground Lattice)
+    const gridCols = 45;
+    const gridRows = 30;
+    const gridCount = gridCols * gridRows;
+    const planeGeo = new THREE.PlaneGeometry(28, 18, gridCols - 1, gridRows - 1);
+    planeGeo.rotateX(-Math.PI / 2.3);
+    planeGeo.translate(0, -3.2, -2);
 
-    // Group for all rotating 3D elements
-    const mainGroup = new THREE.Group();
-    scene.add(mainGroup);
-
-    // 1. Central Architectural Crystal (Icosahedron)
-    const crystalGeo = new THREE.IcosahedronGeometry(2.2, 1);
-    const crystalMat = new THREE.MeshPhysicalMaterial({
-      color: 0x1e1b4b,
-      emissive: 0x312e81,
-      emissiveIntensity: 0.3,
-      roughness: 0.15,
-      metalness: 0.85,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1,
-      wireframe: false,
-      transparent: true,
-      opacity: 0.85
-    });
-    const crystalMesh = new THREE.Mesh(crystalGeo, crystalMat);
-    mainGroup.add(crystalMesh);
-
-    // 2. Wireframe Cage Layer
-    const wireframeGeo = new THREE.IcosahedronGeometry(2.35, 1);
-    const wireframeMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+    const planeMat = new THREE.MeshStandardMaterial({
+      color: 0x0e1726,
       wireframe: true,
+      roughness: 0.3,
+      metalness: 0.8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.15,
       transparent: true,
-      opacity: 0.25
+      opacity: 0.35
     });
-    const wireframeMesh = new THREE.Mesh(wireframeGeo, wireframeMat);
-    mainGroup.add(wireframeMesh);
+    const groundGrid = new THREE.Mesh(planeGeo, planeMat);
+    scene.add(groundGrid);
 
-    // 3. Orbital Concentric Rings (Representing Hospitality Network & PMS Nodes)
-    const ringGeo1 = new THREE.TorusGeometry(3.6, 0.02, 16, 100);
-    const ringMat1 = new THREE.MeshBasicMaterial({
-      color: 0x60a5fa,
-      transparent: true,
-      opacity: 0.4
-    });
-    const ringMesh1 = new THREE.Mesh(ringGeo1, ringMat1);
-    ringMesh1.rotation.x = Math.PI / 3;
-    mainGroup.add(ringMesh1);
-
-    const ringGeo2 = new THREE.TorusGeometry(4.3, 0.015, 16, 100);
-    const ringMat2 = new THREE.MeshBasicMaterial({
-      color: 0xa855f7,
-      transparent: true,
-      opacity: 0.3
-    });
-    const ringMesh2 = new THREE.Mesh(ringGeo2, ringMat2);
-    ringMesh2.rotation.x = -Math.PI / 4;
-    ringMesh2.rotation.y = Math.PI / 6;
-    mainGroup.add(ringMesh2);
-
-    // 4. Floating Satellites (Mini hotel modules)
-    const satellites: THREE.Mesh[] = [];
-    const satCount = 6;
-    const satGeo = new THREE.BoxGeometry(0.35, 0.35, 0.35);
-    const satMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      roughness: 0.2,
-      metalness: 0.9,
-      emissive: 0x0ea5e9,
-      emissiveIntensity: 0.4
-    });
-
-    for (let i = 0; i < satCount; i++) {
-      const sat = new THREE.Mesh(satGeo, satMat);
-      const angle = (i / satCount) * Math.PI * 2;
-      const radius = 3.6;
-      sat.position.set(
-        Math.cos(angle) * radius,
-        (Math.sin(angle * 2) * 0.8),
-        Math.sin(angle) * radius
-      );
-      satellites.push(sat);
-      mainGroup.add(sat);
-    }
-
-    // 5. Ambient Star / Data Particles
-    const particleCount = 180;
+    // Ambient Luxury Starlight & Golden Embers
+    const particleCount = 220;
     const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
+    const particleScales = new Float32Array(particleCount);
 
-    for (let i = 0; i < particleCount * 3; i += 3) {
-      particlePositions[i] = (Math.random() - 0.5) * 20;
-      particlePositions[i + 1] = (Math.random() - 0.5) * 16;
-      particlePositions[i + 2] = (Math.random() - 0.5) * 16;
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 24;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 14;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 12;
+      particleScales[i] = Math.random() * 0.05 + 0.02;
     }
 
     particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMat = new THREE.PointsMaterial({
-      color: 0x93c5fd,
-      size: 0.04,
+      color: 0xbae6fd,
+      size: 0.05,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.55,
       blending: THREE.AdditiveBlending
     });
     const particleSystem = new THREE.Points(particleGeo, particleMat);
     scene.add(particleSystem);
+
+    // Floating Golden Accent Light Rings
+    const ringGeo = new THREE.TorusGeometry(5.2, 0.015, 16, 120);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xd97706,
+      transparent: true,
+      opacity: 0.25
+    });
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+    ringMesh.rotation.x = Math.PI / 2.8;
+    ringMesh.position.set(0, -1, -3);
+    scene.add(ringMesh);
 
     // Mouse Parallax Interaction
     let targetX = 0;
@@ -161,8 +113,8 @@ export default function ThreeSceneHero({ className = '' }: ThreeSceneHeroProps) 
       const rect = container.getBoundingClientRect();
       const x = (event.clientX - rect.left) / rect.width - 0.5;
       const y = (event.clientY - rect.top) / rect.height - 0.5;
-      targetX = x * 1.2;
-      targetY = y * 1.0;
+      targetX = x * 0.8;
+      targetY = y * 0.6;
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
@@ -178,14 +130,8 @@ export default function ThreeSceneHero({ className = '' }: ThreeSceneHeroProps) 
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     };
 
-    window.addEventListener('resize', handleResize);
-
-    // Pause rendering when hero is out of viewport to preserve 100% GPU performance
-    let isVisible = true;
-    const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting;
-    }, { threshold: 0.05 });
-    observer.observe(container);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
 
     // Animation Loop
     let animationFrameId: number;
@@ -194,85 +140,61 @@ export default function ThreeSceneHero({ className = '' }: ThreeSceneHeroProps) 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      if (!isVisible) return;
-
       const delta = clock.getDelta();
-      const elapsedTime = clock.getElapsedTime();
+      const time = clock.getElapsedTime();
 
       // Smooth mouse easing
-      currentX += (targetX - currentX) * 0.04;
-      currentY += (targetY - currentY) * 0.04;
+      currentX += (targetX - currentX) * 0.05;
+      currentY += (targetY - currentY) * 0.05;
+
+      camera.position.x = currentX;
+      camera.position.y = 1.5 - currentY;
+      camera.lookAt(0, 0, 0);
 
       if (!prefersReducedMotion) {
-        // Continuous gentle rotation
-        crystalMesh.rotation.y += delta * 0.25;
-        crystalMesh.rotation.x += delta * 0.12;
+        // Subtle wave effect on the grid vertices
+        const posAttr = planeGeo.attributes.position;
+        for (let i = 0; i < posAttr.count; i++) {
+          const u = i % gridCols;
+          const v = Math.floor(i / gridCols);
+          const zVal = Math.sin(time * 0.8 + u * 0.3) * 0.35 + Math.cos(time * 0.6 + v * 0.4) * 0.25;
+          posAttr.setZ(i, zVal);
+        }
+        posAttr.needsUpdate = true;
 
-        wireframeMesh.rotation.y -= delta * 0.18;
-        wireframeMesh.rotation.z += delta * 0.1;
-
-        ringMesh1.rotation.z += delta * 0.15;
-        ringMesh2.rotation.z -= delta * 0.12;
-
-        // Animate floating satellites
-        satellites.forEach((sat, idx) => {
-          const speed = 0.4 + idx * 0.05;
-          const angle = elapsedTime * speed + (idx / satCount) * Math.PI * 2;
-          const radius = 3.6 + Math.sin(elapsedTime + idx) * 0.3;
-          sat.position.x = Math.cos(angle) * radius;
-          sat.position.z = Math.sin(angle) * radius;
-          sat.position.y = Math.sin(angle * 2) * 0.6;
-          sat.rotation.x += delta * 1.2;
-          sat.rotation.y += delta * 1.5;
-        });
-
-        // Drift particle system
-        particleSystem.rotation.y += delta * 0.03;
+        // Slow ring rotation
+        ringMesh.rotation.z = time * 0.04;
+        particleSystem.rotation.y = time * 0.02;
       }
-
-      // Parallax camera tilt
-      camera.position.x = currentX * 2.5;
-      camera.position.y = 2 - currentY * 2.0;
-      camera.lookAt(0, 0, 0);
 
       renderer.render(scene, camera);
     };
 
     animate();
 
-    // Clean up on unmount
+    // Clean up
     return () => {
       cancelAnimationFrame(animationFrameId);
-      observer.disconnect();
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('resize', handleResize);
-
-      if (container && renderer.domElement && container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-
-      // Dispose geometries and materials
-      crystalGeo.dispose();
-      crystalMat.dispose();
-      wireframeGeo.dispose();
-      wireframeMat.dispose();
-      ringGeo1.dispose();
-      ringMat1.dispose();
-      ringGeo2.dispose();
-      ringMat2.dispose();
-      satGeo.dispose();
-      satMat.dispose();
+      resizeObserver.disconnect();
+      planeGeo.dispose();
+      planeMat.dispose();
       particleGeo.dispose();
       particleMat.dispose();
+      ringGeo.dispose();
+      ringMat.dispose();
       renderer.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
     };
   }, []);
 
   return (
-    <div 
-      ref={containerRef} 
-      className={`absolute inset-0 pointer-events-none overflow-hidden ${className}`}
+    <div
+      ref={containerRef}
       aria-hidden="true"
+      className={`absolute inset-0 pointer-events-none overflow-hidden select-none ${className}`}
     />
   );
 }
