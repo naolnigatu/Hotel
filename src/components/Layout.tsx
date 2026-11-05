@@ -191,7 +191,9 @@ export default function Layout() {
 
           <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
             {/* Dedicated Google Translate Button & Selector */}
-            <GoogleTranslateSelector variant="header" />
+            <div className="notranslate skiptranslate shrink-0" translate="no">
+              <GoogleTranslateSelector variant="header" />
+            </div>
             
             {/* Profile Dropdown */}
             {currentUser ? (
@@ -317,7 +319,9 @@ export default function Layout() {
               
               {/* Drawer Footer (Language & Book) */}
               <div className="p-4 border-t border-neutral-100 bg-neutral-50 shrink-0 space-y-4">
-                <GoogleTranslateSelector variant="mobile" onSelectLanguage={closeMenu} />
+                <div className="notranslate skiptranslate" translate="no">
+                  <GoogleTranslateSelector variant="mobile" onSelectLanguage={closeMenu} />
+                </div>
                 
                 <Link onClick={closeMenu} to="/book" className="flex items-center justify-center w-full py-3.5 bg-neutral-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-neutral-800 transition-colors">
                   {t('book_now')}
